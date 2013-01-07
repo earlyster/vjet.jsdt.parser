@@ -75,7 +75,7 @@ public class CompilationUnitDeclaration
 
 	public InferredType [] inferredTypes = new InferredType[10];
 	public int numberInferredTypes=0;
-	public HashtableOfObject inferredTypesHash=new HashtableOfObject();
+	//public HashtableOfObject inferredTypesHash=new HashtableOfObject();
 	public boolean typesHaveBeenInferred=false;
 
 	public boolean ignoreFurtherInvestigation = false;	// once pointless to investigate due to errors
@@ -598,16 +598,16 @@ public class CompilationUnitDeclaration
 		}
 	}
 
-	public InferredType findInferredType(char [] name)
-	{
-		return (InferredType)inferredTypesHash.get(name);
-//		for (int i=0;i<this.numberInferredTypes;i++) {
-//			InferredType inferredType = this.inferredTypes[i];
-//			if (CharOperation.equals(name,inferredType.getName()))
-//					return inferredType;
-//		}
-//		return null;
-	}
+//	public InferredType findInferredType(char [] name)
+//	{
+//		return (InferredType)inferredTypesHash.get(name);
+////		for (int i=0;i<this.numberInferredTypes;i++) {
+////			InferredType inferredType = this.inferredTypes[i];
+////			if (CharOperation.equals(name,inferredType.getName()))
+////					return inferredType;
+////		}
+////		return null;
+//	}
 
 
 
