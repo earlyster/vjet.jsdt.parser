@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2008 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,13 +10,9 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
-
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.ILabeledStatement;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
-import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowContext;
-import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowInfo;
-import org.eclipse.mod.wst.jsdt.internal.compiler.flow.LabelFlowContext;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BlockScope;
 
 public class LabeledStatement extends Statement implements ILabeledStatement {
@@ -42,47 +38,6 @@ public class LabeledStatement extends Statement implements ILabeledStatement {
 		this.sourceEnd = sourceEnd;
 	}
 
-	public FlowInfo analyseCode(
-		BlockScope currentScope,
-		FlowContext flowContext,
-		FlowInfo flowInfo) {
-
-		// need to stack a context to store explicit label, answer inits in case of normal completion merged
-		// with those relative to the exit path from break statement occurring inside the labeled statement.
-		if (statement == null) {
-			return flowInfo;
-		} else {
-			LabelFlowContext labelContext;
-			FlowInfo statementInfo, mergedInfo;
-			if (((statementInfo = statement
-					.analyseCode(
-						currentScope,
-						(labelContext =
-							new LabelFlowContext(
-								flowContext,
-								this,
-								label,
-								currentScope)),
-						flowInfo)).tagBits & FlowInfo.UNREACHABLE) != 0) {
-				if ((labelContext.initsOnBreak.tagBits & FlowInfo.UNREACHABLE) == 0) {
-					// an embedded loop has had no chance to reinject forgotten null info
-					mergedInfo = flowInfo.unconditionalCopy().
-						addInitializationsFrom(labelContext.initsOnBreak);
-				} else {
-					mergedInfo = labelContext.initsOnBreak;
-				}
-			} else {
-				mergedInfo = statementInfo.mergedWith(labelContext.initsOnBreak);
-			}
-//			mergedInitStateIndex =
-//				currentScope.methodScope().recordInitializationStates(mergedInfo);
-			if ((this.bits & ASTNode.LabelUsed) == 0) {
-				currentScope.problemReporter().unusedLabel(this);
-			}
-			return mergedInfo;
-		}
-	}
-
 	public ASTNode concreteStatement() {
 
 		// return statement.concreteStatement(); // for supporting nested labels:   a:b:c: someStatement (see 21912)
@@ -99,12 +54,12 @@ public class LabeledStatement extends Statement implements ILabeledStatement {
 		return output;
 	}
 
-	public void resolve(BlockScope scope) {
-
-		if (this.statement != null) {
-			this.statement.resolve(scope);
-		}
-	}
+//	public void resolve(BlockScope scope) {
+//
+//		if (this.statement != null) {
+//			this.statement.resolve(scope);
+//		}
+//	}
 
 
 	public void traverse(

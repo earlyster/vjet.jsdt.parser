@@ -16,7 +16,6 @@ import java.util.Comparator;
 
 import org.eclipse.mod.wst.jsdt.core.JavaScriptConstants;
 import org.eclipse.mod.wst.jsdt.core.compiler.CharOperation;
-import org.eclipse.mod.wst.jsdt.core.infer.InferredType;
 import org.eclipse.mod.wst.jsdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.mod.wst.jsdt.internal.compiler.env.IDependent;
 import org.eclipse.mod.wst.jsdt.internal.compiler.util.SimpleLookupTable;
@@ -162,12 +161,12 @@ public static void sortMethods(MethodBinding[] sortedMethods, int left, int righ
 	Arrays.sort(sortedMethods, left, right, METHOD_COMPARATOR);
 }
 
-public FieldBinding[] availableFields() {
-	return fields();
-}
-public MethodBinding[] availableMethods() {
-	return methods();
-}
+//public FieldBinding[] availableFields() {
+//	return fields();
+//}
+//public MethodBinding[] availableMethods() {
+//	return methods();
+//}
 /* Answer true if the receiver can be instantiated
 */
 public boolean canBeInstantiated() {
@@ -234,37 +233,37 @@ public final boolean canBeSeenBy(ReferenceBinding receiverType, ReferenceBinding
 /*
  * Answer true if the receiver is visible to the type provided by the scope.
  */
-public final boolean canBeSeenBy(Scope scope) {
-	if (isPublic()) return true;
-
-	SourceTypeBinding invocationType = scope.enclosingSourceType();
-	if (invocationType == this) return true;
-
-	if (invocationType == null) // static import call
-		return !isPrivate() && scope.getCurrentPackage() == this.fPackage;
-
-	if (isPrivate()) {
-		// answer true if the receiver and the invocationType have a common enclosingType
-		// already know they are not the identical type
-		ReferenceBinding outerInvocationType = invocationType;
-		ReferenceBinding temp = outerInvocationType.enclosingType();
-		while (temp != null) {
-			outerInvocationType = temp;
-			temp = temp.enclosingType();
-		}
-
-		ReferenceBinding outerDeclaringClass = (ReferenceBinding)this;
-		temp = outerDeclaringClass.enclosingType();
-		while (temp != null) {
-			outerDeclaringClass = temp;
-			temp = temp.enclosingType();
-		}
-		return outerInvocationType == outerDeclaringClass;
-	}
-
-	// isDefault()
-	return invocationType.fPackage == this.fPackage;
-}
+//public final boolean canBeSeenBy(Scope scope) {
+//	if (isPublic()) return true;
+//
+//	SourceTypeBinding invocationType = scope.enclosingSourceType();
+//	if (invocationType == this) return true;
+//
+//	if (invocationType == null) // static import call
+//		return !isPrivate() && scope.getCurrentPackage() == this.fPackage;
+//
+//	if (isPrivate()) {
+//		// answer true if the receiver and the invocationType have a common enclosingType
+//		// already know they are not the identical type
+//		ReferenceBinding outerInvocationType = invocationType;
+//		ReferenceBinding temp = outerInvocationType.enclosingType();
+//		while (temp != null) {
+//			outerInvocationType = temp;
+//			temp = temp.enclosingType();
+//		}
+//
+//		ReferenceBinding outerDeclaringClass = (ReferenceBinding)this;
+//		temp = outerDeclaringClass.enclosingType();
+//		while (temp != null) {
+//			outerDeclaringClass = temp;
+//			temp = temp.enclosingType();
+//		}
+//		return outerInvocationType == outerDeclaringClass;
+//	}
+//
+//	// isDefault()
+//	return invocationType.fPackage == this.fPackage;
+//}
 
 /**
  * In case of problems, returns the closest match found. It may not be perfect match, but the
@@ -491,9 +490,9 @@ public ReferenceBinding getMemberType(char[] typeName) {
 	return null;
 }
 
-public MethodBinding[] getMethods(char[] selector) {
-	return Binding.NO_METHODS;
-}
+//public MethodBinding[] getMethods(char[] selector) {
+//	return Binding.NO_METHODS;
+//}
 
 public PackageBinding getPackage() {
 	return this.fPackage;
@@ -511,29 +510,29 @@ public int hashCode() {
  * Returns true if the two types have an incompatible common supertype,
  * e.g. List<String> and List<Integer>
  */
-public boolean hasIncompatibleSuperType(ReferenceBinding otherType) {
-
-    if (this == otherType) return false;
-
-	ReferenceBinding[] interfacesToVisit = null;
-	int nextPosition = 0;
-    ReferenceBinding currentType = this;
-	TypeBinding match;
-	do {
-		match = otherType.findSuperTypeWithSameErasure(currentType);
-		if (match != null && !match.isIntersectingWith(currentType))
-			return true;
-	} while ((currentType = currentType.superclass()) != null);
-
-	for (int i = 0; i < nextPosition; i++) {
-		currentType = interfacesToVisit[i];
-		if (currentType == otherType) return false;
-		match = otherType.findSuperTypeWithSameErasure(currentType);
-		if (match != null && !match.isIntersectingWith(currentType))
-			return true;
-	}
-	return false;
-}
+//public boolean hasIncompatibleSuperType(ReferenceBinding otherType) {
+//
+//    if (this == otherType) return false;
+//
+//	ReferenceBinding[] interfacesToVisit = null;
+//	int nextPosition = 0;
+//    ReferenceBinding currentType = this;
+//	TypeBinding match;
+//	do {
+//		match = otherType.findSuperTypeWithSameErasure(currentType);
+//		if (match != null && !match.isIntersectingWith(currentType))
+//			return true;
+//	} while ((currentType = currentType.superclass()) != null);
+//
+//	for (int i = 0; i < nextPosition; i++) {
+//		currentType = interfacesToVisit[i];
+//		if (currentType == otherType) return false;
+//		match = otherType.findSuperTypeWithSameErasure(currentType);
+//		if (match != null && !match.isIntersectingWith(currentType))
+//			return true;
+//	}
+//	return false;
+//}
 public boolean hasMemberTypes() {
     return false;
 }
@@ -541,24 +540,24 @@ public final boolean hasRestrictedAccess() {
 	return (this.modifiers & ExtraCompilerModifiers.AccRestrictedAccess) != 0;
 }
 
-// Internal method... assume its only sent to classes NOT interfaces
-boolean implementsMethod(MethodBinding method) {
-	char[] selector = method.selector;
-	ReferenceBinding type = this;
-	while (type != null) {
-		MethodBinding[] methods = type.methods();
-		long range;
-		if ((range = ReferenceBinding.binarySearch(selector, methods)) >= 0) {
-			int start = (int) range, end = (int) (range >> 32);
-			for (int i = start; i <= end; i++) {
-				if (methods[i].areParametersEqual(method))
-					return true;
-			}
-		}
-		type = type.superclass();
-	}
-	return false;
-}
+//// Internal method... assume its only sent to classes NOT interfaces
+//boolean implementsMethod(MethodBinding method) {
+//	char[] selector = method.selector;
+//	ReferenceBinding type = this;
+//	while (type != null) {
+//		MethodBinding[] methods = type.methods();
+//		long range;
+//		if ((range = ReferenceBinding.binarySearch(selector, methods)) >= 0) {
+//			int start = (int) range, end = (int) (range >> 32);
+//			for (int i = start; i <= end; i++) {
+//				if (methods[i].areParametersEqual(method))
+//					return true;
+//			}
+//		}
+//		type = type.superclass();
+//	}
+//	return false;
+//}
 
 /**
  * Answer true if the receiver is an abstract type
@@ -758,9 +757,9 @@ public boolean isViewedAsDeprecated() {
 public ReferenceBinding[] memberTypes() {
 	return Binding.NO_MEMBER_TYPES;
 }
-public MethodBinding[] methods() {
-	return Binding.NO_METHODS;
-}
+//public MethodBinding[] methods() {
+//	return Binding.NO_METHODS;
+//}
 public final ReferenceBinding outermostEnclosingType() {
 	ReferenceBinding current = this;
 	while (true) {
@@ -818,14 +817,10 @@ public char[] sourceName() {
 public ReferenceBinding superclass() {
 	return null;
 }
-public InferredType getInferredType() {
 
-	return null;
-}
-
-MethodBinding[] unResolvedMethods() { // for the MethodVerifier so it doesn't resolve types
-	return methods();
-}
+//MethodBinding[] unResolvedMethods() { // for the MethodVerifier so it doesn't resolve types
+//	return methods();
+//}
 
 public void cleanup()
 {

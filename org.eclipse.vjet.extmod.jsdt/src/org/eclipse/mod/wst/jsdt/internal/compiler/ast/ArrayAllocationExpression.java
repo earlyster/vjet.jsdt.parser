@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IArrayAllocationExpression;
@@ -30,18 +29,6 @@ public class ArrayAllocationExpression extends Expression implements IArrayAlloc
 	public Expression[] dimensions;
 	public ArrayInitializer initializer;
 
-	public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, FlowInfo flowInfo) {
-		for (int i = 0, max = this.dimensions.length; i < max; i++) {
-			Expression dim;
-			if ((dim = this.dimensions[i]) != null) {
-				flowInfo = dim.analyseCode(currentScope, flowContext, flowInfo);
-			}
-		}
-		if (this.initializer != null) {
-			return this.initializer.analyseCode(currentScope, flowContext, flowInfo);
-		}
-		return flowInfo;
-	}
 
 	public StringBuffer printExpression(int indent, StringBuffer output) {
 		output.append("new "); //$NON-NLS-1$
@@ -59,69 +46,6 @@ public class ArrayAllocationExpression extends Expression implements IArrayAlloc
 		return output;
 	}
 
-	public TypeBinding resolveType(BlockScope scope) {
-		// Build an array type reference using the current dimensions
-		// The parser does not check for the fact that dimension may be null
-		// only at the -end- like new int [4][][]. The parser allows new int[][4][]
-		// so this must be checked here......(this comes from a reduction to LL1 grammar)
-
-		TypeBinding referenceType = this.type.resolveType(scope, true /* check bounds*/);
-
-		// will check for null after dimensions are checked
-		this.constant = Constant.NotAConstant;
-		if (referenceType == TypeBinding.VOID) {
-			scope.problemReporter().cannotAllocateVoidArray(this);
-			referenceType = null;
-		}
-
-		// check the validity of the dimension syntax (and test for all null dimensions)
-		int explicitDimIndex = -1;
-		loop: for (int i = this.dimensions.length; --i >= 0;) {
-			if (this.dimensions[i] != null) {
-				if (explicitDimIndex < 0) explicitDimIndex = i;
-			} else if (explicitDimIndex > 0) {
-				// should not have an empty dimension before an non-empty one
-				scope.problemReporter().incorrectLocationForNonEmptyDimension(this, explicitDimIndex);
-				break loop;
-			}
-		}
-
-		// explicitDimIndex < 0 says if all dimensions are nulled
-		// when an initializer is given, no dimension must be specified
-		if (this.initializer == null) {
-			if (explicitDimIndex < 0) {
-				scope.problemReporter().mustDefineDimensionsOrInitializer(this);
-			}
-		} else if (explicitDimIndex >= 0) {
-			scope.problemReporter().cannotDefineDimensionsAndInitializer(this);
-		}
-
-		// dimensions resolution
-		for (int i = 0; i <= explicitDimIndex; i++) {
-			Expression dimExpression;
-			if ((dimExpression = this.dimensions[i]) != null) {
-				TypeBinding dimensionType = dimExpression.resolveTypeExpecting(scope, TypeBinding.INT);
-				if (dimensionType != null) {
-					this.dimensions[i].computeConversion(scope, TypeBinding.INT, dimensionType);
-				}
-			}
-		}
-
-		// building the array binding
-		if (referenceType != null) {
-			if (this.dimensions.length > 255) {
-				scope.problemReporter().tooManyDimensions(this);
-			}
-			this.resolvedType = scope.createArrayType(referenceType, this.dimensions.length);
-
-			// check the initializer
-			if (this.initializer != null) {
-				if ((this.initializer.resolveTypeExpecting(scope, this.resolvedType)) != null)
-					this.initializer.binding = (ArrayBinding)this.resolvedType;
-			}
-		}
-		return this.resolvedType;
-	}
 
 
 	public void traverse(ASTVisitor visitor, BlockScope scope) {

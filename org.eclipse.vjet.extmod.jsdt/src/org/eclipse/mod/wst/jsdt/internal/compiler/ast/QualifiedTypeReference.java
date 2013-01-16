@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IQualifiedTypeReference;
@@ -44,66 +43,42 @@ public class QualifiedTypeReference extends TypeReference implements IQualifiedT
 		return new ArrayQualifiedTypeReference(tokens, dim, sourcePositions);
 	}
 
-	protected TypeBinding findNextTypeBinding(int tokenIndex, Scope scope, PackageBinding packageBinding) {
-		LookupEnvironment env = scope.environment();
-		try {
-			env.missingClassFileLocation = this;
-			if (this.resolvedType == null) {
-				this.resolvedType = scope.getType(this.tokens[tokenIndex], packageBinding);
-			} else {
-				this.resolvedType = scope.getMemberType(this.tokens[tokenIndex], (ReferenceBinding) this.resolvedType);
-				if (this.resolvedType instanceof ProblemReferenceBinding) {
-					ProblemReferenceBinding problemBinding = (ProblemReferenceBinding) this.resolvedType;
-					this.resolvedType = new ProblemReferenceBinding(
-						org.eclipse.mod.wst.jsdt.core.compiler.CharOperation.subarray(this.tokens, 0, tokenIndex + 1),
-						problemBinding.closestMatch(),
-						this.resolvedType.problemId());
-				}
-			}
-			return this.resolvedType;
-		} catch (AbortCompilation e) {
-			e.updateContext(this, scope.referenceCompilationUnit().compilationResult);
-			throw e;
-		} finally {
-			env.missingClassFileLocation = null;
-		}
-	}
 
 	public char[] getLastToken() {
 		return this.tokens[this.tokens.length-1];
 	}
-	protected TypeBinding getTypeBinding(Scope scope) {
-
-		if (this.resolvedType != null)
-			return this.resolvedType;
-
-		Binding binding = scope.getPackage(this.tokens);
-		if (binding != null && !binding.isValidBinding())
-			return (ReferenceBinding) binding; // not found
-
-	    PackageBinding packageBinding = binding == null ? null : (PackageBinding) binding;
-	    boolean isClassScope = scope.kind == Scope.CLASS_SCOPE;
-	    ReferenceBinding qualifiedType = null;
-		for (int i = packageBinding == null ? 0 : packageBinding.compoundName.length, max = this.tokens.length, last = max-1; i < max; i++) {
-			findNextTypeBinding(i, scope, packageBinding);
-			if (!this.resolvedType.isValidBinding())
-				return this.resolvedType;
-			if (i < last && isTypeUseDeprecated(this.resolvedType, scope)) {
-				reportDeprecatedType(this.resolvedType, scope);
-			}
-			if (isClassScope)
-				if (((ClassScope) scope).detectHierarchyCycle(this.resolvedType, this)) // must connect hierarchy to find inherited member types
-					return null;
-			ReferenceBinding currentType = (ReferenceBinding) this.resolvedType;
-			if (qualifiedType != null) {
-				qualifiedType = currentType;
-			} else {
-				qualifiedType = currentType;
-			}
-		}
-		this.resolvedType = qualifiedType;
-		return this.resolvedType;
-	}
+//	protected TypeBinding getTypeBinding(Scope scope) {
+//
+//		if (this.resolvedType != null)
+//			return this.resolvedType;
+//
+//		Binding binding = scope.getPackage(this.tokens);
+//		if (binding != null && !binding.isValidBinding())
+//			return (ReferenceBinding) binding; // not found
+//
+//	    PackageBinding packageBinding = binding == null ? null : (PackageBinding) binding;
+//	    boolean isClassScope = scope.kind == Scope.CLASS_SCOPE;
+//	    ReferenceBinding qualifiedType = null;
+//		for (int i = packageBinding == null ? 0 : packageBinding.compoundName.length, max = this.tokens.length, last = max-1; i < max; i++) {
+//			findNextTypeBinding(i, scope, packageBinding);
+//			if (!this.resolvedType.isValidBinding())
+//				return this.resolvedType;
+//			if (i < last && isTypeUseDeprecated(this.resolvedType, scope)) {
+//				reportDeprecatedType(this.resolvedType, scope);
+//			}
+//			if (isClassScope)
+//				if (((ClassScope) scope).detectHierarchyCycle(this.resolvedType, this)) // must connect hierarchy to find inherited member types
+//					return null;
+//			ReferenceBinding currentType = (ReferenceBinding) this.resolvedType;
+//			if (qualifiedType != null) {
+//				qualifiedType = currentType;
+//			} else {
+//				qualifiedType = currentType;
+//			}
+//		}
+//		this.resolvedType = qualifiedType;
+//		return this.resolvedType;
+//	}
 
 	public char[][] getTypeName(){
 

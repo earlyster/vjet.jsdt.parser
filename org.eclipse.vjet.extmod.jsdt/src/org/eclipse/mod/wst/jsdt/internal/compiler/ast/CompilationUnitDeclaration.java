@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,29 +14,21 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 
-
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IProgramElement;
 import org.eclipse.mod.wst.jsdt.core.ast.IScriptFileDeclaration;
 import org.eclipse.mod.wst.jsdt.core.compiler.CategorizedProblem;
 import org.eclipse.mod.wst.jsdt.core.compiler.CharOperation;
 import org.eclipse.mod.wst.jsdt.core.infer.IInferenceFile;
-import org.eclipse.mod.wst.jsdt.core.infer.InferredMethod;
-import org.eclipse.mod.wst.jsdt.core.infer.InferredType;
+//import org.eclipse.mod.wst.jsdt.core.infer.InferredMethod;
+//import org.eclipse.mod.wst.jsdt.core.infer.InferredType;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
 import org.eclipse.mod.wst.jsdt.internal.compiler.CompilationResult;
 import org.eclipse.mod.wst.jsdt.internal.compiler.DelegateASTVisitor;
-import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowContext;
-import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowInfo;
 import org.eclipse.mod.wst.jsdt.internal.compiler.impl.ReferenceContext;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BlockScope;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.CompilationUnitBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.CompilationUnitScope;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ImportBinding;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.LocalTypeBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.MethodBinding;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.MethodScope;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeConstants;
 import org.eclipse.mod.wst.jsdt.internal.compiler.parser.NLSTag;
 import org.eclipse.mod.wst.jsdt.internal.compiler.problem.AbortCompilationUnit;
@@ -45,17 +37,14 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.problem.AbortType;
 import org.eclipse.mod.wst.jsdt.internal.compiler.problem.ProblemReporter;
 import org.eclipse.mod.wst.jsdt.internal.compiler.problem.ProblemSeverities;
 import org.eclipse.mod.wst.jsdt.internal.compiler.util.HashtableOfObject;
+import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.CompilationUnitBinding;
+//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.LocalTypeBinding;
+//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.MethodScope;
+//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.SourceTypeBinding;
 
 public class CompilationUnitDeclaration
 	extends ASTNode
 	implements ProblemSeverities, ReferenceContext, IScriptFileDeclaration, IInferenceFile {
-
-	protected void finalize() throws Throwable {
-//		System.out.println("finalize "+hashCode());
-		super.finalize();
-	}
-
-
 
 	private static final Comparator STRING_LITERAL_COMPARATOR = new Comparator() {
 		public int compare(Object o1, Object o2) {
@@ -73,9 +62,9 @@ public class CompilationUnitDeclaration
 	public int[][] comments;
 
 
-	public InferredType [] inferredTypes = new InferredType[10];
+//	public InferredType [] inferredTypes = new InferredType[10];
 	public int numberInferredTypes=0;
-	//public HashtableOfObject inferredTypesHash=new HashtableOfObject();
+	public HashtableOfObject inferredTypesHash=new HashtableOfObject();
 	public boolean typesHaveBeenInferred=false;
 
 	public boolean ignoreFurtherInvestigation = false;	// once pointless to investigate due to errors
@@ -85,8 +74,8 @@ public class CompilationUnitDeclaration
 	public CompilationResult compilationResult;
 
 
-	public LocalTypeBinding[] localTypes;
-	public int localTypeCount = 0;
+//	public LocalTypeBinding[] localTypes;
+//	public int localTypeCount = 0;
 
 	public CompilationUnitBinding compilationUnitBinding;
 
@@ -130,122 +119,51 @@ public class CompilationUnitDeclaration
 		}
 	}
 
-	/*
-	 * Dispatch code analysis AND request saturation of inner emulation
-	 */
-	public void analyseCode() {
-
-		if (ignoreFurtherInvestigation )
-			return;
-		try {
-			if (types != null) {
-				for (int i = 0, count = types.length; i < count; i++) {
-					types[i].analyseCode(scope);
-				}
-			}
-
-			this.scope.temporaryAnalysisIndex=0;
-			int maxVars=this.scope.localIndex;
-			for (Iterator iter = this.scope.externalCompilationUnits.iterator(); iter.hasNext();) {
-				CompilationUnitScope externalScope = (CompilationUnitScope) iter.next();
-				externalScope.temporaryAnalysisIndex=maxVars;
-				maxVars+=externalScope.localIndex;
-			}
-			FlowInfo flowInfo=FlowInfo.initial(maxVars);
-			FlowContext flowContext = new FlowContext(null, this);
-
-			if (statements != null) {
-				for (int i = 0, count = statements.length; i < count; i++) {
-					if (statements[i] instanceof  AbstractMethodDeclaration)
-					{
-						((AbstractMethodDeclaration)statements[i]).analyseCode(this.scope, null, flowInfo.copy());
-					}
-					else
-					flowInfo=((Statement)statements[i]).analyseCode(scope,flowContext,flowInfo);
-				}
-			}
-			this.scope.reportUnusedDeclarations();
-		} catch (AbortCompilationUnit e) {
-			this.ignoreFurtherInvestigation = true;
-			return;
-		}
-	}
+	
 
 	/*
 	 * When unit result is about to be accepted, removed back pointers
 	 * to compiler structures.
 	 */
-	public void cleanUp() {
-		if (this.compilationUnitBinding!=null)
-
-			this.compilationUnitBinding.cleanup();
-		if (this.types != null) {
-			for (int i = 0, max = this.types.length; i < max; i++) {
-				cleanUp(this.types[i]);
-			}
-			for (int i = 0, max = this.localTypeCount; i < max; i++) {
-			    LocalTypeBinding localType = localTypes[i];
-				// null out the type's scope backpointers
-				localType.scope = null; // local members are already in the list
-				localType.enclosingCase = null;
-			}
-		}
-
-		for (int i = 0; i < this.numberInferredTypes; i++) {
-			SourceTypeBinding binding = this.inferredTypes[i].binding;
-			if (binding!=null)
-				binding.cleanup();
-		}
-		compilationResult.recoveryScannerData = null; // recovery is already done
-
-
-	}
-	private void cleanUp(TypeDeclaration type) {
-		if (type.memberTypes != null) {
-			for (int i = 0, max = type.memberTypes.length; i < max; i++){
-				cleanUp(type.memberTypes[i]);
-			}
-		}
-		if (type.binding != null) {
-			// null out the type's scope backpointers
-			type.binding.scope = null;
-		}
-	}
+//	public void cleanUp() {
+//		if (this.compilationUnitBinding!=null)
+//
+//			this.compilationUnitBinding.cleanup();
+//		if (this.types != null) {
+//			for (int i = 0, max = this.types.length; i < max; i++) {
+//				cleanUp(this.types[i]);
+//			}
+//			for (int i = 0, max = this.localTypeCount; i < max; i++) {
+//			    LocalTypeBinding localType = localTypes[i];
+//				// null out the type's scope backpointers
+//				localType.scope = null; // local members are already in the list
+//				localType.enclosingCase = null;
+//			}
+//		}
+//
+//		for (int i = 0; i < this.numberInferredTypes; i++) {
+//			SourceTypeBinding binding = this.inferredTypes[i].binding;
+//			if (binding!=null)
+//				binding.cleanup();
+//		}
+//		compilationResult.recoveryScannerData = null; // recovery is already done
+//
+//
+//	}
+//	private void cleanUp(TypeDeclaration type) {
+//		if (type.memberTypes != null) {
+//			for (int i = 0, max = type.memberTypes.length; i < max; i++){
+//				cleanUp(type.memberTypes[i]);
+//			}
+//		}
+//		if (type.binding != null) {
+//			// null out the type's scope backpointers
+//			type.binding.scope = null;
+//		}
+//	}
 
 	public CompilationResult compilationResult() {
 		return this.compilationResult;
-	}
-
-	/*
-	 * Finds the matching type amoung this compilation unit types.
-	 * Returns null if no type with this name is found.
-	 * The type name is a compound name
-	 * eg. if we're looking for X.A.B then a type name would be {X, A, B}
-	 */
-	public TypeDeclaration declarationOfType(char[][] typeName) {
-
-		for (int i = 0; i < this.types.length; i++) {
-			TypeDeclaration typeDecl = this.types[i].declarationOfType(typeName);
-			if (typeDecl != null) {
-				return typeDecl;
-			}
-		}
-		return null;
-	}
-
-
-	public AbstractMethodDeclaration declarationOf(MethodBinding methodBinding) {
-		if (methodBinding != null && this.statements != null) {
-			for (int i = 0, max = this.statements.length; i < max; i++) {
-				if (this.statements[i] instanceof AbstractMethodDeclaration)
-				{
-					AbstractMethodDeclaration methodDecl = (AbstractMethodDeclaration)this.statements[i];
-					if (methodDecl.binding == methodBinding)
-						return methodDecl;
-				}
-			}
-		}
-		return null;
 	}
 
 
@@ -336,87 +254,93 @@ public class CompilationUnitDeclaration
 	 * Keep track of all local types, so as to update their innerclass
 	 * emulation later on.
 	 */
-	public void record(LocalTypeBinding localType) {
+//	public void record(LocalTypeBinding localType) {
+//
+//		if (this.localTypeCount == 0) {
+//			this.localTypes = new LocalTypeBinding[5];
+//		} else if (this.localTypeCount == this.localTypes.length) {
+//			System.arraycopy(this.localTypes, 0, (this.localTypes = new LocalTypeBinding[this.localTypeCount * 2]), 0, this.localTypeCount);
+//		}
+//		this.localTypes[this.localTypeCount++] = localType;
+//	}
 
-		if (this.localTypeCount == 0) {
-			this.localTypes = new LocalTypeBinding[5];
-		} else if (this.localTypeCount == this.localTypes.length) {
-			System.arraycopy(this.localTypes, 0, (this.localTypes = new LocalTypeBinding[this.localTypeCount * 2]), 0, this.localTypeCount);
-		}
-		this.localTypes[this.localTypeCount++] = localType;
-	}
-
-	public void resolve() {
-		int startingTypeIndex = 0;
-		boolean isPackageInfo =  false;//isPackageInfo();
-		if (this.types != null && isPackageInfo) {
-            // resolve synthetic type declaration
-			final TypeDeclaration syntheticTypeDeclaration = types[0];
-			// set empty javadoc to avoid missing warning (see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=95286)
-			if (syntheticTypeDeclaration.javadoc == null) {
-				syntheticTypeDeclaration.javadoc = new Javadoc(syntheticTypeDeclaration.declarationSourceStart, syntheticTypeDeclaration.declarationSourceStart);
-			}
-			syntheticTypeDeclaration.resolve(this.scope);
-			// resolve annotations if any
-//			if (this.currentPackage!= null && this.currentPackage.annotations != null) {
-//				resolveAnnotations(syntheticTypeDeclaration.staticInitializerScope, this.currentPackage.annotations, this.scope.getDefaultPackage());
+//	public void resolve() {
+//		int startingTypeIndex = 0;
+//		boolean isPackageInfo =  false;//isPackageInfo();
+//		if (this.types != null && isPackageInfo) {
+//            // resolve synthetic type declaration
+//			final TypeDeclaration syntheticTypeDeclaration = types[0];
+//			// set empty javadoc to avoid missing warning (see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=95286)
+//			if (syntheticTypeDeclaration.javadoc == null) {
+//				syntheticTypeDeclaration.javadoc = new Javadoc(syntheticTypeDeclaration.declarationSourceStart, syntheticTypeDeclaration.declarationSourceStart);
 //			}
-			// resolve javadoc package if any
-			if (this.javadoc != null) {
-				this.javadoc.resolve(syntheticTypeDeclaration.staticInitializerScope);
-    		}
-			startingTypeIndex = 1;
-		} else {
-			// resolve compilation unit javadoc package if any
-			if (this.javadoc != null) {
-				this.javadoc.resolve(this.scope);
-    		}
-		}
+//			syntheticTypeDeclaration.resolve(this.scope);
+//			// resolve annotations if any
+////			if (this.currentPackage!= null && this.currentPackage.annotations != null) {
+////				resolveAnnotations(syntheticTypeDeclaration.staticInitializerScope, this.currentPackage.annotations, this.scope.getDefaultPackage());
+////			}
+//			// resolve javadoc package if any
+//			// VJET MOD - not resolving jsdoc here
+////			if (this.javadoc != null) {
+////				this.javadoc.resolve(syntheticTypeDeclaration.staticInitializerScope);
+////    		}
+//			startingTypeIndex = 1;
+//		} else {
+//			// resolve compilation unit javadoc package if any
+//			// VJET MOD - not resolving jsdoc here
+////			if (this.javadoc != null) {
+////				this.javadoc.resolve(this.scope);
+////    		}
+//		}
+//
+//		try {
+//			if (types != null) {
+//				for (int i = startingTypeIndex, count = types.length; i < count; i++) {
+//					types[i].resolve(scope);
+//				}
+//			}
+//			if (statements != null) {
+//				for (int i = 0, count = statements.length; i < count; i++) {
+//					statements[i].resolve(scope);
+//				}
+//			}
+//			reportNLSProblems();
+//		} catch (AbortCompilationUnit e) {
+//			this.ignoreFurtherInvestigation = true;
+//			return;
+//		}
+//	}
 
-		try {
-			if (types != null) {
-				for (int i = startingTypeIndex, count = types.length; i < count; i++) {
-					types[i].resolve(scope);
-				}
-			}
-			if (statements != null) {
-				for (int i = 0, count = statements.length; i < count; i++) {
-					statements[i].resolve(scope);
-				}
-			}
-			reportNLSProblems();
-		} catch (AbortCompilationUnit e) {
-			this.ignoreFurtherInvestigation = true;
-			return;
-		}
-	}
-	public void resolve(int start, int end) {
-		try {
-			int startingTypeIndex = 0;
-			// resolve compilation unit javadoc package if any
-			if (this.javadoc != null && this.javadoc.sourceStart<=start && this.javadoc.sourceEnd>= end) {
-				this.javadoc.resolve(this.scope);
-    		}
-			if (types != null) {
-				for (int i = startingTypeIndex, count = types.length; i < count; i++) {
-					TypeDeclaration typeDeclaration = types[i];
-					if (typeDeclaration.sourceStart<=start && typeDeclaration.sourceEnd>=end)
-						typeDeclaration.resolve(scope);
-				}
-			}
-			if (statements != null) {
-				for (int i = 0, count = statements.length; i < count; i++) {
-					ProgramElement programElement = statements[i];
-					if (programElement.sourceStart<=start && programElement.sourceEnd>=end)
-						programElement.resolve(scope);
-				}
-			}
-			reportNLSProblems();
-		} catch (AbortCompilationUnit e) {
-			this.ignoreFurtherInvestigation = true;
-			return;
-		}
-	}
+	// VJET MOD - not resolving 
+//	public void resolve(int start, int end) {
+//		try {
+//			int startingTypeIndex = 0;
+//			// resolve compilation unit javadoc package if any
+//			// VJET MOD - not resolving jsdoc here
+////			if (this.javadoc != null && this.javadoc.sourceStart<=start && this.javadoc.sourceEnd>= end) {
+////				this.javadoc.resolve(this.scope);
+////    		}
+//			if (types != null) {
+//				for (int i = startingTypeIndex, count = types.length; i < count; i++) {
+//					TypeDeclaration typeDeclaration = types[i];
+//					if (typeDeclaration.sourceStart<=start && typeDeclaration.sourceEnd>=end)
+//						typeDeclaration.resolve(scope);
+//				}
+//			}
+//			if (statements != null) {
+//				for (int i = 0, count = statements.length; i < count; i++) {
+//					ProgramElement programElement = statements[i];
+//					if (programElement.sourceStart<=start && programElement.sourceEnd>=end)
+//						programElement.resolve(scope);
+//				}
+//			}
+//			reportNLSProblems();
+//		} catch (AbortCompilationUnit e) {
+//			this.ignoreFurtherInvestigation = true;
+//			return;
+//		}
+//	}
+
 
 	private void reportNLSProblems() {
 		if (this.nlsTags != null || this.stringLiterals != null) {
@@ -541,15 +465,15 @@ public class CompilationUnitDeclaration
 			return;
 		try {
 			if (visitor.visit(this, this.scope)) {
-				if (this.types != null && isPackageInfo()) {
-		            // resolve synthetic type declaration
-					final TypeDeclaration syntheticTypeDeclaration = types[0];
-					// resolve javadoc package if any
-					final MethodScope methodScope = syntheticTypeDeclaration.staticInitializerScope;
-					if (this.javadoc != null) {
-						this.javadoc.traverse(visitor, methodScope);
-					}
-				}
+//				if (this.types != null && isPackageInfo()) {
+//		            // resolve synthetic type declaration
+//					final TypeDeclaration syntheticTypeDeclaration = types[0];
+//					// resolve javadoc package if any
+//					final MethodScope methodScope = syntheticTypeDeclaration.staticInitializerScope;
+//					if (this.javadoc != null) {
+//						this.javadoc.traverse(visitor, methodScope);
+//					}
+//				}
 
 //				if (currentPackage != null) {
 //					currentPackage.traverse(visitor, this.scope);
@@ -580,23 +504,23 @@ public class CompilationUnitDeclaration
 		}
 	}
 
-	public void traverseInferredTypes(ASTVisitor visitor,BlockScope unitScope) {
-		boolean continueVisiting=true;
-		for (int i=0;i<this.numberInferredTypes;i++) {
-			InferredType inferredType = this.inferredTypes[i];
-			continueVisiting=visitor.visit(inferredType, scope);
-			  for (int attributeInx=0; attributeInx<inferredType.numberAttributes; attributeInx++) {
-					visitor.visit(inferredType.attributes[attributeInx], scope);
-				}
-			if (inferredType.methods!=null)
-				for (Iterator iterator = inferredType.methods.iterator();  continueVisiting && iterator
-						.hasNext();) {
-					InferredMethod inferredMethod = (InferredMethod) iterator.next();
-					visitor.visit(inferredMethod, scope);
-				}
-			visitor.endVisit(inferredType, scope);
-		}
-	}
+//	public void traverseInferredTypes(ASTVisitor visitor,BlockScope unitScope) {
+//		boolean continueVisiting=true;
+//		for (int i=0;i<this.numberInferredTypes;i++) {
+//			InferredType inferredType = this.inferredTypes[i];
+//			continueVisiting=visitor.visit(inferredType, scope);
+//			  for (int attributeInx=0; attributeInx<inferredType.numberAttributes; attributeInx++) {
+//					visitor.visit(inferredType.attributes[attributeInx], scope);
+//				}
+//			if (inferredType.methods!=null)
+//				for (Iterator iterator = inferredType.methods.iterator();  continueVisiting && iterator
+//						.hasNext();) {
+//					InferredMethod inferredMethod = (InferredMethod) iterator.next();
+//					visitor.visit(inferredMethod, scope);
+//				}
+//			visitor.endVisit(inferredType, scope);
+//		}
+//	}
 
 //	public InferredType findInferredType(char [] name)
 //	{
@@ -610,19 +534,19 @@ public class CompilationUnitDeclaration
 //	}
 
 
-
-	public void printInferredTypes(StringBuffer sb)
-	{
-		for (int i=0;i<this.numberInferredTypes;i++) {
-			InferredType inferredType = this.inferredTypes[i];
-				if (inferredType.isDefinition)
-				{
-					inferredType.print(0,sb);
-					sb.append("\n"); //$NON-NLS-1$
-				}
-		}
-
-	}
+//
+//	public void printInferredTypes(StringBuffer sb)
+//	{
+//		for (int i=0;i<this.numberInferredTypes;i++) {
+//			InferredType inferredType = this.inferredTypes[i];
+//				if (inferredType.isDefinition)
+//				{
+//					inferredType.print(0,sb);
+//					sb.append("\n"); //$NON-NLS-1$
+//				}
+//		}
+//
+//	}
 	public int getASTType() {
 		return IASTNode.SCRIPT_FILE_DECLARATION;
 	
@@ -654,4 +578,31 @@ public class CompilationUnitDeclaration
 		}
 	}
 
+//	public InferredType addType(char[] className, boolean isDefinition, String providerId) {
+//		InferredType type = findInferredType(className);
+//
+//		if (type==null && className.length > 0)
+//		{
+//			if (numberInferredTypes == inferredTypes.length) 
+//			{
+//				System.arraycopy(
+//						inferredTypes,
+//						0,
+//						(inferredTypes = new InferredType[numberInferredTypes  * 2]),
+//						0,
+//						numberInferredTypes );
+//			}
+//
+//			type=inferredTypes[numberInferredTypes ++] = new InferredType(className);
+//			type.inferenceProviderID = providerId;
+//			if (className.length > 2 && className[className.length - 2] == '[' && className[className.length - 1] == ']') {
+//				type.isArray = true;
+//			}
+//			
+//			inferredTypesHash.put(className,type);
+//		}
+//		if (isDefinition && type != null)
+//			type.isDefinition=isDefinition;
+//		return type;
+//	}
 }

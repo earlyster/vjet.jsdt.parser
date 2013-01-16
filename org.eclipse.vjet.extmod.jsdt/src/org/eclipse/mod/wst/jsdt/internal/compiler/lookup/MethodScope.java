@@ -12,15 +12,11 @@ package org.eclipse.mod.wst.jsdt.internal.compiler.lookup;
 
 
 import org.eclipse.mod.wst.jsdt.core.compiler.CharOperation;
-import org.eclipse.mod.wst.jsdt.core.infer.InferredMethod;
-import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ASTNode;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.AbstractMethodDeclaration;
-import org.eclipse.mod.wst.jsdt.internal.compiler.ast.Argument;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ConstructorDeclaration;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.QualifiedNameReference;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.SingleNameReference;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.TypeDeclaration;
-import org.eclipse.mod.wst.jsdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowInfo;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.UnconditionalFlowInfo;
 import org.eclipse.mod.wst.jsdt.internal.compiler.impl.ReferenceContext;
@@ -68,210 +64,210 @@ public class MethodScope extends BlockScope {
 		argumentsBinding.declaringScope=this;
 	}
 
-	/* Spec : 8.4.3 & 9.4
-	 */
-	private void checkAndSetModifiersForConstructor(MethodBinding methodBinding) {
-
-		int modifiers = methodBinding.modifiers;
-		final ReferenceBinding declaringClass = methodBinding.declaringClass;
-		if ((modifiers & ExtraCompilerModifiers.AccAlternateModifierProblem) != 0)
-			problemReporter().duplicateModifierForMethod(declaringClass, (AbstractMethodDeclaration) referenceContext);
-
-//		if (((ConstructorDeclaration) referenceContext).isDefaultConstructor) {
-		if ((methodBinding.modifiers&ExtraCompilerModifiers.AccIsDefaultConstructor)>0) {
-			// certain flags are propagated from declaring class onto constructor
-			final int DECLARING_FLAGS = ClassFileConstants.AccPublic|ClassFileConstants.AccProtected;
-			final int VISIBILITY_FLAGS = ClassFileConstants.AccPrivate|ClassFileConstants.AccPublic|ClassFileConstants.AccProtected;
-			int flags;
-			if ((flags = declaringClass.modifiers & DECLARING_FLAGS) != 0) {
-				modifiers &= ~VISIBILITY_FLAGS;
-				modifiers |= flags; // propagate public/protected
-			}
-		}
-
-		// after this point, tests on the 16 bits reserved.
-		int realModifiers = modifiers & ExtraCompilerModifiers.AccJustFlag;
-
-		// check for abnormal modifiers
-		final int UNEXPECTED_MODIFIERS = ~(ClassFileConstants.AccStatic | ClassFileConstants.AccPublic | ClassFileConstants.AccPrivate | ClassFileConstants.AccProtected | ClassFileConstants.AccStrictfp);
-		if ((realModifiers & UNEXPECTED_MODIFIERS) != 0) {
-			problemReporter().illegalModifierForMethod((AbstractMethodDeclaration) referenceContext);
-			modifiers &= ~ExtraCompilerModifiers.AccJustFlag | ~UNEXPECTED_MODIFIERS;
-		} else if ((((AbstractMethodDeclaration) referenceContext).modifiers & ClassFileConstants.AccStrictfp) != 0) {
-			// must check the parse node explicitly
-			problemReporter().illegalModifierForMethod((AbstractMethodDeclaration) referenceContext);
-		}
-
-		// check for incompatible modifiers in the visibility bits, isolate the visibility bits
-		int accessorBits = realModifiers & (ClassFileConstants.AccPublic | ClassFileConstants.AccProtected | ClassFileConstants.AccPrivate);
-		if ((accessorBits & (accessorBits - 1)) != 0) {
-			problemReporter().illegalVisibilityModifierCombinationForMethod(declaringClass, (AbstractMethodDeclaration) referenceContext);
-
-			// need to keep the less restrictive so disable Protected/Private as necessary
-			if ((accessorBits & ClassFileConstants.AccPublic) != 0) {
-				if ((accessorBits & ClassFileConstants.AccProtected) != 0)
-					modifiers &= ~ClassFileConstants.AccProtected;
-				if ((accessorBits & ClassFileConstants.AccPrivate) != 0)
-					modifiers &= ~ClassFileConstants.AccPrivate;
-			} else if ((accessorBits & ClassFileConstants.AccProtected) != 0 && (accessorBits & ClassFileConstants.AccPrivate) != 0) {
-				modifiers &= ~ClassFileConstants.AccPrivate;
-			}
-		}
-
-//		// if the receiver's declaring class is a private nested type, then make sure the receiver is not private (causes problems for inner type emulation)
-//		if (declaringClass.isPrivate() && (modifiers & ClassFileConstants.AccPrivate) != 0)
-//			modifiers &= ~ClassFileConstants.AccPrivate;
-
-		methodBinding.modifiers = modifiers;
-	}
-
-	/* Spec : 8.4.3 & 9.4
-	 */
-	private void checkAndSetModifiersForMethod(MethodBinding methodBinding) {
-
-		int modifiers = methodBinding.modifiers;
-		final ReferenceBinding declaringClass = methodBinding.declaringClass;
-		if ((modifiers & ExtraCompilerModifiers.AccAlternateModifierProblem) != 0)
-			problemReporter().duplicateModifierForMethod(declaringClass, (AbstractMethodDeclaration) referenceContext);
-
-		// after this point, tests on the 16 bits reserved.
-		int realModifiers = modifiers & ExtraCompilerModifiers.AccJustFlag;
-
-		// set the requested modifiers for a method in an interface/annotation
-//		if (declaringClass.isInterface()) {
-//			if ((realModifiers & ~(ClassFileConstants.AccPublic | ClassFileConstants.AccAbstract)) != 0) {
-//				if ((declaringClass.modifiers & ClassFileConstants.AccAnnotation) != 0)
-//					problemReporter().illegalModifierForAnnotationMember((AbstractMethodDeclaration) referenceContext);
-//				else
-//					problemReporter().illegalModifierForInterfaceMethod((AbstractMethodDeclaration) referenceContext);
+//	/* Spec : 8.4.3 & 9.4
+//	 */
+//	private void checkAndSetModifiersForConstructor(MethodBinding methodBinding) {
+//
+//		int modifiers = methodBinding.modifiers;
+//		final ReferenceBinding declaringClass = methodBinding.declaringClass;
+//		if ((modifiers & ExtraCompilerModifiers.AccAlternateModifierProblem) != 0)
+//			problemReporter().duplicateModifierForMethod(declaringClass, (AbstractMethodDeclaration) referenceContext);
+//
+////		if (((ConstructorDeclaration) referenceContext).isDefaultConstructor) {
+//		if ((methodBinding.modifiers&ExtraCompilerModifiers.AccIsDefaultConstructor)>0) {
+//			// certain flags are propagated from declaring class onto constructor
+//			final int DECLARING_FLAGS = ClassFileConstants.AccPublic|ClassFileConstants.AccProtected;
+//			final int VISIBILITY_FLAGS = ClassFileConstants.AccPrivate|ClassFileConstants.AccPublic|ClassFileConstants.AccProtected;
+//			int flags;
+//			if ((flags = declaringClass.modifiers & DECLARING_FLAGS) != 0) {
+//				modifiers &= ~VISIBILITY_FLAGS;
+//				modifiers |= flags; // propagate public/protected
 //			}
-//			return;
 //		}
+//
+//		// after this point, tests on the 16 bits reserved.
+//		int realModifiers = modifiers & ExtraCompilerModifiers.AccJustFlag;
+//
+//		// check for abnormal modifiers
+//		final int UNEXPECTED_MODIFIERS = ~(ClassFileConstants.AccStatic | ClassFileConstants.AccPublic | ClassFileConstants.AccPrivate | ClassFileConstants.AccProtected | ClassFileConstants.AccStrictfp);
+//		if ((realModifiers & UNEXPECTED_MODIFIERS) != 0) {
+//			problemReporter().illegalModifierForMethod((AbstractMethodDeclaration) referenceContext);
+//			modifiers &= ~ExtraCompilerModifiers.AccJustFlag | ~UNEXPECTED_MODIFIERS;
+//		} else if ((((AbstractMethodDeclaration) referenceContext).modifiers & ClassFileConstants.AccStrictfp) != 0) {
+//			// must check the parse node explicitly
+//			problemReporter().illegalModifierForMethod((AbstractMethodDeclaration) referenceContext);
+//		}
+//
+//		// check for incompatible modifiers in the visibility bits, isolate the visibility bits
+//		int accessorBits = realModifiers & (ClassFileConstants.AccPublic | ClassFileConstants.AccProtected | ClassFileConstants.AccPrivate);
+//		if ((accessorBits & (accessorBits - 1)) != 0) {
+//			problemReporter().illegalVisibilityModifierCombinationForMethod(declaringClass, (AbstractMethodDeclaration) referenceContext);
+//
+//			// need to keep the less restrictive so disable Protected/Private as necessary
+//			if ((accessorBits & ClassFileConstants.AccPublic) != 0) {
+//				if ((accessorBits & ClassFileConstants.AccProtected) != 0)
+//					modifiers &= ~ClassFileConstants.AccProtected;
+//				if ((accessorBits & ClassFileConstants.AccPrivate) != 0)
+//					modifiers &= ~ClassFileConstants.AccPrivate;
+//			} else if ((accessorBits & ClassFileConstants.AccProtected) != 0 && (accessorBits & ClassFileConstants.AccPrivate) != 0) {
+//				modifiers &= ~ClassFileConstants.AccPrivate;
+//			}
+//		}
+//
+////		// if the receiver's declaring class is a private nested type, then make sure the receiver is not private (causes problems for inner type emulation)
+////		if (declaringClass.isPrivate() && (modifiers & ClassFileConstants.AccPrivate) != 0)
+////			modifiers &= ~ClassFileConstants.AccPrivate;
+//
+//		methodBinding.modifiers = modifiers;
+//	}
 
-		// check for abnormal modifiers
-		final int UNEXPECTED_MODIFIERS = ~(ClassFileConstants.AccPublic | ClassFileConstants.AccPrivate | ClassFileConstants.AccProtected
-			| ClassFileConstants.AccAbstract | ClassFileConstants.AccStatic | ClassFileConstants.AccFinal | ClassFileConstants.AccNative | ClassFileConstants.AccStrictfp);
-		if ((realModifiers & UNEXPECTED_MODIFIERS) != 0) {
-			problemReporter().illegalModifierForMethod((AbstractMethodDeclaration) referenceContext);
-			modifiers &= ~ExtraCompilerModifiers.AccJustFlag | ~UNEXPECTED_MODIFIERS;
-		}
+//	/* Spec : 8.4.3 & 9.4
+//	 */
+//	private void checkAndSetModifiersForMethod(MethodBinding methodBinding) {
+//
+//		int modifiers = methodBinding.modifiers;
+//		final ReferenceBinding declaringClass = methodBinding.declaringClass;
+//		if ((modifiers & ExtraCompilerModifiers.AccAlternateModifierProblem) != 0)
+//			problemReporter().duplicateModifierForMethod(declaringClass, (AbstractMethodDeclaration) referenceContext);
+//
+//		// after this point, tests on the 16 bits reserved.
+//		int realModifiers = modifiers & ExtraCompilerModifiers.AccJustFlag;
+//
+//		// set the requested modifiers for a method in an interface/annotation
+////		if (declaringClass.isInterface()) {
+////			if ((realModifiers & ~(ClassFileConstants.AccPublic | ClassFileConstants.AccAbstract)) != 0) {
+////				if ((declaringClass.modifiers & ClassFileConstants.AccAnnotation) != 0)
+////					problemReporter().illegalModifierForAnnotationMember((AbstractMethodDeclaration) referenceContext);
+////				else
+////					problemReporter().illegalModifierForInterfaceMethod((AbstractMethodDeclaration) referenceContext);
+////			}
+////			return;
+////		}
+//
+//		// check for abnormal modifiers
+//		final int UNEXPECTED_MODIFIERS = ~(ClassFileConstants.AccPublic | ClassFileConstants.AccPrivate | ClassFileConstants.AccProtected
+//			| ClassFileConstants.AccAbstract | ClassFileConstants.AccStatic | ClassFileConstants.AccFinal | ClassFileConstants.AccNative | ClassFileConstants.AccStrictfp);
+//		if ((realModifiers & UNEXPECTED_MODIFIERS) != 0) {
+//			problemReporter().illegalModifierForMethod((AbstractMethodDeclaration) referenceContext);
+//			modifiers &= ~ExtraCompilerModifiers.AccJustFlag | ~UNEXPECTED_MODIFIERS;
+//		}
+//
+//		// check for incompatible modifiers in the visibility bits, isolate the visibility bits
+//		int accessorBits = realModifiers & (ClassFileConstants.AccPublic | ClassFileConstants.AccProtected | ClassFileConstants.AccPrivate);
+//		if ((accessorBits & (accessorBits - 1)) != 0) {
+//			problemReporter().illegalVisibilityModifierCombinationForMethod(declaringClass, (AbstractMethodDeclaration) referenceContext);
+//
+//			// need to keep the less restrictive so disable Protected/Private as necessary
+//			if ((accessorBits & ClassFileConstants.AccPublic) != 0) {
+//				if ((accessorBits & ClassFileConstants.AccProtected) != 0)
+//					modifiers &= ~ClassFileConstants.AccProtected;
+//				if ((accessorBits & ClassFileConstants.AccPrivate) != 0)
+//					modifiers &= ~ClassFileConstants.AccPrivate;
+//			} else if ((accessorBits & ClassFileConstants.AccProtected) != 0 && (accessorBits & ClassFileConstants.AccPrivate) != 0) {
+//				modifiers &= ~ClassFileConstants.AccPrivate;
+//			}
+//		}
+//
+//		// check for modifiers incompatible with abstract modifier
+//		if ((modifiers & ClassFileConstants.AccAbstract) != 0) {
+//			int incompatibleWithAbstract = ClassFileConstants.AccPrivate | ClassFileConstants.AccStatic | ClassFileConstants.AccFinal | ClassFileConstants.AccNative | ClassFileConstants.AccStrictfp;
+//			if ((modifiers & incompatibleWithAbstract) != 0)
+//				problemReporter().illegalAbstractModifierCombinationForMethod(declaringClass, (AbstractMethodDeclaration) referenceContext);
+//			if (!methodBinding.declaringClass.isAbstract())
+//				problemReporter().abstractMethodInAbstractClass((SourceTypeBinding) declaringClass, (AbstractMethodDeclaration) referenceContext);
+//		}
+//
+//		/* DISABLED for backward compatibility with javac (if enabled should also mark private methods as final)
+//		// methods from a final class are final : 8.4.3.3
+//		if (methodBinding.declaringClass.isFinal())
+//			modifiers |= AccFinal;
+//		*/
+//		// native methods cannot also be tagged as strictfp
+//		if ((modifiers & ClassFileConstants.AccNative) != 0 && (modifiers & ClassFileConstants.AccStrictfp) != 0)
+//			problemReporter().nativeMethodsCannotBeStrictfp(declaringClass, (AbstractMethodDeclaration) referenceContext);
+//
+////		// static members are only authorized in a static member or top level type
+////		if (((realModifiers & ClassFileConstants.AccStatic) != 0) && declaringClass.isNestedType() && !declaringClass.isStatic())
+////			problemReporter().unexpectedStaticModifierForMethod(declaringClass, (AbstractMethodDeclaration) referenceContext);
+//
+//		methodBinding.modifiers = modifiers;
+//	}
+//
+//	MethodBinding createMethod(InferredMethod inferredMethod,SourceTypeBinding declaringClass) {
+//        boolean isConstructor=inferredMethod.isConstructor;
+//        if (isConstructor && declaringClass!=inferredMethod.inType.binding)
+//        	isConstructor=false;
+//		 MethodBinding binding = createMethod((AbstractMethodDeclaration) inferredMethod.getFunctionDeclaration(),inferredMethod.name,declaringClass, isConstructor,false); 
+//		 if (inferredMethod.isConstructor || declaringClass!=inferredMethod.inType.binding)
+//			 binding.allocationType=inferredMethod.inType.binding;
+//		 return binding;
+//	}
 
-		// check for incompatible modifiers in the visibility bits, isolate the visibility bits
-		int accessorBits = realModifiers & (ClassFileConstants.AccPublic | ClassFileConstants.AccProtected | ClassFileConstants.AccPrivate);
-		if ((accessorBits & (accessorBits - 1)) != 0) {
-			problemReporter().illegalVisibilityModifierCombinationForMethod(declaringClass, (AbstractMethodDeclaration) referenceContext);
-
-			// need to keep the less restrictive so disable Protected/Private as necessary
-			if ((accessorBits & ClassFileConstants.AccPublic) != 0) {
-				if ((accessorBits & ClassFileConstants.AccProtected) != 0)
-					modifiers &= ~ClassFileConstants.AccProtected;
-				if ((accessorBits & ClassFileConstants.AccPrivate) != 0)
-					modifiers &= ~ClassFileConstants.AccPrivate;
-			} else if ((accessorBits & ClassFileConstants.AccProtected) != 0 && (accessorBits & ClassFileConstants.AccPrivate) != 0) {
-				modifiers &= ~ClassFileConstants.AccPrivate;
-			}
-		}
-
-		// check for modifiers incompatible with abstract modifier
-		if ((modifiers & ClassFileConstants.AccAbstract) != 0) {
-			int incompatibleWithAbstract = ClassFileConstants.AccPrivate | ClassFileConstants.AccStatic | ClassFileConstants.AccFinal | ClassFileConstants.AccNative | ClassFileConstants.AccStrictfp;
-			if ((modifiers & incompatibleWithAbstract) != 0)
-				problemReporter().illegalAbstractModifierCombinationForMethod(declaringClass, (AbstractMethodDeclaration) referenceContext);
-			if (!methodBinding.declaringClass.isAbstract())
-				problemReporter().abstractMethodInAbstractClass((SourceTypeBinding) declaringClass, (AbstractMethodDeclaration) referenceContext);
-		}
-
-		/* DISABLED for backward compatibility with javac (if enabled should also mark private methods as final)
-		// methods from a final class are final : 8.4.3.3
-		if (methodBinding.declaringClass.isFinal())
-			modifiers |= AccFinal;
-		*/
-		// native methods cannot also be tagged as strictfp
-		if ((modifiers & ClassFileConstants.AccNative) != 0 && (modifiers & ClassFileConstants.AccStrictfp) != 0)
-			problemReporter().nativeMethodsCannotBeStrictfp(declaringClass, (AbstractMethodDeclaration) referenceContext);
-
-//		// static members are only authorized in a static member or top level type
-//		if (((realModifiers & ClassFileConstants.AccStatic) != 0) && declaringClass.isNestedType() && !declaringClass.isStatic())
-//			problemReporter().unexpectedStaticModifierForMethod(declaringClass, (AbstractMethodDeclaration) referenceContext);
-
-		methodBinding.modifiers = modifiers;
-	}
-
-	MethodBinding createMethod(InferredMethod inferredMethod,SourceTypeBinding declaringClass) {
-        boolean isConstructor=inferredMethod.isConstructor;
-        if (isConstructor && declaringClass!=inferredMethod.inType.binding)
-        	isConstructor=false;
-		 MethodBinding binding = createMethod((AbstractMethodDeclaration) inferredMethod.getFunctionDeclaration(),inferredMethod.name,declaringClass, isConstructor,false); 
-		 if (inferredMethod.isConstructor || declaringClass!=inferredMethod.inType.binding)
-			 binding.allocationType=inferredMethod.inType.binding;
-		 return binding;
-	}
-
-	public MethodBinding createMethod(AbstractMethodDeclaration method,char[] name,SourceTypeBinding declaringClass, boolean isConstructor, boolean isLocal) {
-
-		MethodBinding methodBinding=null;
-		// is necessary to ensure error reporting
-		this.referenceContext = method;
-		method.scope = this;
-		int modifiers = method.modifiers | ExtraCompilerModifiers.AccUnresolved;
-		if ((method.modifiers &(ClassFileConstants.AccPrivate | ClassFileConstants.AccProtected))==0)
-			modifiers|=ClassFileConstants.AccPublic;
-		if (method.inferredMethod!=null &&  method.inferredMethod.isStatic)
-			modifiers|= ClassFileConstants.AccStatic;
-		if (method.isConstructor() || isConstructor) {
-			if (method.isDefaultConstructor() || isConstructor)
-				modifiers |= ExtraCompilerModifiers.AccIsDefaultConstructor;
-			methodBinding = new MethodBinding(modifiers, null, declaringClass);
-			checkAndSetModifiersForConstructor(methodBinding);
-		} else {
-//			if (declaringClass.isInterface()) // interface or annotation type
-//				modifiers |= ClassFileConstants.AccPublic | ClassFileConstants.AccAbstract;
-			TypeBinding returnType =
-				 (method.inferredType!=null)?method.inferredType.resolveType(this,method):TypeBinding.UNKNOWN;
+//	public MethodBinding createMethod(AbstractMethodDeclaration method,char[] name,SourceTypeBinding declaringClass, boolean isConstructor, boolean isLocal) {
+//
+//		MethodBinding methodBinding=null;
+//		// is necessary to ensure error reporting
+//		this.referenceContext = method;
+//		method.scope = this;
+//		int modifiers = method.modifiers | ExtraCompilerModifiers.AccUnresolved;
+//		if ((method.modifiers &(ClassFileConstants.AccPrivate | ClassFileConstants.AccProtected))==0)
+//			modifiers|=ClassFileConstants.AccPublic;
+//		if (method.inferredMethod!=null &&  method.inferredMethod.isStatic)
+//			modifiers|= ClassFileConstants.AccStatic;
+//		if (method.isConstructor() || isConstructor) {
+//			if (method.isDefaultConstructor() || isConstructor)
+//				modifiers |= ExtraCompilerModifiers.AccIsDefaultConstructor;
+//			methodBinding = new MethodBinding(modifiers, null, declaringClass);
+//			checkAndSetModifiersForConstructor(methodBinding);
+//		} else {
+////			if (declaringClass.isInterface()) // interface or annotation type
+////				modifiers |= ClassFileConstants.AccPublic | ClassFileConstants.AccAbstract;
 //			TypeBinding returnType =
-//			 (method instanceof FunctionDeclaration && ((FunctionDeclaration)method).returnType!=null && method.inferredMethod!=null)?method.inferredType.resolveType(this,((FunctionDeclaration)method).returnType):TypeBinding.ANY;
-			if (method.inferredType==null && method.inferredMethod!=null && method.inferredMethod.isConstructor
-					&& method.inferredMethod.inType!=null)
-			{
-				returnType=method.inferredMethod.inType.resolveType(this,method);
-			}
-			if (returnType==null)
-				returnType=TypeBinding.UNKNOWN;
-			
-			if (isLocal && method.selector!=null)
-			{
-				methodBinding =
-					new LocalFunctionBinding(modifiers, name,returnType, null, declaringClass);
-			}
-			else	// not local method
-				methodBinding =
-					new MethodBinding(modifiers, name,returnType, null, declaringClass);
-			if (method.inferredMethod!=null)
-			{
-				methodBinding.tagBits |= TagBits.IsInferredType;
-				if ((method.bits&ASTNode.IsInferredJsDocType)!=0)
-					methodBinding.tagBits |= TagBits.IsInferredJsDocType;
-			}
-			methodBinding.createFunctionTypeBinding(this);
-			if (method.inferredMethod!=null && method.inferredMethod.isConstructor)
-				methodBinding.tagBits|=TagBits.IsConstructor;
-			checkAndSetModifiersForMethod(methodBinding);
-		}
-		this.isStatic =methodBinding.isStatic();
-
-		Argument[] argTypes = method.arguments;
-		int argLength = argTypes == null ? 0 : argTypes.length;
-		if (argLength > 0 && compilerOptions().sourceLevel >= ClassFileConstants.JDK1_5) {
-			if (argTypes[--argLength].isVarArgs())
-				methodBinding.modifiers |= ClassFileConstants.AccVarargs;
-			while (--argLength >= 0) {
-				if (argTypes[argLength].isVarArgs())
-					problemReporter().illegalVararg(argTypes[argLength], method);
-			}
-		}
-	
-		return methodBinding;
-	}
+//				 (method.inferredType!=null)?method.inferredType.resolveType(this,method):TypeBinding.UNKNOWN;
+////			TypeBinding returnType =
+////			 (method instanceof FunctionDeclaration && ((FunctionDeclaration)method).returnType!=null && method.inferredMethod!=null)?method.inferredType.resolveType(this,((FunctionDeclaration)method).returnType):TypeBinding.ANY;
+//			if (method.inferredType==null && method.inferredMethod!=null && method.inferredMethod.isConstructor
+//					&& method.inferredMethod.inType!=null)
+//			{
+//				returnType=method.inferredMethod.inType.resolveType(this,method);
+//			}
+//			if (returnType==null)
+//				returnType=TypeBinding.UNKNOWN;
+//			
+//			if (isLocal && method.selector!=null)
+//			{
+//				methodBinding =
+//					new LocalFunctionBinding(modifiers, name,returnType, null, declaringClass);
+//			}
+//			else	// not local method
+//				methodBinding =
+//					new MethodBinding(modifiers, name,returnType, null, declaringClass);
+//			if (method.inferredMethod!=null)
+//			{
+//				methodBinding.tagBits |= TagBits.IsInferredType;
+//				if ((method.bits&ASTNode.IsInferredJsDocType)!=0)
+//					methodBinding.tagBits |= TagBits.IsInferredJsDocType;
+//			}
+//			methodBinding.createFunctionTypeBinding(this);
+//			if (method.inferredMethod!=null && method.inferredMethod.isConstructor)
+//				methodBinding.tagBits|=TagBits.IsConstructor;
+//			checkAndSetModifiersForMethod(methodBinding);
+//		}
+//		this.isStatic =methodBinding.isStatic();
+//
+//		Argument[] argTypes = method.arguments;
+//		int argLength = argTypes == null ? 0 : argTypes.length;
+//		if (argLength > 0 && compilerOptions().sourceLevel >= ClassFileConstants.JDK1_5) {
+//			if (argTypes[--argLength].isVarArgs())
+//				methodBinding.modifiers |= ClassFileConstants.AccVarargs;
+//			while (--argLength >= 0) {
+//				if (argTypes[argLength].isVarArgs())
+//					problemReporter().illegalVararg(argTypes[argLength], method);
+//			}
+//		}
+//	
+//		return methodBinding;
+//	}
 
 	/* Overridden to detect the error case inside an explicit constructor call:
 
@@ -283,42 +279,42 @@ public class MethodScope extends BlockScope {
 		}
 	}
 	*/
-	public FieldBinding findField(
-		TypeBinding receiverType,
-		char[] fieldName,
-		InvocationSite invocationSite,
-		boolean needResolve) {
-
-		FieldBinding field = super.findField(receiverType, fieldName, invocationSite, needResolve);
-		if (field == null)
-			return null;
-		if (!field.isValidBinding())
-			return field; // answer the error field
-		if (field.isStatic())
-			return field; // static fields are always accessible
-
-		if (!isConstructorCall || receiverType != enclosingSourceType())
-			return field;
-
-		if (invocationSite instanceof SingleNameReference)
-			return new ProblemFieldBinding(
-				field, // closest match
-				field.declaringClass,
-				fieldName,
-				ProblemReasons.NonStaticReferenceInConstructorInvocation);
-		if (invocationSite instanceof QualifiedNameReference) {
-			// look to see if the field is the first binding
-			QualifiedNameReference name = (QualifiedNameReference) invocationSite;
-			if (name.binding == null)
-				// only true when the field is the fieldbinding at the beginning of name's tokens
-				return new ProblemFieldBinding(
-					field, // closest match
-					field.declaringClass,
-					fieldName,
-					ProblemReasons.NonStaticReferenceInConstructorInvocation);
-		}
-		return field;
-	}
+//	public FieldBinding findField(
+//		TypeBinding receiverType,
+//		char[] fieldName,
+//		InvocationSite invocationSite,
+//		boolean needResolve) {
+//
+//		FieldBinding field = super.findField(receiverType, fieldName, invocationSite, needResolve);
+//		if (field == null)
+//			return null;
+//		if (!field.isValidBinding())
+//			return field; // answer the error field
+//		if (field.isStatic())
+//			return field; // static fields are always accessible
+//
+//		if (!isConstructorCall || receiverType != enclosingSourceType())
+//			return field;
+//
+//		if (invocationSite instanceof SingleNameReference)
+//			return new ProblemFieldBinding(
+//				field, // closest match
+//				field.declaringClass,
+//				fieldName,
+//				ProblemReasons.NonStaticReferenceInConstructorInvocation);
+//		if (invocationSite instanceof QualifiedNameReference) {
+//			// look to see if the field is the first binding
+//			QualifiedNameReference name = (QualifiedNameReference) invocationSite;
+//			if (name.binding == null)
+//				// only true when the field is the fieldbinding at the beginning of name's tokens
+//				return new ProblemFieldBinding(
+//					field, // closest match
+//					field.declaringClass,
+//					fieldName,
+//					ProblemReasons.NonStaticReferenceInConstructorInvocation);
+//		}
+//		return field;
+//	}
 
 	public boolean isInsideConstructor() {
 

@@ -24,7 +24,6 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.ast.BinaryExpression;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.Block;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.BreakStatement;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.CaseStatement;
-import org.eclipse.mod.wst.jsdt.internal.compiler.ast.CharLiteral;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.CompoundAssignment;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ConditionalExpression;
@@ -39,7 +38,6 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ExtendedStringLiteral;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.FalseLiteral;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.FieldDeclaration;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.FieldReference;
-import org.eclipse.mod.wst.jsdt.internal.compiler.ast.FloatLiteral;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ForInStatement;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ForStatement;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ForeachStatement;
@@ -64,7 +62,6 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.ast.JavadocSingleTypeReference
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.LabeledStatement;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ListExpression;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.LocalDeclaration;
-import org.eclipse.mod.wst.jsdt.internal.compiler.ast.LongLiteral;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.MessageSend;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.NullLiteral;
@@ -75,7 +72,6 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.ast.PostfixExpression;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.PrefixExpression;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.QualifiedAllocationExpression;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.QualifiedNameReference;
-import org.eclipse.mod.wst.jsdt.internal.compiler.ast.QualifiedSuperReference;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.QualifiedThisReference;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.QualifiedTypeReference;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.RegExLiteral;
@@ -98,7 +94,7 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.ast.WithStatement;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.CompilationUnitScope;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.MethodScope;
+//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.MethodScope;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.Scope;
 
 
@@ -172,9 +168,6 @@ public class DelegateASTVisitor extends ASTVisitor {
 	public void endVisit(CaseStatement caseStatement, BlockScope scope) {
 		visitor.endVisit(caseStatement);
 	}
-	public void endVisit(CharLiteral charLiteral, BlockScope scope) {
-		visitor.endVisit(charLiteral);
-	}
  
 	public void endVisit(
 		CompilationUnitDeclaration compilationUnitDeclaration,
@@ -222,17 +215,12 @@ public class DelegateASTVisitor extends ASTVisitor {
 	public void endVisit(FalseLiteral falseLiteral, BlockScope scope) {
 		visitor.endVisit(falseLiteral);
 	}
-	public void endVisit(FieldDeclaration fieldDeclaration, MethodScope scope) {
-		visitor.endVisit( fieldDeclaration);
-	}
+
 	public void endVisit(FieldReference fieldReference, BlockScope scope) {
 		visitor.endVisit( fieldReference); 
 	}
 	public void endVisit(FieldReference fieldReference, ClassScope scope) {
 		visitor.endVisit(fieldReference);
-	}
-	public void endVisit(FloatLiteral floatLiteral, BlockScope scope) {
-		visitor.endVisit(floatLiteral);
 	}
 	public void endVisit(ForeachStatement forStatement, BlockScope scope) {
 		visitor.endVisit(forStatement);
@@ -258,9 +246,7 @@ public class DelegateASTVisitor extends ASTVisitor {
 //		visitor.endVisit(inferredType);
 //	}
 
-	public void endVisit(Initializer initializer, MethodScope scope) {
-		visitor.endVisit(initializer);
-	}
+
 	public void endVisit(
     		InstanceOfExpression instanceOfExpression,
     		BlockScope scope) {
@@ -350,9 +336,7 @@ public class DelegateASTVisitor extends ASTVisitor {
 	public void endVisit(ListExpression listDeclaration, BlockScope scope) {
 		visitor.endVisit(listDeclaration);
 	}
-	public void endVisit(LongLiteral longLiteral, BlockScope scope) {
-		visitor.endVisit(longLiteral);
-	}
+
 	public void endVisit(MessageSend messageSend, BlockScope scope) {
 		visitor.endVisit(messageSend);
 	}
@@ -389,16 +373,8 @@ public class DelegateASTVisitor extends ASTVisitor {
 			ClassScope scope) {
 		visitor.endVisit(qualifiedNameReference);
 	}
-	public void endVisit(
-    		QualifiedSuperReference qualifiedSuperReference,
-    		BlockScope scope) {
-		visitor.endVisit(qualifiedSuperReference);
-	}
-	public void endVisit(
-    		QualifiedSuperReference qualifiedSuperReference,
-    		ClassScope scope) {
-		visitor.endVisit(qualifiedSuperReference);
-	}
+
+
 	public void endVisit(
     		QualifiedThisReference qualifiedThisReference,
     		BlockScope scope) {
@@ -557,9 +533,6 @@ public class DelegateASTVisitor extends ASTVisitor {
 	public boolean visit(CaseStatement caseStatement, BlockScope scope) {
 		return visitor.visit(caseStatement);
 	}
-	public boolean visit(CharLiteral charLiteral, BlockScope scope) {
-		return visitor.visit(charLiteral);
-	}
  
 	public boolean visit(
 		CompilationUnitDeclaration compilationUnitDeclaration,
@@ -607,17 +580,12 @@ public class DelegateASTVisitor extends ASTVisitor {
 	public boolean visit(FalseLiteral falseLiteral, BlockScope scope) {
 		return visitor.visit(falseLiteral);
 	}
-	public boolean visit(FieldDeclaration fieldDeclaration, MethodScope scope) {
-		return visitor.visit(fieldDeclaration);
-	}
+
 	public boolean visit(FieldReference fieldReference, BlockScope scope) {
 		return visitor.visit(fieldReference);
 	}
 	public boolean visit(FieldReference fieldReference, ClassScope scope) {
 		return visitor.visit(fieldReference);
-	}
-	public boolean visit(FloatLiteral floatLiteral, BlockScope scope) {
-		return visitor.visit(floatLiteral);
 	}
 	public boolean visit(ForeachStatement forStatement, BlockScope scope) {
 		return visitor.visit(forStatement);
@@ -649,9 +617,7 @@ public class DelegateASTVisitor extends ASTVisitor {
 //	public boolean visit(InferredAttribute inferredField, BlockScope scope) {
 //		return visitor.visit(inferredField);
 //	}
-	public boolean visit(Initializer initializer, MethodScope scope) {
-		return visitor.visit(initializer);
-	}
+
 	public boolean visit(
     		InstanceOfExpression instanceOfExpression,
     		BlockScope scope) {
@@ -741,9 +707,7 @@ public class DelegateASTVisitor extends ASTVisitor {
 	public boolean visit(ListExpression listDeclaration, BlockScope scope) {
 		return visitor.visit(listDeclaration);
 	}
-	public boolean visit(LongLiteral longLiteral, BlockScope scope) {
-		return visitor.visit(longLiteral);
-	}
+
 	public boolean visit(MessageSend messageSend, BlockScope scope) {
 		return visitor.visit(messageSend);
 	}
@@ -781,16 +745,6 @@ public class DelegateASTVisitor extends ASTVisitor {
 			QualifiedNameReference qualifiedNameReference,
 			ClassScope scope) {
 		return visitor.visit(qualifiedNameReference);
-	}
-	public boolean visit(
-    		QualifiedSuperReference qualifiedSuperReference,
-    		BlockScope scope) {
-		return visitor.visit(qualifiedSuperReference);
-	}
-	public boolean visit(
-    		QualifiedSuperReference qualifiedSuperReference,
-    		ClassScope scope) {
-		return visitor.visit(qualifiedSuperReference);
 	}
 	public boolean visit(
 			QualifiedThisReference qualifiedThisReference,

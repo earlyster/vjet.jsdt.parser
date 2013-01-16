@@ -16,10 +16,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
-
 import org.eclipse.mod.wst.jsdt.core.JavaScriptConstants;
 import org.eclipse.mod.wst.jsdt.core.compiler.CharOperation;
-import org.eclipse.mod.wst.jsdt.internal.compiler.Compiler;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ASTNode;
 import org.eclipse.mod.wst.jsdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ExtraCompilerModifiers;
@@ -259,7 +257,7 @@ public class CompilerOptions {
 	public String defaultEncoding = null; // will use the platform default encoding
 
 	// print what unit is being processed
-	public boolean verbose = Compiler.DEBUG;
+	public boolean verbose = false;
 
 	// indicates if reference info is desired
 	public boolean produceReferenceInfo = false;

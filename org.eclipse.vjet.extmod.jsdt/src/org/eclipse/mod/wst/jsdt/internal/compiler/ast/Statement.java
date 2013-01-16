@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2008 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,33 +10,14 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
-
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IStatement;
-import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowContext;
-import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowInfo;
-import org.eclipse.mod.wst.jsdt.internal.compiler.impl.Constant;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BlockScope;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding;
 
 public abstract class Statement extends ProgramElement implements IStatement {
 
-	public abstract FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, FlowInfo flowInfo);
 
 
-	// Report an error if necessary
-	public boolean complainIfUnreachable(FlowInfo flowInfo, BlockScope scope, boolean didAlreadyComplain) {
 
-		if ((flowInfo.reachMode() & FlowInfo.UNREACHABLE) != 0) {
-			this.bits &= ~ASTNode.IsReachable;
-			boolean reported = flowInfo == FlowInfo.DEAD_END;
-			if (!didAlreadyComplain && reported) {
-				scope.problemReporter().unreachableCode(this);
-			}
-			return reported; // keep going for fake reachable
-		}
-		return false;
-	}
 
 
 	public boolean isEmptyBlock() {
@@ -63,17 +44,17 @@ public abstract class Statement extends ProgramElement implements IStatement {
 	}
 //	public abstract StringBuffer printStatement(int indent, StringBuffer output);
 
-	public abstract void resolve(BlockScope scope);
+//	public abstract void resolve(BlockScope scope);
 
 	/**
 	 * Returns case constant associated to this statement (NotAConstant if none)
 	 */
-	public Constant resolveCase(BlockScope scope, TypeBinding testType, SwitchStatement switchStatement) {
-		// statement within a switch that are not case are treated as normal statement....
-
-		resolve(scope);
-		return Constant.NotAConstant;
-	}
+//	public Constant resolveCase(BlockScope scope, TypeBinding testType, SwitchStatement switchStatement) {
+//		// statement within a switch that are not case are treated as normal statement....
+//
+//		resolve(scope);
+//		return Constant.NotAConstant;
+//	}
 	public int getASTType() {
 		return IASTNode.STATEMENT;
 	

@@ -63,38 +63,38 @@ public class LoopingFlowContext extends SwitchFlowContext {
  * @param scope the scope to which this context is associated
  * @param flowInfo the flow info against which checks must be performed
  */
-public void complainOnDeferredFinalChecks(BlockScope scope, FlowInfo flowInfo) {
-	// complain on final assignments in loops
-	for (int i = 0; i < assignCount; i++) {
-		VariableBinding variable = finalVariables[i];
-		if (variable == null) continue;
-		boolean complained = false; // remember if have complained on this final assignment
-		if (variable instanceof FieldBinding) {
-			if (flowInfo.isPotentiallyAssigned((FieldBinding) variable)) {
-				complained = true;
-				scope.problemReporter().duplicateInitializationOfBlankFinalField(
-					(FieldBinding) variable,
-					finalAssignments[i]);
-			}
-		} else {
-			if (flowInfo.isPotentiallyAssigned((LocalVariableBinding) variable)) {
-				complained = true;
-				scope.problemReporter().duplicateInitializationOfFinalLocal(
-					(LocalVariableBinding) variable,
-					finalAssignments[i]);
-			}
-		}
-		// any reference reported at this level is removed from the parent context where it
-		// could also be reported again
-		if (complained) {
-			FlowContext context = parent;
-			while (context != null) {
-				context.removeFinalAssignmentIfAny(finalAssignments[i]);
-				context = context.parent;
-			}
-		}
-	}
-}
+//public void complainOnDeferredFinalChecks(BlockScope scope, FlowInfo flowInfo) {
+//	// complain on final assignments in loops
+//	for (int i = 0; i < assignCount; i++) {
+//		VariableBinding variable = finalVariables[i];
+//		if (variable == null) continue;
+//		boolean complained = false; // remember if have complained on this final assignment
+//		if (variable instanceof FieldBinding) {
+//			if (flowInfo.isPotentiallyAssigned((FieldBinding) variable)) {
+//				complained = true;
+//				scope.problemReporter().duplicateInitializationOfBlankFinalField(
+//					(FieldBinding) variable,
+//					finalAssignments[i]);
+//			}
+//		} else {
+//			if (flowInfo.isPotentiallyAssigned((LocalVariableBinding) variable)) {
+//				complained = true;
+//				scope.problemReporter().duplicateInitializationOfFinalLocal(
+//					(LocalVariableBinding) variable,
+//					finalAssignments[i]);
+//			}
+//		}
+//		// any reference reported at this level is removed from the parent context where it
+//		// could also be reported again
+//		if (complained) {
+//			FlowContext context = parent;
+//			while (context != null) {
+//				context.removeFinalAssignmentIfAny(finalAssignments[i]);
+//				context = context.parent;
+//			}
+//		}
+//	}
+//}
 
 /**
  * Perform deferred checks relative to the null status of local variables.

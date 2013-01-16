@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2008 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,14 +10,11 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
-
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IJsDocArrayQualifiedTypeReference;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ClassScope;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.Scope;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding;
 
 
 
@@ -29,12 +26,6 @@ public class JavadocArrayQualifiedTypeReference extends ArrayQualifiedTypeRefere
 		super(typeRef.tokens, dim, typeRef.sourcePositions);
 	}
 
-	protected void reportInvalidType(Scope scope) {
-		scope.problemReporter().javadocInvalidType(this, this.resolvedType, scope.getDeclarationModifiers());
-	}
-	protected void reportDeprecatedType(TypeBinding type, Scope scope) {
-		scope.problemReporter().javadocDeprecatedType(type, this, scope.getDeclarationModifiers());
-	}
 
 	/* (non-Javadoc)
 	 * Redefine to capture javadoc specific signatures

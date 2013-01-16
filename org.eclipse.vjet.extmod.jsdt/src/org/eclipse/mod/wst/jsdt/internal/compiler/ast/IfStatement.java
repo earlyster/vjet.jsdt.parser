@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,17 +10,10 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
-
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IIfStatement;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
-import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowContext;
-import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowInfo;
-import org.eclipse.mod.wst.jsdt.internal.compiler.impl.Constant;
-import org.eclipse.mod.wst.jsdt.internal.compiler.impl.StringConstant;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BlockScope;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.LocalVariableBinding;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding;
 
 public class IfStatement extends Statement implements IIfStatement {
 
@@ -61,115 +54,8 @@ public class IfStatement extends Statement implements IIfStatement {
 		this.sourceEnd = sourceEnd;
 	}
 
-	public FlowInfo analyseCode(
-		BlockScope currentScope,
-		FlowContext flowContext,
-		FlowInfo flowInfo) {
-
-		// process the condition
-		FlowInfo conditionFlowInfo =
-			condition.analyseCode(currentScope, flowContext, flowInfo);
-
-		Constant cst = this.condition.optimizedBooleanConstant();
-		boolean isConditionOptimizedTrue = cst != Constant.NotAConstant && cst.booleanValue() == true;
-		boolean isConditionOptimizedFalse = cst != Constant.NotAConstant && cst.booleanValue() == false;
-
-		// process the THEN part
-		FlowInfo thenFlowInfo = conditionFlowInfo.safeInitsWhenTrue();
-		if (isConditionOptimizedFalse) {
-			thenFlowInfo.setReachMode(FlowInfo.UNREACHABLE);
-		}
-		FlowInfo elseFlowInfo = conditionFlowInfo.initsWhenFalse();
-		if (isConditionOptimizedTrue) {
-			elseFlowInfo.setReachMode(FlowInfo.UNREACHABLE);
-		}
-		if (this.thenStatement != null) {
-			// Save info for code gen
-//			thenInitStateIndex =
-//				currentScope.methodScope().recordInitializationStates(thenFlowInfo);
-			if (!thenStatement.complainIfUnreachable(thenFlowInfo, currentScope, false)) {
-				thenFlowInfo =
-					thenStatement.analyseCode(currentScope, flowContext, thenFlowInfo);
-			}
-		}
-		// code gen: optimizing the jump around the ELSE part
-		this.thenExit = (thenFlowInfo.tagBits & FlowInfo.UNREACHABLE) != 0;
-
-		// process the ELSE part
-		if (this.elseStatement != null) {
-		    // signal else clause unnecessarily nested, tolerate else-if code pattern
-		    if (thenFlowInfo == FlowInfo.DEAD_END
-		            && (this.bits & IsElseIfStatement) == 0 	// else of an else-if
-		            && !(this.elseStatement instanceof IfStatement)) {
-		        currentScope.problemReporter().unnecessaryElse(this.elseStatement);
-		    }
-			// Save info for code gen
-//			elseInitStateIndex =
-//				currentScope.methodScope().recordInitializationStates(elseFlowInfo);
-			if (!elseStatement.complainIfUnreachable(elseFlowInfo, currentScope, false)) {
-				elseFlowInfo =
-					elseStatement.analyseCode(currentScope, flowContext, elseFlowInfo);
-			}
-		}
-
-		// handle cases  where condition is "typeof something== ''", set inits accordingly
-		if (this.condition instanceof EqualExpression)
-		{
-			EqualExpression equalExpression =(EqualExpression) this.condition;
-			int operator=(equalExpression.bits & OperatorMASK) >> OperatorSHIFT;
-			if (operator==OperatorIds.EQUAL_EQUAL || operator==OperatorIds.NOT_EQUAL)
-			{
-
-				boolean isDefined[]={false};
-				SingleNameReference snr=getTypeofExpressionVar(equalExpression.left,equalExpression.right,isDefined);
-				if (snr==null)
-					snr=getTypeofExpressionVar(equalExpression.right, equalExpression.left,isDefined);
-				if (snr!=null)
-				{
-					LocalVariableBinding local = snr.localVariableBinding();
-					if (local==null)
-						snr.resolveType(currentScope, true,null);
-					local = snr.localVariableBinding();
-					if (local!=null)
-					{
-						if (isDefined[0])
-							thenFlowInfo.markAsDefinitelyAssigned(local);
-						else
-							elseFlowInfo.markAsDefinitelyAssigned(local);
-					}
-				}
 
 
-			}
-		}
-
-		// merge THEN & ELSE initializations
-		FlowInfo mergedInfo = FlowInfo.mergedOptimizedBranches(
-			thenFlowInfo,
-			isConditionOptimizedTrue,
-			elseFlowInfo,
-			isConditionOptimizedFalse,
-			true /*if(true){ return; }  fake-reachable(); */);
-//		mergedInitStateIndex = currentScope.methodScope().recordInitializationStates(mergedInfo);
-		return mergedInfo;
-	}
-
-	private SingleNameReference getTypeofExpressionVar(Expression expression1,Expression expression2,boolean isDefined[])
-	{
-		if (expression1 instanceof UnaryExpression && expression2.constant instanceof StringConstant)
-		{
-			UnaryExpression unaryExpression = (UnaryExpression)expression1;
-			if ( unaryExpression.expression instanceof SingleNameReference &&
-					(((unaryExpression.bits & OperatorMASK) >> OperatorSHIFT)==OperatorIds.TYPEOF)
-					)
-		{
-				isDefined[0]=!((StringConstant)expression2.constant).stringValue().equals("undefined"); //$NON-NLS-1$
-				return (SingleNameReference)unaryExpression.expression ;
-
-		}
-		}
-		return null;
-	}
 
 	public StringBuffer printStatement(int indent, StringBuffer output) {
 
@@ -185,15 +71,14 @@ public class IfStatement extends Statement implements IIfStatement {
 		return output;
 	}
 
-	public void resolve(BlockScope scope) {
-
-		TypeBinding type = condition.resolveTypeExpecting(scope, TypeBinding.BOOLEAN);
-		condition.computeConversion(scope, type, type);
-		if (thenStatement != null)
-			thenStatement.resolve(scope);
-		if (elseStatement != null)
-			elseStatement.resolve(scope);
-	}
+//	public void resolve(BlockScope scope) {
+//
+//		TypeBinding type = condition.resolveTypeExpecting(scope, TypeBinding.BOOLEAN);
+//		if (thenStatement != null)
+//			thenStatement.resolve(scope);
+//		if (elseStatement != null)
+//			elseStatement.resolve(scope);
+//	}
 
 	public void traverse(
 		ASTVisitor visitor,

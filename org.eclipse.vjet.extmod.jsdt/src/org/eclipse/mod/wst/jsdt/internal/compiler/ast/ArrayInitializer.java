@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,16 +10,15 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
-
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IArrayInitializer;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.classfmt.ClassFileConstants;
+import org.eclipse.mod.wst.jsdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowContext;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowInfo;
 import org.eclipse.mod.wst.jsdt.internal.compiler.impl.Constant;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ArrayBinding;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BaseTypeBinding;
+import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BaseTypeBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding;
 
@@ -36,15 +35,6 @@ public class ArrayInitializer extends Expression implements IArrayInitializer {
 		super();
 	}
 
-	public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, FlowInfo flowInfo) {
-
-		if (expressions != null) {
-			for (int i = 0, max = expressions.length; i < max; i++) {
-				flowInfo = expressions[i].analyseCode(currentScope, flowContext, flowInfo).unconditionalInits();
-			}
-		}
-		return flowInfo;
-	}
 
 	public StringBuffer printExpression(int indent, StringBuffer output) {
 
@@ -66,18 +56,8 @@ public class ArrayInitializer extends Expression implements IArrayInitializer {
 		return output.append(']');
 	}
 
-	public TypeBinding resolveType(BlockScope scope) {
-		this.constant = Constant.NotAConstant;
-		this.resolvedType = this.binding = new ArrayBinding(TypeBinding.UNKNOWN,1,scope.environment());
-		if (this.expressions!=null)
-		  for (int i = 0, length = this.expressions.length; i < length; i++) {
-			Expression expression = this.expressions[i];
-			 expression.resolveType(scope);
-		}		
-		return this.resolvedType;
-	}
-
-	public TypeBinding resolveTypeExpecting(BlockScope scope, TypeBinding expectedType) {
+	// VJET MOD - remove resolve
+//	public TypeBinding resolveTypeExpecting(BlockScope scope, TypeBinding expectedType) {
 //		// Array initializers can only occur on the right hand side of an assignment
 //		// expression, therefore the expected type contains the valid information
 //		// concerning the type that must be enforced by the elements of the array initializer.
@@ -102,25 +82,23 @@ public class ArrayInitializer extends Expression implements IArrayInitializer {
 //						? expression.resolveTypeExpecting(scope, elementType)
 //						: expression.resolveType(scope);
 //				if (exprType == null)
-//					return null;
+//					continue;
 //
 //				// Compile-time conversion required?
 //				if (elementType != exprType) // must call before computeConversion() and typeMismatchError()
 //					scope.compilationUnitScope().recordTypeConversion(elementType, exprType);
-
+//
 //				if ((expression.isConstantValueOfTypeAssignableToType(exprType, elementType)
 //						|| (elementType.isBaseType() && BaseTypeBinding.isWidening(elementType.id, exprType.id)))
 //						|| exprType.isCompatibleWith(elementType)) {
-//					expression.computeConversion(scope, elementType, exprType);
 //				} else if (scope.isBoxingCompatibleWith(exprType, elementType)
 //									|| (exprType.isBaseType()  // narrowing then boxing ?
 //											&& scope.compilerOptions().sourceLevel >= ClassFileConstants.JDK1_5 // autoboxing
 //											&& !elementType.isBaseType()
 //											&& expression.isConstantValueOfTypeAssignableToType(exprType, scope.environment().computeBoxingType(elementType)))) {
-//					expression.computeConversion(scope, elementType, exprType);
 //				} else {
 //					scope.problemReporter().typeMismatchError(exprType, elementType, expression);
-//					return null;
+////					return null;
 //				}
 //			}
 //			return this.binding;
@@ -158,8 +136,8 @@ public class ArrayInitializer extends Expression implements IArrayInitializer {
 //			if (expectedType != null )
 //				scope.problemReporter().typeMismatchError(this.resolvedType, expectedType, this);
 //		}
-		return null;
-	}
+//		return null;
+//	}
 
 	public void traverse(ASTVisitor visitor, BlockScope scope) {
 

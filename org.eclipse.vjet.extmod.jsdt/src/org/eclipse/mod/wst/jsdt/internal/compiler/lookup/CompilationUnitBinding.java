@@ -542,65 +542,65 @@ public class CompilationUnitBinding  extends SourceTypeBinding {
 //		this.methods = methods;
 //	}
 
-	public AbstractMethodDeclaration sourceMethod(MethodBinding binding) {
-		  ProgramElement[] statements = compilationUnitScope.referenceContext.statements;
-		  for (int i = 0; i < statements.length; i++) {
-			if (statements[i] instanceof AbstractMethodDeclaration && ((AbstractMethodDeclaration)statements[i]).binding==binding)
-				return (AbstractMethodDeclaration)statements[i];
-			else if (statements[i] instanceof Assignment && (((Assignment)statements[i]).expression instanceof FunctionExpression)) {
-				FunctionExpression functionExpression = (FunctionExpression) ((Assignment)statements[i]).expression;
-				if (functionExpression.methodDeclaration !=null && functionExpression.methodDeclaration.binding==binding)
-					return functionExpression.methodDeclaration;
-			}
-		  }
-
-		  class  MethodFinder extends ASTVisitor
-		  {
-			  MethodBinding binding;
-			  MethodDeclaration method;
-			  MethodFinder(MethodBinding binding)
-			  {this.binding=binding;}
-			  
-				public boolean visit(MethodDeclaration methodDeclaration, Scope scope) {
-					if (methodDeclaration.binding==this.binding)
-					{
-						method=methodDeclaration;
-						return false;
-					}
-					return true;
-				}
-				public boolean visit(Javadoc javadoc, BlockScope scope) {	// not possible to contain method
-					return false;
-				}
-
-				public boolean visit(Javadoc javadoc, ClassScope scope) { // not possible to contain method
-					return false;
-				}
-
-				public boolean visit(PostfixExpression postfixExpression,  // not possible to contain method
-						BlockScope scope) {
-					return false;
-				}
-
-				public boolean visit(PrefixExpression prefixExpression,	// not possible to contain method
-						BlockScope scope) {
-					return false;
-				}
-
-				public boolean visit(ThisReference thisReference,	// not possible to contain method
-						BlockScope scope) {
-					return false;
-				}
-
-				public boolean visit(ThisReference thisReference,	// not possible to contain method
-						ClassScope scope) {
-					return false;
-				}
-		  }
-		  MethodFinder visitor=new MethodFinder(binding);
-		  compilationUnitScope.referenceContext.traverse(visitor, compilationUnitScope,true);
-		  return visitor.method;
-	}
+//	public AbstractMethodDeclaration sourceMethod(MethodBinding binding) {
+//		  ProgramElement[] statements = compilationUnitScope.referenceContext.statements;
+//		  for (int i = 0; i < statements.length; i++) {
+//			if (statements[i] instanceof AbstractMethodDeclaration && ((AbstractMethodDeclaration)statements[i]).binding==binding)
+//				return (AbstractMethodDeclaration)statements[i];
+//			else if (statements[i] instanceof Assignment && (((Assignment)statements[i]).expression instanceof FunctionExpression)) {
+//				FunctionExpression functionExpression = (FunctionExpression) ((Assignment)statements[i]).expression;
+//				if (functionExpression.methodDeclaration !=null && functionExpression.methodDeclaration.binding==binding)
+//					return functionExpression.methodDeclaration;
+//			}
+//		  }
+//
+//		  class  MethodFinder extends ASTVisitor
+//		  {
+//			  MethodBinding binding;
+//			  MethodDeclaration method;
+//			  MethodFinder(MethodBinding binding)
+//			  {this.binding=binding;}
+//			  
+//				public boolean visit(MethodDeclaration methodDeclaration, Scope scope) {
+//					if (methodDeclaration.binding==this.binding)
+//					{
+//						method=methodDeclaration;
+//						return false;
+//					}
+//					return true;
+//				}
+//				public boolean visit(Javadoc javadoc, BlockScope scope) {	// not possible to contain method
+//					return false;
+//				}
+//
+//				public boolean visit(Javadoc javadoc, ClassScope scope) { // not possible to contain method
+//					return false;
+//				}
+//
+//				public boolean visit(PostfixExpression postfixExpression,  // not possible to contain method
+//						BlockScope scope) {
+//					return false;
+//				}
+//
+//				public boolean visit(PrefixExpression prefixExpression,	// not possible to contain method
+//						BlockScope scope) {
+//					return false;
+//				}
+//
+//				public boolean visit(ThisReference thisReference,	// not possible to contain method
+//						BlockScope scope) {
+//					return false;
+//				}
+//
+//				public boolean visit(ThisReference thisReference,	// not possible to contain method
+//						ClassScope scope) {
+//					return false;
+//				}
+//		  }
+//		  MethodFinder visitor=new MethodFinder(binding);
+//		  compilationUnitScope.referenceContext.traverse(visitor, compilationUnitScope,true);
+//		  return visitor.method;
+//	}
 
 	public char[] qualifiedSourceName() {
 		return CharOperation.concatWith(compoundName, '.');

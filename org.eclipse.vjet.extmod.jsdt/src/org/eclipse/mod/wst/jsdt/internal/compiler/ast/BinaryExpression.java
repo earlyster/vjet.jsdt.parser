@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,15 +10,14 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
-
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IBinaryExpression;
+import org.eclipse.mod.wst.jsdt.core.ast.IExpression;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
 import org.eclipse.mod.wst.jsdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowContext;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowInfo;
 import org.eclipse.mod.wst.jsdt.internal.compiler.impl.Constant;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ArrayBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeIds;
@@ -56,21 +55,6 @@ public BinaryExpression(Expression left, Expression right, int operator) {
 //	}
 }
 
-public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext,
-		FlowInfo flowInfo) {
-	// keep implementation in sync with CombinedBinaryExpression#analyseCode
-	if (this.resolvedType.id == TypeIds.T_JavaLangString) {
-		return this.right.analyseCode(
-							currentScope, flowContext,
-							this.left.analyseCode(currentScope, flowContext, flowInfo).unconditionalInits())
-						.unconditionalInits();
-	} else {
-		this.left.checkNPE(currentScope, flowContext, flowInfo);
-		flowInfo = this.left.analyseCode(currentScope, flowContext, flowInfo).unconditionalInits();
-		this.right.checkNPE(currentScope, flowContext, flowInfo);
-		return this.right.analyseCode(currentScope, flowContext, flowInfo).unconditionalInits();
-	}
-}
 
 public void computeConstant(BlockScope scope, int leftId, int rightId) {
 	//compute the constant when valid
@@ -112,115 +96,97 @@ public Constant optimizedBooleanConstant() {
 public boolean isCompactableOperation() {
 	return true;
 }
-
-/**
- * Separates into a reusable method the subpart of {@link
- * #resolveType(BlockScope)} that needs to be executed while climbing up the
- * chain of expressions of this' leftmost branch. For use by {@link
- * CombinedBinaryExpression#resolveType(BlockScope)}.
- * @param scope the scope within which the resolution occurs
- */
-void nonRecursiveResolveTypeUpwards(BlockScope scope) {
-	// keep implementation in sync with BinaryExpression#resolveType
-	boolean leftIsCast, rightIsCast;
-	TypeBinding leftType = this.left.resolvedType;
-
-	TypeBinding rightType = this.right.resolveType(scope);
-
-	// use the id of the type to navigate into the table
-	if (leftType == null || rightType == null) {
-		this.constant = Constant.NotAConstant;
-		return;
-	}
-
-	int leftTypeID = leftType.id;
-	int rightTypeID = rightType.id;
-
-	// autoboxing support
-	boolean use15specifics = scope.compilerOptions().sourceLevel >= ClassFileConstants.JDK1_5;
-	if (use15specifics) {
-		if (!leftType.isBaseType() && rightTypeID != TypeIds.T_JavaLangString && rightTypeID != TypeIds.T_null) {
-			leftTypeID = scope.environment().computeBoxingType(leftType).id;
-		}
-		if (!rightType.isBaseType() && leftTypeID != TypeIds.T_JavaLangString && leftTypeID != TypeIds.T_null) {
-			rightTypeID = scope.environment().computeBoxingType(rightType).id;
-		}
-	}
-	if (leftTypeID > 15
-		|| rightTypeID > 15) { // must convert String + Object || Object + String
-		if (leftTypeID == TypeIds.T_JavaLangString) {
-			rightTypeID = TypeIds.T_JavaLangObject;
-		} else if (rightTypeID == TypeIds.T_JavaLangString) {
-			leftTypeID = TypeIds.T_JavaLangObject;
-		} else {
-			this.constant = Constant.NotAConstant;
-			scope.problemReporter().invalidOperator(this, leftType, rightType);
-			return;
-		}
-	}
-	if (((this.bits & ASTNode.OperatorMASK) >> ASTNode.OperatorSHIFT) == OperatorIds.PLUS) {
-		if (leftTypeID == TypeIds.T_JavaLangString) {
-			this.left.computeConversion(scope, leftType, leftType);
-			if (rightType.isArrayType() && ((ArrayBinding) rightType).elementsType() == TypeBinding.CHAR) {
-				scope.problemReporter().signalNoImplicitStringConversionForCharArrayExpression(this.right);
-			}
-		}
-		if (rightTypeID == TypeIds.T_JavaLangString) {
-			this.right.computeConversion(scope, rightType, rightType);
-			if (leftType.isArrayType() && ((ArrayBinding) leftType).elementsType() == TypeBinding.CHAR) {
-				scope.problemReporter().signalNoImplicitStringConversionForCharArrayExpression(this.left);
-			}
-		}
-	}
-
-	// the code is an int
-	// (cast)  left   Op (cast)  right --> result
-	//  0000   0000       0000   0000      0000
-	//  <<16   <<12       <<8    <<4       <<0
-
-	// Don't test for result = 0. If it is zero, some more work is done.
-	// On the one hand when it is not zero (correct code) we avoid doing the test
-	int operator = (this.bits & ASTNode.OperatorMASK) >> ASTNode.OperatorSHIFT;
-	int operatorSignature = OperatorExpression.OperatorSignatures[operator][(leftTypeID << 4) + rightTypeID];
-
-	this.left.computeConversion(scope, 	TypeBinding.wellKnownType(scope, (operatorSignature >>> 16) & 0x0000F), leftType);
-	this.right.computeConversion(scope, TypeBinding.wellKnownType(scope, (operatorSignature >>> 8) & 0x0000F), rightType);
-	this.bits |= operatorSignature & 0xF;
-	switch (operatorSignature & 0xF) { // record the current ReturnTypeID
-		// only switch on possible result type.....
-		case T_boolean :
-			this.resolvedType = TypeBinding.BOOLEAN;
-			break;
-		case T_byte :
-			this.resolvedType = TypeBinding.BYTE;
-			break;
-		case T_char :
-			this.resolvedType = TypeBinding.CHAR;
-			break;
-		case T_double :
-			this.resolvedType = TypeBinding.DOUBLE;
-			break;
-		case T_float :
-			this.resolvedType = TypeBinding.FLOAT;
-			break;
-		case T_int :
-			this.resolvedType = TypeBinding.INT;
-			break;
-		case T_long :
-			this.resolvedType = TypeBinding.LONG;
-			break;
-//		case T_JavaLangString :
-//			this.resolvedType = scope.getJavaLangString();
+// VJET MOD remove resolve
+//
+///**
+// * Separates into a reusable method the subpart of {@link
+// * #resolveType(BlockScope)} that needs to be executed while climbing up the
+// * chain of expressions of this' leftmost branch. For use by {@link
+// * CombinedBinaryExpression#resolveType(BlockScope)}.
+// * @param scope the scope within which the resolution occurs
+// */
+//void nonRecursiveResolveTypeUpwards(BlockScope scope) {
+//	// keep implementation in sync with BinaryExpression#resolveType
+//	TypeBinding leftType = this.left.resolvedType;
+//
+//	TypeBinding rightType = this.right.resolveType(scope);
+//
+//	// use the id of the type to navigate into the table
+//	if (leftType == null || rightType == null) {
+//		this.constant = Constant.NotAConstant;
+//		return;
+//	}
+//
+//	int leftTypeID = leftType.id;
+//	int rightTypeID = rightType.id;
+//
+//	// autoboxing support
+//	boolean use15specifics = scope.compilerOptions().sourceLevel >= ClassFileConstants.JDK1_5;
+//	if (use15specifics) {
+//		if (!leftType.isBaseType() && rightTypeID != TypeIds.T_JavaLangString && rightTypeID != TypeIds.T_null) {
+//			leftTypeID = scope.environment().computeBoxingType(leftType).id;
+//		}
+//		if (!rightType.isBaseType() && leftTypeID != TypeIds.T_JavaLangString && leftTypeID != TypeIds.T_null) {
+//			rightTypeID = scope.environment().computeBoxingType(rightType).id;
+//		}
+//	}
+//	if (leftTypeID > 15
+//		|| rightTypeID > 15) { // must convert String + Object || Object + String
+//		if (leftTypeID == TypeIds.T_JavaLangString) {
+//			rightTypeID = TypeIds.T_JavaLangObject;
+//		} else if (rightTypeID == TypeIds.T_JavaLangString) {
+//			leftTypeID = TypeIds.T_JavaLangObject;
+//		} else {
+//			this.constant = Constant.NotAConstant;
+//			scope.problemReporter().invalidOperator(this, leftType, rightType);
+//			return;
+//		}
+//	}
+//
+//	// the code is an int
+//	// (cast)  left   Op (cast)  right --> result
+//	//  0000   0000       0000   0000      0000
+//	//  <<16   <<12       <<8    <<4       <<0
+//
+//	// Don't test for result = 0. If it is zero, some more work is done.
+//	// On the one hand when it is not zero (correct code) we avoid doing the test
+//	int operator = (this.bits & ASTNode.OperatorMASK) >> ASTNode.OperatorSHIFT;
+//	int operatorSignature = OperatorExpression.OperatorSignatures[operator][(leftTypeID << 4) + rightTypeID];
+//
+//	this.bits |= operatorSignature & 0xF;
+//	switch (operatorSignature & 0xF) { // record the current ReturnTypeID
+//		// only switch on possible result type.....
+//		case T_boolean :
+//			this.resolvedType = TypeBinding.BOOLEAN;
 //			break;
-		default : //error........
-			this.constant = Constant.NotAConstant;
-			scope.problemReporter().invalidOperator(this, leftType, rightType);
-			return;
-	}
-
-	// compute the constant when valid
-	computeConstant(scope, leftTypeID, rightTypeID);
-}
+//		case T_char :
+//			this.resolvedType = TypeBinding.CHAR;
+//			break;
+//		case T_double :
+//			this.resolvedType = TypeBinding.DOUBLE;
+//			break;
+//		case T_float :
+//			this.resolvedType = TypeBinding.FLOAT;
+//			break;
+//		case T_int :
+//			this.resolvedType = TypeBinding.INT;
+//			break;
+//		case T_long :
+//			this.resolvedType = TypeBinding.LONG;
+//			break;
+//			// VJET MOD - remove java lang string 
+////		case T_JavaLangString :
+////			this.resolvedType = scope.getJavaLangString();
+////			break;
+//		default : //error........
+//			this.constant = Constant.NotAConstant;
+//			scope.problemReporter().invalidOperator(this, leftType, rightType);
+//			return;
+//	}
+//
+//	// compute the constant when valid
+//	computeConstant(scope, leftTypeID, rightTypeID);
+//}
 
 public void optimizedBooleanConstant(int leftId, int operator, int rightId) {
 	switch (operator) {
@@ -277,129 +243,112 @@ public StringBuffer printExpressionNoParenthesis(int indent, StringBuffer output
 	return this.right.printExpression(0, output);
 }
 
-public TypeBinding resolveType(BlockScope scope) {
-	// keep implementation in sync with CombinedBinaryExpression#resolveType
-	// and nonRecursiveResolveTypeUpwards
-	boolean leftIsCast, rightIsCast;
-	TypeBinding leftType = this.left.resolveType(scope);
-	TypeBinding rightType = this.right.resolveType(scope);
-
-	// use the id of the type to navigate into the table
-	if (leftType == null || rightType == null) {
-		this.constant = Constant.NotAConstant;
-		this.resolvedType=TypeBinding.ANY;
-		return null;
-	}
-	int operator = (this.bits & ASTNode.OperatorMASK) >> ASTNode.OperatorSHIFT;
-
-	int leftTypeID = leftType.id;
-	int rightTypeID = rightType.id;
-
-	if(operator==OperatorIds.INSTANCEOF  ||operator==OperatorIds.IN  ) {
-		if ( rightTypeID>15)
-			rightTypeID=  TypeIds.T_JavaLangObject;
-		if ( leftTypeID>15)
-			leftTypeID=  TypeIds.T_JavaLangObject;
-	}
-
-	// autoboxing support
-	boolean use15specifics = scope.compilerOptions().sourceLevel >= ClassFileConstants.JDK1_5;
-	if (use15specifics) {
-		if (!leftType.isBaseType() && rightTypeID != TypeIds.T_JavaLangString && rightTypeID != TypeIds.T_null) {
-			leftTypeID = scope.environment().computeBoxingType(leftType).id;
-		}
-		if (!rightType.isBaseType() && leftTypeID != TypeIds.T_JavaLangString && leftTypeID != TypeIds.T_null) {
-			rightTypeID = scope.environment().computeBoxingType(rightType).id;
-		}
-	}
-	if (rightType.isArrayType())
-	{
-		rightType=rightType.leafComponentType();
-		rightTypeID=rightType.id;
-	}
-	if (leftTypeID > 15
-		|| rightTypeID > 15) { // must convert String + Object || Object + String
-
-		if (leftTypeID == TypeIds.T_JavaLangString) {
-			rightTypeID = TypeIds.T_JavaLangObject;
-		} else if (rightTypeID == TypeIds.T_JavaLangString) {
-			leftTypeID = TypeIds.T_JavaLangObject;
-		} else {
-
-			this.constant = Constant.NotAConstant;
-			scope.problemReporter().invalidOperator(this, leftType, rightType);
-			return null;
-		}
-	}
-	if (((this.bits & ASTNode.OperatorMASK) >> ASTNode.OperatorSHIFT) == OperatorIds.PLUS) {
-		if (leftTypeID == TypeIds.T_JavaLangString) {
-			this.left.computeConversion(scope, leftType, leftType);
-			if (rightType.isArrayType() && ((ArrayBinding) rightType).elementsType() == TypeBinding.CHAR) {
-				scope.problemReporter().signalNoImplicitStringConversionForCharArrayExpression(this.right);
-			}
-		}
-		if (rightTypeID == TypeIds.T_JavaLangString) {
-			this.right.computeConversion(scope, rightType, rightType);
-			if (leftType.isArrayType() && ((ArrayBinding) leftType).elementsType() == TypeBinding.CHAR) {
-				scope.problemReporter().signalNoImplicitStringConversionForCharArrayExpression(this.left);
-			}
-		}
-	}
-
-	// the code is an int
-	// (cast)  left   Op (cast)  right --> result
-	//  0000   0000       0000   0000      0000
-	//  <<16   <<12       <<8    <<4       <<0
-
-	// Don't test for result = 0. If it is zero, some more work is done.
-	// On the one hand when it is not zero (correct code) we avoid doing the test
-	int operatorSignature = OperatorExpression.OperatorSignatures[operator][(leftTypeID << 4) + rightTypeID];
-
-	this.left.computeConversion(scope, 	TypeBinding.wellKnownType(scope, (operatorSignature >>> 16) & 0x0000F), leftType);
-	this.right.computeConversion(scope, TypeBinding.wellKnownType(scope, (operatorSignature >>> 8) & 0x0000F), rightType);
-	this.bits |= operatorSignature & 0xF;
-	switch (operatorSignature & 0xF) { // record the current ReturnTypeID
-		// only switch on possible result type.....
-		case T_boolean :
-			this.resolvedType = TypeBinding.BOOLEAN;
-			break;
-		case T_byte :
-			this.resolvedType = TypeBinding.BYTE;
-			break;
-		case T_char :
-			this.resolvedType = TypeBinding.CHAR;
-			break;
-		case T_double :
-			this.resolvedType = TypeBinding.DOUBLE;
-			break;
-		case T_float :
-			this.resolvedType = TypeBinding.FLOAT;
-			break;
+//public TypeBinding resolveType(BlockScope scope) {
+//	// keep implementation in sync with CombinedBinaryExpression#resolveType
+//	// and nonRecursiveResolveTypeUpwards
+//	TypeBinding leftType = this.left.resolveType(scope);
+//	TypeBinding rightType = this.right.resolveType(scope);
+//
+//	// use the id of the type to navigate into the table
+//	if (leftType == null || rightType == null) {
+//		this.constant = Constant.NotAConstant;
+//		this.resolvedType=TypeBinding.ANY;
+//		return null;
+//	}
+//	int operator = (this.bits & ASTNode.OperatorMASK) >> ASTNode.OperatorSHIFT;
+//
+//	int leftTypeID = leftType.id;
+//	int rightTypeID = rightType.id;
+//
+//	if(operator==OperatorIds.INSTANCEOF  || operator==OperatorIds.IN  || operator==OperatorIds.OR_OR) {
+//		if ( rightTypeID>15)
+//			rightTypeID=  TypeIds.T_JavaLangObject;
+//		if ( leftTypeID>15)
+//			leftTypeID=  TypeIds.T_JavaLangObject;
+//	}
+//
+//	// autoboxing support
+//	boolean use15specifics = scope.compilerOptions().sourceLevel >= ClassFileConstants.JDK1_5;
+//	if (use15specifics) {
+//		if (!leftType.isBaseType() && rightTypeID != TypeIds.T_JavaLangString && rightTypeID != TypeIds.T_null) {
+//			leftTypeID = scope.environment().computeBoxingType(leftType).id;
+//		}
+//		if (!rightType.isBaseType() && leftTypeID != TypeIds.T_JavaLangString && leftTypeID != TypeIds.T_null) {
+//			rightTypeID = scope.environment().computeBoxingType(rightType).id;
+//		}
+//	}
+//	if (rightType.isArrayType())
+//	{
+//		rightType=rightType.leafComponentType();
+//		rightTypeID=rightType.id;
+//	}
+//	if (leftTypeID > 15
+//		|| rightTypeID > 15) { // must convert String + Object || Object + String
+//
+//		if (leftTypeID == TypeIds.T_JavaLangString) {
+//			rightTypeID = TypeIds.T_JavaLangObject;
+//		} else if (rightTypeID == TypeIds.T_JavaLangString) {
+//			leftTypeID = TypeIds.T_JavaLangObject;
+//		} else {
+//
+//			this.constant = Constant.NotAConstant;
+//			scope.problemReporter().invalidOperator(this, leftType, rightType);
+//			return null;
+//		}
+//	}
+//
+//	// the code is an int
+//	// (cast)  left   Op (cast)  right --> result
+//	//  0000   0000       0000   0000      0000
+//	//  <<16   <<12       <<8    <<4       <<0
+//
+//	// Don't test for result = 0. If it is zero, some more work is done.
+//	// On the one hand when it is not zero (correct code) we avoid doing the test
+//	int operatorSignature = OperatorExpression.OperatorSignatures[operator][(leftTypeID << 4) + rightTypeID];
+//
+//	this.bits |= operatorSignature & 0xF;
+//	switch (operatorSignature & 0xF) { // record the current ReturnTypeID
+//		// only switch on possible result type.....
+//		case T_boolean :
+//			this.resolvedType = TypeBinding.BOOLEAN;
+//			break;
+//		case T_char :
+//			this.resolvedType = TypeBinding.CHAR;
+//			break;
+//		case T_double :
+//			this.resolvedType = TypeBinding.DOUBLE;
+//			break;
+//		case T_float :
+//			this.resolvedType = TypeBinding.FLOAT;
+//			break;
 //		case T_int :
 //			this.resolvedType = scope.getJavaLangNumber();
 //			break;
-		case T_long :
-			this.resolvedType = TypeBinding.LONG;
-			break;
+//		case T_long :
+//			this.resolvedType = TypeBinding.LONG;
+//			break;
 //		case T_JavaLangString :
 //			this.resolvedType = scope.getJavaLangString();
 //			break;
-		case T_any:
-			this.resolvedType = TypeBinding.UNKNOWN;
-			break;
+//		case T_any:
+//			this.resolvedType = TypeBinding.UNKNOWN;
+//			break;
 //		case T_function:
 //			this.resolvedType = scope.getJavaLangFunction();
 //			break;
-		default : //error........
-			this.constant = Constant.NotAConstant;
-			scope.problemReporter().invalidOperator(this, leftType, rightType);
-			return null;
-	}
-	
-	// compute the constant when valid
-	computeConstant(scope, leftTypeID, rightTypeID);
-	return this.resolvedType;
-}
+//		case T_JavaLangObject:
+//			this.resolvedType = scope.getJavaLangObject();
+//			break;
+//		default : //error........
+//			this.constant = Constant.NotAConstant;
+//			scope.problemReporter().invalidOperator(this, leftType, rightType);
+//			return null;
+//	}
+//	
+//	// compute the constant when valid
+//	computeConstant(scope, leftTypeID, rightTypeID);
+//	return this.resolvedType;
+//}
 
 public void traverse(ASTVisitor visitor, BlockScope scope) {
 	if (visitor.visit(this, scope)) {
@@ -411,5 +360,11 @@ public void traverse(ASTVisitor visitor, BlockScope scope) {
 public int getASTType() {
 	return IASTNode.BINARY_EXPRESSION;
 
+}
+public IExpression getLeft() {
+	return left;
+}
+public IExpression getRight() {
+	return right;
 }
 }

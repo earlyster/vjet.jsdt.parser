@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2008 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IThrowStatement;
@@ -31,12 +30,6 @@ public ThrowStatement(Expression exception, int sourceStart, int sourceEnd) {
 	this.sourceEnd = sourceEnd;
 }
 
-public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, FlowInfo flowInfo) {
-	this.exception.analyseCode(currentScope, flowContext, flowInfo);
-	// need to check that exception thrown is actually caught somewhere
-	//flowContext.checkExceptionHandlers(this.exceptionType, this, flowInfo, currentScope);
-	return FlowInfo.DEAD_END;
-}
 
 public StringBuffer printStatement(int indent, StringBuffer output) {
 	printIndent(indent, output).append("throw "); //$NON-NLS-1$
@@ -44,12 +37,7 @@ public StringBuffer printStatement(int indent, StringBuffer output) {
 	return output.append(';');
 }
 
-public void resolve(BlockScope scope) {
-	this.exceptionType = this.exception.resolveType(scope);
-	if (this.exceptionType == null || !this.exceptionType.isValidBinding()) {
-		this.exceptionType = new ProblemReferenceBinding(new char[0][0],null,0);
-	}
-}
+
 
 public void traverse(ASTVisitor visitor, BlockScope blockScope) {
 	if (visitor.visit(this, blockScope))

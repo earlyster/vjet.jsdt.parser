@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
@@ -31,46 +30,10 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.problem.AbortMethod;
 
 public class Clinit extends AbstractMethodDeclaration  {
 
-
 	public Clinit(CompilationResult compilationResult) {
 		super(compilationResult);
 		modifiers = 0;
 		selector = TypeConstants.CLINIT;
-	}
-
-	public FlowInfo analyseCode(
-		Scope classScope,
-		FlowContext flowContext,
-		FlowInfo flowInfo) {
-
-		InitializationFlowContext staticInitializerFlowContext =(InitializationFlowContext)flowContext;
-		if (ignoreFurtherInvestigation)
-			return flowInfo;
-		try {
-			ExceptionHandlingFlowContext clinitContext =
-				new ExceptionHandlingFlowContext(
-					staticInitializerFlowContext.parent,
-					this,
-					Binding.NO_EXCEPTIONS,
-					scope,
-					FlowInfo.DEAD_END);
-
-			// check for missing returning path
-			this.needFreeReturn = (flowInfo.tagBits & FlowInfo.UNREACHABLE) == 0;
-
-
-			// check missing blank final field initializations
-			flowInfo = flowInfo.mergedWith(staticInitializerFlowContext.initsOnReturn);
-			
-			// check static initializers thrown exceptions
-			staticInitializerFlowContext.checkInitializerExceptions(
-				scope,
-				clinitContext,
-				flowInfo);
-		} catch (AbortMethod e) {
-			this.ignoreFurtherInvestigation = true;
-		}
-		return flowInfo;
 	}
 
 	public boolean isClinit() {
@@ -99,11 +62,6 @@ public class Clinit extends AbstractMethodDeclaration  {
 		return output;
 	}
 
-	public void resolve(ClassScope classScope) {
-
-		this.scope = new MethodScope(classScope, classScope.referenceContext, true);
-	}
-
 	public void traverse(
 		ASTVisitor visitor,
 		ClassScope classScope) {
@@ -112,15 +70,7 @@ public class Clinit extends AbstractMethodDeclaration  {
 		visitor.endVisit(this, classScope);
 	}
 
-	public void setAssertionSupport(FieldBinding assertionSyntheticFieldBinding, boolean needClassLiteralField) {
 
-		// we need to add the field right now, because the field infos are generated before the methods
-		if (needClassLiteralField) {
-			SourceTypeBinding sourceType =
-				this.scope.outerMostClassScope().enclosingSourceType();
-			// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=22334
-		}
-	}
 	public int getASTType() {
 		return IASTNode.CL_INIT;
 	

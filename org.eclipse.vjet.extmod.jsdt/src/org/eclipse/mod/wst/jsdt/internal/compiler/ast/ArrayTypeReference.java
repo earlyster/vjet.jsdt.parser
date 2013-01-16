@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IArrayTypeReference;
@@ -53,16 +52,6 @@ public class ArrayTypeReference extends SingleTypeReference implements IArrayTyp
 			dimChars[index+1] = ']';
 		}
 		return new char[][]{ CharOperation.concat(token, dimChars) };
-	}
-	protected TypeBinding getTypeBinding(Scope scope) {
-
-		if (this.resolvedType != null) return this.resolvedType;
-		if (dimensions > 255) {
-			scope.problemReporter().tooManyDimensions(this);
-		}
-		TypeBinding leafComponentType = scope.getType(token);
-		return scope.createArrayType(leafComponentType, dimensions);
-
 	}
 
 	public StringBuffer printExpression(int indent, StringBuffer output){

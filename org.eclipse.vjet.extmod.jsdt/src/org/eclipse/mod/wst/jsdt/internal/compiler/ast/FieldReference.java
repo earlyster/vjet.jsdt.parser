@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2012 IBM Corporation and others.
+ * Copyright (c) 2007, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,8 +12,7 @@ package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
 import java.util.ArrayList;
 
-
-//import org.eclipse.mod.wst.jsdt.core.JavaScriptConstants;
+//import org.eclipse.mod.wst.jsdt.core.JavaScriptCore;
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IExpression;
 import org.eclipse.mod.wst.jsdt.core.ast.IFieldReference;
@@ -36,8 +35,8 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.Scope;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeConstants;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeIds;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.util.Util;
+import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeIds;
+import org.eclipse.mod.wst.jsdt.internal.compiler.util.Util;
 
 public class FieldReference extends Reference implements InvocationSite, IFieldReference {
 
@@ -64,58 +63,8 @@ public FieldReference(char[] source, long pos) {
 
 }
 
-public FlowInfo analyseAssignment(BlockScope currentScope, 	FlowContext flowContext, 	FlowInfo flowInfo, Assignment assignment, boolean isCompound) {
-	// compound assignment extra work
-//	if (isCompound) { // check the variable part is initialized if blank final
-//		if (binding.isBlankFinal()
-//			&& receiver.isThis()
-//			&& currentScope.allowBlankFinalFieldAssignment(binding)
-//			&& (!flowInfo.isDefinitelyAssigned(binding))) {
-//			currentScope.problemReporter().uninitializedBlankFinalField(binding, this);
-//			// we could improve error msg here telling "cannot use compound assignment on final blank field"
-//		}
-//		manageSyntheticAccessIfNecessary(currentScope, flowInfo, true /*read-access*/);
-//	}
-	if (receiver instanceof SingleNameReference && ((SingleNameReference)receiver).binding instanceof LocalVariableBinding)
-	{
-		flowInfo.markAsDefinitelyNonNull((LocalVariableBinding)((SingleNameReference)receiver).binding);
-		flowInfo.markAsDefinitelyAssigned((LocalVariableBinding)((SingleNameReference)receiver).binding);
-	}
-	flowInfo =
-		receiver
-			.analyseCode(currentScope, flowContext, flowInfo, binding==null || !binding.isStatic())
-			.unconditionalInits();
-	if (assignment.expression != null) {
-		flowInfo =
-			assignment
-				.expression
-				.analyseCode(currentScope, flowContext, flowInfo)
-				.unconditionalInits();
-	}
-	manageSyntheticAccessIfNecessary(currentScope, flowInfo, false /*write-access*/);
-
-	return flowInfo;
-}
-
-public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, FlowInfo flowInfo) {
-	return analyseCode(currentScope, flowContext, flowInfo, true);
-}
-
-public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, FlowInfo flowInfo, boolean valueRequired) {
-	boolean nonStatic = binding==null || !binding.isStatic();
-	receiver.analyseCode(currentScope, flowContext, flowInfo, nonStatic);
-	if (nonStatic) {
-		receiver.checkNPE(currentScope, flowContext, flowInfo);
-	}
-
-	if (valueRequired || currentScope.compilerOptions().complianceLevel >= ClassFileConstants.JDK1_4) {
-		manageSyntheticAccessIfNecessary(currentScope, flowInfo, true /*read-access*/);
-	}
-	return flowInfo;
-}
-
 /**
- * @see org.eclipse.mod.wst.jsdt.internal.compiler.ast.Expression#computeConversion(org.eclipse.mod.wst.jsdt.internal.compiler.lookup.Scope, org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding, org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding)
+ * @see org.eclipse.wst.jsdt.internal.compiler.ast.Expression#computeConversion(org.eclipse.wst.jsdt.internal.compiler.lookup.Scope, org.eclipse.wst.jsdt.internal.compiler.lookup.TypeBinding, org.eclipse.wst.jsdt.internal.compiler.lookup.TypeBinding)
  */
 public void computeConversion(Scope scope, TypeBinding runtimeTimeType, TypeBinding compileTimeType) {
 	if (runtimeTimeType == null || compileTimeType == null)
@@ -124,7 +73,6 @@ public void computeConversion(Scope scope, TypeBinding runtimeTimeType, TypeBind
 	if (this.binding != null && this.binding.isValidBinding()) {
 		FieldBinding originalBinding = this.binding.original();
 	}
-	super.computeConversion(scope, runtimeTimeType, compileTimeType);
 }
 
 public FieldBinding fieldBinding() {
@@ -132,7 +80,7 @@ public FieldBinding fieldBinding() {
 }
 
 /**
- * @see org.eclipse.mod.wst.jsdt.internal.compiler.lookup.InvocationSite#genericTypeArguments()
+ * @see org.eclipse.wst.jsdt.internal.compiler.lookup.InvocationSite#genericTypeArguments()
  */
 public TypeBinding[] genericTypeArguments() {
 	return null;
@@ -229,58 +177,55 @@ public Constant optimizedBooleanConstant() {
 			return Constant.NotAConstant;
 	}
 }
-
-/**
- * @see org.eclipse.mod.wst.jsdt.internal.compiler.ast.Expression#postConversionType(Scope)
- */
-public TypeBinding postConversionType(Scope scope) {
-	TypeBinding convertedType = this.resolvedType;
-//	if (this.genericCast != null)
-//		convertedType = this.genericCast;
-	int runtimeType = (this.implicitConversion & IMPLICIT_CONVERSION_MASK) >> 4;
-	switch (runtimeType) {
-		case T_boolean :
-			convertedType = TypeBinding.BOOLEAN;
-			break;
-		case T_byte :
-			convertedType = TypeBinding.BYTE;
-			break;
-		case T_short :
-			convertedType = TypeBinding.SHORT;
-			break;
-		case T_char :
-			convertedType = TypeBinding.CHAR;
-			break;
-		case T_int :
-			convertedType = TypeBinding.INT;
-			break;
-		case T_float :
-			convertedType = TypeBinding.FLOAT;
-			break;
-		case T_long :
-			convertedType = TypeBinding.LONG;
-			break;
-		case T_double :
-			convertedType = TypeBinding.DOUBLE;
-			break;
-		default :
-	}
-	if ((this.implicitConversion & BOXING) != 0) {
-		convertedType = scope.environment().computeBoxingType(convertedType);
-	}
-	return convertedType;
-}
+//
+///**
+// * @see org.eclipse.wst.jsdt.internal.compiler.ast.Expression#postConversionType(Scope)
+// */
+//public TypeBinding postConversionType(Scope scope) {
+//	TypeBinding convertedType = this.resolvedType;
+////	if (this.genericCast != null)
+////		convertedType = this.genericCast;
+//	int runtimeType = (this.implicitConversion & IMPLICIT_CONVERSION_MASK) >> 4;
+//	switch (runtimeType) {
+//		case T_boolean :
+//			convertedType = TypeBinding.BOOLEAN;
+//			break;
+//		case T_short :
+//			convertedType = TypeBinding.SHORT;
+//			break;
+//		case T_char :
+//			convertedType = TypeBinding.CHAR;
+//			break;
+//		case T_int :
+//			convertedType = TypeBinding.INT;
+//			break;
+//		case T_float :
+//			convertedType = TypeBinding.FLOAT;
+//			break;
+//		case T_long :
+//			convertedType = TypeBinding.LONG;
+//			break;
+//		case T_double :
+//			convertedType = TypeBinding.DOUBLE;
+//			break;
+//		default :
+//	}
+//	if ((this.implicitConversion & BOXING) != 0) {
+//		convertedType = scope.environment().computeBoxingType(convertedType);
+//	}
+//	return convertedType;
+//}
 
 public StringBuffer printExpression(int indent, StringBuffer output) {
 	return receiver.printExpression(0, output).append('.').append(token);
 }
 
-
-public TypeBinding resolveType(BlockScope scope) {
-	return resolveType(scope, false, null);
-}
-
-public TypeBinding resolveType(BlockScope scope, boolean define, TypeBinding useType) {
+//
+//public TypeBinding resolveType(BlockScope scope) {
+//	return resolveType(scope, false, null);
+//}
+//
+//public TypeBinding resolveType(BlockScope scope, boolean define, TypeBinding useType) {
 //	// Answer the signature type of the field.
 //	// constants are propaged when the field is final
 //	// and initialized with a (compile time) constant
@@ -299,7 +244,13 @@ public TypeBinding resolveType(BlockScope scope, boolean define, TypeBinding use
 //	 * By default, the prototype is of type Object, but if there is an InferredType
 //	 * for the receiver, it should yeild the receiver type.
 //	 */
-//	if( this.isPrototype() ){
+//if( this.isPrototype() ){
+//		// check if receiver type is defined
+//	if ((this.receiverType = receiver.resolveType(scope)) == null) {
+//		constant = Constant.NotAConstant;
+//        return null;
+//    }
+//
 //
 //		//construc the name of the type based on the receiver
 //		char [] possibleTypeName = Util.getTypeName( receiver );
@@ -323,6 +274,15 @@ public TypeBinding resolveType(BlockScope scope, boolean define, TypeBinding use
 //	}
 //
 //	char [] possibleTypeName = Util.getTypeName( this );
+//	Binding possibleTypeBinding =null;
+//	if (possibleTypeName!=null)
+//	   possibleTypeBinding = scope.getBinding( possibleTypeName, Binding.TYPE  & RestrictiveFlagMASK, this, true /*resolve*/);
+//	if(possibleTypeBinding != null && possibleTypeBinding.isValidBinding() && (TypeBinding)possibleTypeBinding != scope.getJavaLangObject()) {
+//		this.typeBinding=(TypeBinding)possibleTypeBinding;
+//		constant = Constant.NotAConstant;
+//		this.bits|=Binding.TYPE;
+//		return this.typeBinding;
+//	}
 //	boolean receiverDefined=true;
 //   // if this could be a qualified type name, first check if receiver is defined, and if not look up as type name
 //	if (possibleTypeName!=null && receiver instanceof SingleNameReference)
@@ -335,9 +295,6 @@ public TypeBinding resolveType(BlockScope scope, boolean define, TypeBinding use
 //	if (receiverDefined)
 //	  this.receiverType = receiver.resolveType(scope);
 //	if (this.receiverType == null || this.receiverType==scope.getJavaLangObject()) {
-//		Binding possibleTypeBinding =null;
-//		if (possibleTypeName!=null)
-//		   possibleTypeBinding = scope.getBinding( possibleTypeName, Binding.TYPE  & RestrictiveFlagMASK, this, true /*resolve*/);
 //		if (possibleTypeBinding!=null && possibleTypeBinding.isValidBinding())
 //		{
 //			this.typeBinding=(TypeBinding)possibleTypeBinding;
@@ -406,7 +363,7 @@ public TypeBinding resolveType(BlockScope scope, boolean define, TypeBinding use
 //			}
 //	//		return this.resolvedType=TypeBinding.UNKNOWN;
 //		}
-//		if (JavaScriptConstants.IS_ECMASCRIPT4)
+//		if (JavaScriptCore.IS_ECMASCRIPT4)
 //		{
 //			TypeBinding receiverErasure = this.receiverType;
 //			if (receiverErasure instanceof ReferenceBinding) {
@@ -415,7 +372,6 @@ public TypeBinding resolveType(BlockScope scope, boolean define, TypeBinding use
 //				}
 //			}
 //		}
-//		this.receiver.computeConversion(scope, this.receiverType, this.receiverType);
 //		if (isFieldUseDeprecated(fieldBinding, scope, (this.bits & IsStrictlyAssigned) !=0)) {
 //			scope.problemReporter().deprecatedField(fieldBinding, this);
 //		}
@@ -433,6 +389,9 @@ public TypeBinding resolveType(BlockScope scope, boolean define, TypeBinding use
 //					&& fieldBinding.declaringClass.canBeSeenBy(scope)) {
 //				scope.problemReporter().indirectAccessToStaticField(this, fieldBinding);
 //			}
+//		} else {
+//			if(receiverIsType)
+//				scope.problemReporter().staticFieldAccessToNonStaticVariable(this, fieldBinding);
 //		}
 //		// perform capture conversion if read access
 //		return this.resolvedType = fieldBinding.type;
@@ -442,7 +401,8 @@ public TypeBinding resolveType(BlockScope scope, boolean define, TypeBinding use
 //
 //		if (!methodBinding.isStatic()) {
 //			if (receiverIsType && methodBinding.isValidBinding() && !methodBinding.isConstructor()) {
-//				scope.problemReporter().mustUseAStaticMethod(this, methodBinding);
+//				if(this.receiverType == null || !this.receiverType.isAnonymousType())
+//					scope.problemReporter().mustUseAStaticMethod(this, methodBinding);
 //			}
 //		}
 //		else 
@@ -454,14 +414,16 @@ public TypeBinding resolveType(BlockScope scope, boolean define, TypeBinding use
 //		}
 //		
 //		this.resolvedType= scope.getJavaLangFunction();
-//		this.binding=new ProblemFieldBinding(null,this.token,ProblemReasons.NotFound);
+//		this.binding = new FieldBinding(((MethodBinding) memberBinding).selector, this.receiverType, ((MethodBinding) memberBinding).modifiers, methodBinding.declaringClass);
+//		//this.binding=new ProblemFieldBinding(null,this.token,ProblemReasons.NotFound);
 //		if( memberBinding.isValidBinding() )
 //			return this.resolvedType;
 //		return null;
 //	}
+//
+//	return null;
+//}
 
-	return null;
-}
 
 public void setActualReceiverType(ReferenceBinding receiverType) {
 	// ignored
@@ -489,41 +451,41 @@ public boolean isPrototype()
 	return (CharOperation.equals(TypeConstants.PROTOTYPE,this.token));
 }
 
-
-public TypeBinding resolveForAllocation(BlockScope scope, ASTNode location)
-{
-	char [][]qualifiedName=asQualifiedName();
-	TypeBinding typeBinding=null;
-	if (qualifiedName!=null)
-	{
-		typeBinding=scope.getType(CharOperation.concatWith(qualifiedName, '.'));
-	}
-	if (typeBinding==null || !typeBinding.isValidBinding())
-	{
-		this.receiverType = receiver.resolveType(scope);
-		if (this.receiverType == null) {
-			this.binding=new ProblemFieldBinding(null,this.token,ProblemReasons.NotFound);
-			constant = Constant.NotAConstant;
-			this.resolvedType=TypeBinding.ANY;
-			return null;
-		}
-		Binding memberBinding = scope.getFieldOrMethod(this.receiverType, token, this);
-		if( memberBinding instanceof MethodBinding && memberBinding.isValidBinding()){
-			this.resolvedType= ((MethodBinding)memberBinding).allocationType;
-			this.binding=new ProblemFieldBinding(null,this.token,ProblemReasons.NotFound);
-			if( memberBinding.isValidBinding() )
-				return this.resolvedType;
-		}
-		
-	}
-	if (typeBinding==null)
-	{
-		if (qualifiedName==null)
-			qualifiedName=new char[][]{token};
-		typeBinding=new  ProblemReferenceBinding(qualifiedName,null,ProblemReasons.NotFound);
-	}
-	return typeBinding;
-}
+//
+//public TypeBinding resolveForAllocation(BlockScope scope, ASTNode location)
+//{
+//	char [][]qualifiedName=asQualifiedName();
+//	TypeBinding typeBinding=null;
+//	if (qualifiedName!=null)
+//	{
+//		typeBinding=scope.getType(CharOperation.concatWith(qualifiedName, '.'));
+//	}
+//	if (typeBinding==null || !typeBinding.isValidBinding())
+//	{
+//		this.receiverType = receiver.resolveType(scope);
+//		if (this.receiverType == null) {
+//			this.binding=new ProblemFieldBinding(null,this.token,ProblemReasons.NotFound);
+//			constant = Constant.NotAConstant;
+//			this.resolvedType=TypeBinding.ANY;
+//			return null;
+//		}
+//		Binding memberBinding = scope.getFieldOrMethod(this.receiverType, token, this);
+//		if( memberBinding instanceof MethodBinding && memberBinding.isValidBinding()){
+//			this.resolvedType= ((MethodBinding)memberBinding).allocationType;
+//			this.binding=new ProblemFieldBinding(null,this.token,ProblemReasons.NotFound);
+//			if( memberBinding.isValidBinding() )
+//				return this.resolvedType;
+//		}
+//		
+//	}
+//	if (typeBinding==null)
+//	{
+//		if (qualifiedName==null)
+//			qualifiedName=new char[][]{token};
+//		typeBinding=new  ProblemReferenceBinding(qualifiedName,null,ProblemReasons.NotFound);
+//	}
+//	return typeBinding;
+//}
 public int getASTType() {
 	return IASTNode.FIELD_REFERENCE;
 

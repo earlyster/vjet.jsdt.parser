@@ -79,32 +79,32 @@ public final boolean areParametersEqual(MethodBinding method) {
  * passed as argument matches this FunctionBinding number of parameters
  */
 
-public final boolean areParametersCompatibleWith(TypeBinding[] arguments) {
-	int paramLength = this.parameters.length;
-	int argLength = arguments.length;
-	int lastIndex = argLength;
-	if (isVarargs()) {
-		lastIndex = paramLength - 1;
-		if (paramLength == argLength) { // accept X[] but not X or X[][]
-			TypeBinding varArgType = parameters[lastIndex]; // is an ArrayBinding by definition
-			TypeBinding lastArgument = arguments[lastIndex];
-			if (varArgType != lastArgument && !lastArgument.isCompatibleWith(varArgType))
-				return false;
-		} else if (paramLength < argLength) { // all remainig argument types must be compatible with the elementsType of varArgType
-			TypeBinding varArgType = ((ArrayBinding) parameters[lastIndex]).elementsType();
-			for (int i = lastIndex; i < argLength; i++)
-				if (varArgType != arguments[i] && !arguments[i].isCompatibleWith(varArgType))
-					return false;
-		} else if (lastIndex != argLength) { // can call foo(int i, X ... x) with foo(1) but NOT foo();
-			return false;
-		}
-		// now compare standard arguments from 0 to lastIndex
-	}
-	for (int i = 0; i < lastIndex; i++)
-		if (parameters[i] != arguments[i] && !arguments[i].isCompatibleWith(parameters[i]))
-			return false;
-	return true;
-}
+//public final boolean areParametersCompatibleWith(TypeBinding[] arguments) {
+//	int paramLength = this.parameters.length;
+//	int argLength = arguments.length;
+//	int lastIndex = argLength;
+//	if (isVarargs()) {
+//		lastIndex = paramLength - 1;
+//		if (paramLength == argLength) { // accept X[] but not X or X[][]
+//			TypeBinding varArgType = parameters[lastIndex]; // is an ArrayBinding by definition
+//			TypeBinding lastArgument = arguments[lastIndex];
+//			if (varArgType != lastArgument && !lastArgument.isCompatibleWith(varArgType))
+//				return false;
+//		} else if (paramLength < argLength) { // all remainig argument types must be compatible with the elementsType of varArgType
+//			TypeBinding varArgType = ((ArrayBinding) parameters[lastIndex]).elementsType();
+//			for (int i = lastIndex; i < argLength; i++)
+//				if (varArgType != arguments[i] && !arguments[i].isCompatibleWith(varArgType))
+//					return false;
+//		} else if (lastIndex != argLength) { // can call foo(int i, X ... x) with foo(1) but NOT foo();
+//			return false;
+//		}
+//		// now compare standard arguments from 0 to lastIndex
+//	}
+//	for (int i = 0; i < lastIndex; i++)
+//		if (parameters[i] != arguments[i] && !arguments[i].isCompatibleWith(parameters[i]))
+//			return false;
+//	return true;
+//}
 
 /* API
 * Answer the receiver's binding type from Binding.BindingID.
@@ -132,133 +132,133 @@ public final boolean canBeSeenBy(PackageBinding invocationPackage) {
 * NOTE: Cannot invoke this method with a compilation unit scope.
 */
 
-public final boolean canBeSeenBy(InvocationSite invocationSite, Scope scope) {
-	if (isPublic()) return true;
-
-	SourceTypeBinding invocationType = scope.enclosingSourceType();
-	if (invocationType == declaringClass) return true;
-
-	if (isProtected()) {
-		// answer true if the receiver is in the same package as the invocationType
-		if (invocationType.fPackage == declaringClass.fPackage) return true;
-		return invocationSite.isSuperAccess();
-	}
-
-	if (isPrivate()) {
-		// answer true if the invocationType and the declaringClass have a common enclosingType
-		// already know they are not the identical type
-		ReferenceBinding outerInvocationType = invocationType;
-		ReferenceBinding temp = outerInvocationType.enclosingType();
-		while (temp != null) {
-			outerInvocationType = temp;
-			temp = temp.enclosingType();
-		}
-
-		ReferenceBinding outerDeclaringClass = declaringClass;
-		temp = outerDeclaringClass.enclosingType();
-		while (temp != null) {
-			outerDeclaringClass = temp;
-			temp = temp.enclosingType();
-		}
-		return outerInvocationType == outerDeclaringClass;
-	}
-
-	// isDefault()
-	return invocationType.fPackage == declaringClass.fPackage;
-}
+//public final boolean canBeSeenBy(InvocationSite invocationSite, Scope scope) {
+//	if (isPublic()) return true;
+//
+//	SourceTypeBinding invocationType = scope.enclosingSourceType();
+//	if (invocationType == declaringClass) return true;
+//
+//	if (isProtected()) {
+//		// answer true if the receiver is in the same package as the invocationType
+//		if (invocationType.fPackage == declaringClass.fPackage) return true;
+//		return invocationSite.isSuperAccess();
+//	}
+//
+//	if (isPrivate()) {
+//		// answer true if the invocationType and the declaringClass have a common enclosingType
+//		// already know they are not the identical type
+//		ReferenceBinding outerInvocationType = invocationType;
+//		ReferenceBinding temp = outerInvocationType.enclosingType();
+//		while (temp != null) {
+//			outerInvocationType = temp;
+//			temp = temp.enclosingType();
+//		}
+//
+//		ReferenceBinding outerDeclaringClass = declaringClass;
+//		temp = outerDeclaringClass.enclosingType();
+//		while (temp != null) {
+//			outerDeclaringClass = temp;
+//			temp = temp.enclosingType();
+//		}
+//		return outerInvocationType == outerDeclaringClass;
+//	}
+//
+//	// isDefault()
+//	return invocationType.fPackage == declaringClass.fPackage;
+//}
 /* Answer true if the receiver is visible to the type provided by the scope.
 * InvocationSite implements isSuperAccess() to provide additional information
 * if the receiver is protected.
 *
 * NOTE: Cannot invoke this method with a compilation unit scope.
 */
-public final boolean canBeSeenBy(TypeBinding receiverType, InvocationSite invocationSite, Scope scope) {
-	if (isPublic()) return true;
-
-	SourceTypeBinding invocationType = scope.enclosingSourceType();
-	if (invocationType == declaringClass && invocationType == receiverType) return true;
-
-	if (invocationType == null) // static import call
-		return !isPrivate() && scope.getCurrentPackage() == declaringClass.fPackage;
-
-	if (isProtected()) {
-		// answer true if the invocationType is the declaringClass or they are in the same package
-		// OR the invocationType is a subclass of the declaringClass
-		//    AND the receiverType is the invocationType or its subclass
-		//    OR the method is a static method accessed directly through a type
-		//    OR previous assertions are true for one of the enclosing type
-		if (invocationType == declaringClass) return true;
-		if (invocationType.fPackage == declaringClass.fPackage) return true;
-
-		ReferenceBinding currentType = invocationType;
-		TypeBinding receiverErasure = receiverType;
-		ReferenceBinding declaringErasure = declaringClass;
-		int depth = 0;
-		do {
-			if (currentType.findSuperTypeWithSameErasure(declaringErasure) != null) {
-				if (invocationSite.isSuperAccess())
-					return true;
-				// receiverType can be an array binding in one case... see if you can change it
-				if (receiverType instanceof ArrayBinding)
-					return false;
-				if (isStatic()) {
-					if (depth > 0) invocationSite.setDepth(depth);
-					return true; // see 1FMEPDL - return invocationSite.isTypeAccess();
-				}
-				if (currentType == receiverErasure || receiverErasure.findSuperTypeWithSameErasure(currentType) != null) {
-					if (depth > 0) invocationSite.setDepth(depth);
-					return true;
-				}
-			}
-			depth++;
-			currentType = currentType.enclosingType();
-		} while (currentType != null);
-		return false;
-	}
-
-	if (isPrivate()) {
-		// answer true if the receiverType is the declaringClass
-		// AND the invocationType and the declaringClass have a common enclosingType
-		
-			if (receiverType != declaringClass) {
-			return false;
-		}
-
-		if (invocationType != declaringClass) {
-			ReferenceBinding outerInvocationType = invocationType;
-			ReferenceBinding temp = outerInvocationType.enclosingType();
-			while (temp != null) {
-				outerInvocationType = temp;
-				temp = temp.enclosingType();
-			}
-
-			ReferenceBinding outerDeclaringClass = declaringClass;
-			temp = outerDeclaringClass.enclosingType();
-			while (temp != null) {
-				outerDeclaringClass = temp;
-				temp = temp.enclosingType();
-			}
-			if (outerInvocationType != outerDeclaringClass) return false;
-		}
-		return true;
-	}
-
-	// isDefault()
-	PackageBinding declaringPackage = declaringClass.fPackage;
-	if (invocationType.fPackage != declaringPackage) return false;
-
-	// receiverType can be an array binding in one case... see if you can change it
-	if (receiverType instanceof ArrayBinding)
-		return false;
-	ReferenceBinding currentType = (ReferenceBinding) receiverType;
-	do {
-		if (declaringClass == currentType) return true;
-		PackageBinding currentPackage = currentType.fPackage;
-		// package could be null for wildcards/intersection types, ignore and recurse in superclass
-		if (currentPackage != null && currentPackage != declaringPackage) return false;
-	} while ((currentType = currentType.superclass()) != null);
-	return false;
-}
+//public final boolean canBeSeenBy(TypeBinding receiverType, InvocationSite invocationSite, Scope scope) {
+//	if (isPublic()) return true;
+//
+//	SourceTypeBinding invocationType = scope.enclosingSourceType();
+//	if (invocationType == declaringClass && invocationType == receiverType) return true;
+//
+//	if (invocationType == null) // static import call
+//		return !isPrivate() && scope.getCurrentPackage() == declaringClass.fPackage;
+//
+//	if (isProtected()) {
+//		// answer true if the invocationType is the declaringClass or they are in the same package
+//		// OR the invocationType is a subclass of the declaringClass
+//		//    AND the receiverType is the invocationType or its subclass
+//		//    OR the method is a static method accessed directly through a type
+//		//    OR previous assertions are true for one of the enclosing type
+//		if (invocationType == declaringClass) return true;
+//		if (invocationType.fPackage == declaringClass.fPackage) return true;
+//
+//		ReferenceBinding currentType = invocationType;
+//		TypeBinding receiverErasure = receiverType;
+//		ReferenceBinding declaringErasure = declaringClass;
+//		int depth = 0;
+//		do {
+//			if (currentType.findSuperTypeWithSameErasure(declaringErasure) != null) {
+//				if (invocationSite.isSuperAccess())
+//					return true;
+//				// receiverType can be an array binding in one case... see if you can change it
+//				if (receiverType instanceof ArrayBinding)
+//					return false;
+//				if (isStatic()) {
+//					if (depth > 0) invocationSite.setDepth(depth);
+//					return true; // see 1FMEPDL - return invocationSite.isTypeAccess();
+//				}
+//				if (currentType == receiverErasure || receiverErasure.findSuperTypeWithSameErasure(currentType) != null) {
+//					if (depth > 0) invocationSite.setDepth(depth);
+//					return true;
+//				}
+//			}
+//			depth++;
+//			currentType = currentType.enclosingType();
+//		} while (currentType != null);
+//		return false;
+//	}
+//
+//	if (isPrivate()) {
+//		// answer true if the receiverType is the declaringClass
+//		// AND the invocationType and the declaringClass have a common enclosingType
+//		
+//			if (receiverType != declaringClass) {
+//			return false;
+//		}
+//
+//		if (invocationType != declaringClass) {
+//			ReferenceBinding outerInvocationType = invocationType;
+//			ReferenceBinding temp = outerInvocationType.enclosingType();
+//			while (temp != null) {
+//				outerInvocationType = temp;
+//				temp = temp.enclosingType();
+//			}
+//
+//			ReferenceBinding outerDeclaringClass = declaringClass;
+//			temp = outerDeclaringClass.enclosingType();
+//			while (temp != null) {
+//				outerDeclaringClass = temp;
+//				temp = temp.enclosingType();
+//			}
+//			if (outerInvocationType != outerDeclaringClass) return false;
+//		}
+//		return true;
+//	}
+//
+//	// isDefault()
+//	PackageBinding declaringPackage = declaringClass.fPackage;
+//	if (invocationType.fPackage != declaringPackage) return false;
+//
+//	// receiverType can be an array binding in one case... see if you can change it
+//	if (receiverType instanceof ArrayBinding)
+//		return false;
+//	ReferenceBinding currentType = (ReferenceBinding) receiverType;
+//	do {
+//		if (declaringClass == currentType) return true;
+//		PackageBinding currentPackage = currentType.fPackage;
+//		// package could be null for wildcards/intersection types, ignore and recurse in superclass
+//		if (currentPackage != null && currentPackage != declaringPackage) return false;
+//	} while ((currentType = currentType.superclass()) != null);
+//	return false;
+//}
 /*
  * declaringUniqueKey dot selector genericSignature
  * p.X { <T> void bar(X<T> t) } --> Lp/X;.bar<T:Ljava/lang/Object;>(LX<TT;>;)V
@@ -531,36 +531,36 @@ public final char[] signature() /* (ILjava/lang/Thread;)Ljava/lang/Object; */ {
 
 	return signature;
 }
-public final int sourceEnd() {
-	AbstractMethodDeclaration method = sourceMethod();
-	if (method == null) {
-		if (this.declaringClass instanceof SourceTypeBinding)
-			return ((SourceTypeBinding) this.declaringClass).sourceEnd();
-		return 0;
-	}
-	return method.sourceEnd;
-}
-public AbstractMethodDeclaration sourceMethod() {
-	SourceTypeBinding sourceType;
-	try {
-		sourceType = (SourceTypeBinding) declaringClass;
-	} catch (ClassCastException e) {
-		return null;
-	}
-
-	if (sourceType!=null)
-		return sourceType.sourceMethod(this);
-	return null;
-}
-public final int sourceStart() {
-	AbstractMethodDeclaration method = sourceMethod();
-	if (method == null) {
-		if (this.declaringClass instanceof SourceTypeBinding)
-			return ((SourceTypeBinding) this.declaringClass).sourceStart();
-		return 0;
-	}
-	return method.sourceStart;
-}
+//public final int sourceEnd() {
+//	AbstractMethodDeclaration method = sourceMethod();
+//	if (method == null) {
+//		if (this.declaringClass instanceof SourceTypeBinding)
+//			return ((SourceTypeBinding) this.declaringClass).sourceEnd();
+//		return 0;
+//	}
+//	return method.sourceEnd;
+//}
+//public AbstractMethodDeclaration sourceMethod() {
+//	SourceTypeBinding sourceType;
+//	try {
+//		sourceType = (SourceTypeBinding) declaringClass;
+//	} catch (ClassCastException e) {
+//		return null;
+//	}
+//
+//	if (sourceType!=null)
+//		return sourceType.sourceMethod(this);
+//	return null;
+//}
+//public final int sourceStart() {
+//	AbstractMethodDeclaration method = sourceMethod();
+//	if (method == null) {
+//		if (this.declaringClass instanceof SourceTypeBinding)
+//			return ((SourceTypeBinding) this.declaringClass).sourceStart();
+//		return 0;
+//	}
+//	return method.sourceStart;
+//}
 
 public String toString() {
 	String s = (returnType != null) ? returnType.debugName() : "NULL TYPE"; //$NON-NLS-1$
@@ -591,10 +591,10 @@ public MethodBinding tiebreakMethod() {
 	return this;
 }
 
-public void createFunctionTypeBinding(Scope scope)
-{
-	functionTypeBinding=new FunctionTypeBinding(this,scope);
-}
+//public void createFunctionTypeBinding(Scope scope)
+//{
+//	functionTypeBinding=new FunctionTypeBinding(this,scope);
+//}
 
 public MethodBinding createNamedMethodBinding(char [] name)
 {
@@ -614,14 +614,14 @@ public void cleanup() {
 	
 }
 
-void ensureBindingsAreComplete()
-{
-	if (this.declaringClass instanceof SourceTypeBinding) {
-		SourceTypeBinding parentBinding = (SourceTypeBinding) this.declaringClass;
-		if ((parentBinding.tagBits & TagBits.AreMethodsComplete) == 0) {
-				parentBinding.methods(); //finish resolving method bindings 
-		}
-	}
-}
- 
+//void ensureBindingsAreComplete()
+//{
+//	if (this.declaringClass instanceof SourceTypeBinding) {
+//		SourceTypeBinding parentBinding = (SourceTypeBinding) this.declaringClass;
+//		if ((parentBinding.tagBits & TagBits.AreMethodsComplete) == 0) {
+//				parentBinding.methods(); //finish resolving method bindings 
+//		}
+//	}
+//}
+// 
 }

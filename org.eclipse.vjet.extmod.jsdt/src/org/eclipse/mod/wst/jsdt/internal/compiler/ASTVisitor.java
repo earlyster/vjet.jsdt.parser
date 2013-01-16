@@ -12,9 +12,6 @@ package org.eclipse.mod.wst.jsdt.internal.compiler;
 
 
 import org.eclipse.mod.wst.jsdt.core.compiler.IProblem;
-import org.eclipse.mod.wst.jsdt.core.infer.InferredAttribute;
-import org.eclipse.mod.wst.jsdt.core.infer.InferredMethod;
-import org.eclipse.mod.wst.jsdt.core.infer.InferredType;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.AND_AND_Expression;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.AllocationExpression;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.Argument;
@@ -28,7 +25,6 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.ast.BinaryExpression;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.Block;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.BreakStatement;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.CaseStatement;
-import org.eclipse.mod.wst.jsdt.internal.compiler.ast.CharLiteral;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ClassLiteralAccess;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.Clinit;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.CompilationUnitDeclaration;
@@ -36,6 +32,7 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.ast.CompoundAssignment;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ConditionalExpression;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ConstructorDeclaration;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ContinueStatement;
+import org.eclipse.mod.wst.jsdt.internal.compiler.ast.DebuggerStatement;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.DoStatement;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.DoubleLiteral;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.EmptyStatement;
@@ -45,7 +42,6 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ExtendedStringLiteral;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.FalseLiteral;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.FieldDeclaration;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.FieldReference;
-import org.eclipse.mod.wst.jsdt.internal.compiler.ast.FloatLiteral;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ForInStatement;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ForStatement;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ForeachStatement;
@@ -70,18 +66,17 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.ast.JavadocSingleTypeReference
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.LabeledStatement;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ListExpression;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.LocalDeclaration;
-import org.eclipse.mod.wst.jsdt.internal.compiler.ast.LongLiteral;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.MessageSend;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.NullLiteral;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.OR_OR_Expression;
+import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ObjectGetterSetterField;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ObjectLiteral;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ObjectLiteralField;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.PostfixExpression;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.PrefixExpression;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.QualifiedAllocationExpression;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.QualifiedNameReference;
-import org.eclipse.mod.wst.jsdt.internal.compiler.ast.QualifiedSuperReference;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.QualifiedThisReference;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.QualifiedTypeReference;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.RegExLiteral;
@@ -170,9 +165,6 @@ public abstract class ASTVisitor {
 	public void endVisit(CaseStatement caseStatement, BlockScope scope) {
 		// do nothing by default
 	}
-	public void endVisit(CharLiteral charLiteral, BlockScope scope) {
-		// do nothing by default
-	}
 	public void endVisit(ClassLiteralAccess classLiteral, BlockScope scope) {
 		// do nothing by default
 	}
@@ -234,9 +226,6 @@ public abstract class ASTVisitor {
 	public void endVisit(FieldReference fieldReference, ClassScope scope) {
 		// do nothing by default
 	}
-	public void endVisit(FloatLiteral floatLiteral, BlockScope scope) {
-		// do nothing by default
-	}
 	public void endVisit(ForeachStatement forStatement, BlockScope scope) {
 		// do nothing by default
 	}
@@ -254,9 +243,6 @@ public abstract class ASTVisitor {
 		// do nothing by default
 	}
 	public void endVisit(ImportReference importRef, CompilationUnitScope scope) {
-		// do nothing by default
-	}
-	public void endVisit(InferredType inferredType, BlockScope scope) {
 		// do nothing by default
 	}
 
@@ -352,9 +338,6 @@ public abstract class ASTVisitor {
 	public void endVisit(ListExpression listDeclaration, BlockScope scope) {
 		// do nothing by default
 	}
-	public void endVisit(LongLiteral longLiteral, BlockScope scope) {
-		// do nothing by default
-	}
 	public void endVisit(MessageSend messageSend, BlockScope scope) {
 		// do nothing by default
 	}
@@ -391,16 +374,8 @@ public abstract class ASTVisitor {
 			ClassScope scope) {
 		// do nothing by default
 	}
-	public void endVisit(
-    		QualifiedSuperReference qualifiedSuperReference,
-    		BlockScope scope) {
-		// do nothing by default
-	}
-	public void endVisit(
-    		QualifiedSuperReference qualifiedSuperReference,
-    		ClassScope scope) {
-		// do nothing by default
-	}
+	
+
 	public void endVisit(
     		QualifiedThisReference qualifiedThisReference,
     		BlockScope scope) {
@@ -559,9 +534,7 @@ public abstract class ASTVisitor {
 	public boolean visit(CaseStatement caseStatement, BlockScope scope) {
 		return true; // do nothing by default, keep traversing
 	}
-	public boolean visit(CharLiteral charLiteral, BlockScope scope) {
-		return true; // do nothing by default, keep traversing
-	}
+
 	public boolean visit(ClassLiteralAccess classLiteral, BlockScope scope) {
 		return true; // do nothing by default, keep traversing
 	}
@@ -623,9 +596,7 @@ public abstract class ASTVisitor {
 	public boolean visit(FieldReference fieldReference, ClassScope scope) {
 		return true; // do nothing by default, keep traversing
 	}
-	public boolean visit(FloatLiteral floatLiteral, BlockScope scope) {
-		return true; // do nothing by default, keep traversing
-	}
+
 	public boolean visit(ForeachStatement forStatement, BlockScope scope) {
 		return true; // do nothing by default, keep traversing
 	}
@@ -642,18 +613,6 @@ public abstract class ASTVisitor {
 		return true; // do nothing by default, keep traversing
 	}
 	public boolean visit(ImportReference importRef, CompilationUnitScope scope) {
-		return true; // do nothing by default, keep traversing
-	}
-
-	public boolean visit(InferredType inferredType, BlockScope scope) {
-		return true; // do nothing by default, keep traversing
-	}
-
-	public boolean visit(InferredMethod inferredMethod, BlockScope scope) {
-		return true; // do nothing by default, keep traversing
-	}
-
-	public boolean visit(InferredAttribute inferredField, BlockScope scope) {
 		return true; // do nothing by default, keep traversing
 	}
 	public boolean visit(Initializer initializer, MethodScope scope) {
@@ -748,9 +707,7 @@ public abstract class ASTVisitor {
 	public boolean visit(ListExpression listDeclaration, BlockScope scope) {
 		return true; // do nothing by default, keep traversing
 	}
-	public boolean visit(LongLiteral longLiteral, BlockScope scope) {
-		return true; // do nothing by default, keep traversing
-	}
+
 	public boolean visit(MessageSend messageSend, BlockScope scope) {
 		return true; // do nothing by default, keep traversing
 	}
@@ -789,16 +746,7 @@ public abstract class ASTVisitor {
 			ClassScope scope) {
 		return true; // do nothing by default, keep traversing
 	}
-	public boolean visit(
-    		QualifiedSuperReference qualifiedSuperReference,
-    		BlockScope scope) {
-		return true; // do nothing by default, keep traversing
-	}
-	public boolean visit(
-    		QualifiedSuperReference qualifiedSuperReference,
-    		ClassScope scope) {
-		return true; // do nothing by default, keep traversing
-	}
+
 	public boolean visit(
 			QualifiedThisReference qualifiedThisReference,
 			BlockScope scope) {
@@ -906,5 +854,15 @@ public abstract class ASTVisitor {
 		return true; // do nothing by default, keep traversing
 	}
 	public void endVisit(ObjectLiteralField field, BlockScope scope) {
+	}
+	public boolean visit(DebuggerStatement statement, BlockScope scope) {
+		return true; // do nothing by default, keep traversing
+	}
+	public void endVisit(DebuggerStatement statement, BlockScope scope) {
+	}
+	public boolean visit(ObjectGetterSetterField field, BlockScope scope) {
+		return true; // do nothing by default, keep traversing
+	}
+	public void endVisit(ObjectGetterSetterField field, BlockScope scope) {
 	}
 }

@@ -191,53 +191,53 @@ abstract public class TypeBinding extends Binding {
 		return null;
 	}
 
-	/**
-	 * Find supertype which erases to a given type, or null if not found
-	 */
-	public TypeBinding findSuperTypeWithSameErasure(TypeBinding otherType) {
-		if (this == otherType)
-			return this;
-		if (otherType == null)
-			return null;
-		switch (kind()) {
-		case Binding.ARRAY_TYPE:
-			ArrayBinding arrayType = (ArrayBinding) this;
-			int otherDim = otherType.dimensions();
-			if (arrayType.dimensions != otherDim) {
-				switch (otherType.id) {
-				case TypeIds.T_JavaLangObject:
-					return otherType;
-				}
-				if (otherDim < arrayType.dimensions
-						&& otherType.leafComponentType().id == TypeIds.T_JavaLangObject) {
-					return otherType; // X[][] has Object[] as an implicit
-										// supertype
-				}
-				return null;
-			}
-			if (!(arrayType.leafComponentType instanceof ReferenceBinding))
-				return null;
-			TypeBinding leafSuperType = arrayType.leafComponentType
-					.findSuperTypeWithSameErasure(otherType.leafComponentType());
-			if (leafSuperType == null)
-				return null;
-			return arrayType.environment().createArrayType(leafSuperType,
-					arrayType.dimensions);
-
-		case Binding.TYPE:
-			if (this == otherType || (this == otherType))
-				return this;
-
-			ReferenceBinding currentType = (ReferenceBinding) this;
-
-			while ((currentType = currentType.superclass()) != null) {
-				if (currentType == otherType || (currentType == otherType))
-					return currentType;
-			}
-			return null;
-		}
-		return null;
-	}
+//	/**
+//	 * Find supertype which erases to a given type, or null if not found
+//	 */
+//	public TypeBinding findSuperTypeWithSameErasure(TypeBinding otherType) {
+//		if (this == otherType)
+//			return this;
+//		if (otherType == null)
+//			return null;
+//		switch (kind()) {
+//		case Binding.ARRAY_TYPE:
+//			ArrayBinding arrayType = (ArrayBinding) this;
+//			int otherDim = otherType.dimensions();
+//			if (arrayType.dimensions != otherDim) {
+//				switch (otherType.id) {
+//				case TypeIds.T_JavaLangObject:
+//					return otherType;
+//				}
+//				if (otherDim < arrayType.dimensions
+//						&& otherType.leafComponentType().id == TypeIds.T_JavaLangObject) {
+//					return otherType; // X[][] has Object[] as an implicit
+//										// supertype
+//				}
+//				return null;
+//			}
+//			if (!(arrayType.leafComponentType instanceof ReferenceBinding))
+//				return null;
+//			TypeBinding leafSuperType = arrayType.leafComponentType
+//					.findSuperTypeWithSameErasure(otherType.leafComponentType());
+//			if (leafSuperType == null)
+//				return null;
+//			return arrayType.environment().createArrayType(leafSuperType,
+//					arrayType.dimensions);
+//
+//		case Binding.TYPE:
+//			if (this == otherType || (this == otherType))
+//				return this;
+//
+//			ReferenceBinding currentType = (ReferenceBinding) this;
+//
+//			while ((currentType = currentType.superclass()) != null) {
+//				if (currentType == otherType || (currentType == otherType))
+//					return currentType;
+//			}
+//			return null;
+//		}
+//		return null;
+//	}
 
 	/**
 	 * Returns the type to use for generic cast, or null if none required
@@ -418,21 +418,21 @@ abstract public class TypeBinding extends Binding {
 	 * Meant to be invoked on compatible types, to figure if unchecked
 	 * conversion is necessary
 	 */
-	public boolean needsUncheckedConversion(TypeBinding targetType) {
-
-		if (this == targetType)
-			return false;
-		targetType = targetType.leafComponentType();
-		if (!(targetType instanceof ReferenceBinding))
-			return false;
-
-		TypeBinding currentType = this.leafComponentType();
-		TypeBinding match = currentType
-				.findSuperTypeWithSameErasure(targetType);
-		if (!(match instanceof ReferenceBinding))
-			return false;
-		return false;
-	}
+//	public boolean needsUncheckedConversion(TypeBinding targetType) {
+//
+//		if (this == targetType)
+//			return false;
+//		targetType = targetType.leafComponentType();
+//		if (!(targetType instanceof ReferenceBinding))
+//			return false;
+//
+//		TypeBinding currentType = this.leafComponentType();
+//		TypeBinding match = currentType
+//				.findSuperTypeWithSameErasure(targetType);
+//		if (!(match instanceof ReferenceBinding))
+//			return false;
+//		return false;
+//	}
 
 	/**
 	 * Answer the qualified name of the receiver's package separated by periods

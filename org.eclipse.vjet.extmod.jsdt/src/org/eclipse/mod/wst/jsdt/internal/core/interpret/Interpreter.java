@@ -30,17 +30,17 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.util.Util;
 public class Interpreter {
 
 	
-	public static InterpreterResult interpet(String code, InterpreterContext context)
-	{
-		InterpretedScript parsedUnit = parseString(code);
-
-		InterpreterResult result = interpret(parsedUnit.compilationUnit, context);
-		
-		parsedUnit.compilationUnit.cleanUp();
-		
-		return result;
-
-	}
+//	public static InterpreterResult interpet(String code, InterpreterContext context)
+//	{
+//		InterpretedScript parsedUnit = parseString(code);
+//
+//		InterpreterResult result = interpret(parsedUnit.compilationUnit, context);
+//		
+//		parsedUnit.compilationUnit.cleanUp();
+//		
+//		return result;
+//
+//	}
 
 
 	public static InterpretedScript parseFile(String fileName) {

@@ -173,8 +173,7 @@ public class RangeUtil {
 	}
 
 	public static boolean containsIgnoredBody(AbstractMethodDeclaration method){
-		return !method.isDefaultConstructor()
-			&& !method.isClinit()
+		return !method.isClinit()
 			&& (method.modifiers & ExtraCompilerModifiers.AccSemicolonBody) == 0;
 	}
 }

@@ -40,18 +40,18 @@ public class InitializationFlowContext extends ExceptionHandlingFlowContext {
 			FlowInfo.DEAD_END);
 	}
 
-	public void checkInitializerExceptions(
-		BlockScope currentScope,
-		FlowContext initializerContext,
-		FlowInfo flowInfo) {
-		for (int i = 0; i < exceptionCount; i++) {
-			initializerContext.checkExceptionHandlers(
-				thrownExceptions[i],
-				exceptionThrowers[i],
-				exceptionThrowerFlowInfos[i],
-				currentScope);
-		}
-	}
+//	public void checkInitializerExceptions(
+//		BlockScope currentScope,
+//		FlowContext initializerContext,
+//		FlowInfo flowInfo) {
+//		for (int i = 0; i < exceptionCount; i++) {
+//			initializerContext.checkExceptionHandlers(
+//				thrownExceptions[i],
+//				exceptionThrowers[i],
+//				exceptionThrowerFlowInfos[i],
+//				currentScope);
+//		}
+//	}
 
 	public String individualToString() {
 

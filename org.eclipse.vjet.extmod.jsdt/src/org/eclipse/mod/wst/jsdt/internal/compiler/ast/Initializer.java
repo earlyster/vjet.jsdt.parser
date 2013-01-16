@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
-
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IInitializer;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
@@ -19,7 +18,6 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowContext;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowInfo;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.MethodScope;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.parser.Parser;
 
 public class Initializer extends FieldDeclaration implements IInitializer {
@@ -38,16 +36,9 @@ public class Initializer extends FieldDeclaration implements IInitializer {
 		declarationSourceStart = sourceStart = block.sourceStart;
 	}
 
-	public FlowInfo analyseCode(
-		MethodScope currentScope,
-		FlowContext flowContext,
-		FlowInfo flowInfo) {
-
-		return block.analyseCode(currentScope, flowContext, flowInfo);
-	}
 
 	/**
-	 * @see org.eclipse.mod.wst.jsdt.internal.compiler.ast.AbstractVariableDeclaration#getKind()
+	 * @see org.eclipse.wst.jsdt.internal.compiler.ast.AbstractVariableDeclaration#getKind()
 	 */
 	public int getKind() {
 		return AbstractVariableDeclaration.INITIALIZER;
@@ -81,26 +72,19 @@ public class Initializer extends FieldDeclaration implements IInitializer {
 		}
 	}
 
-	public void resolve(MethodScope scope) {
-
-	    FieldBinding previousField = scope.initializedField;
-		int previousFieldID = scope.lastVisibleFieldID;
-		try {
-		    scope.initializedField = null;
-			scope.lastVisibleFieldID = lastVisibleFieldID;
-			if (isStatic()) {
-				ReferenceBinding declaringType = scope.enclosingSourceType();
-				if (declaringType.isNestedType() && !declaringType.isStatic())
-					scope.problemReporter().innerTypesCannotDeclareStaticInitializers(
-						declaringType,
-						this);
-			}
-			block.resolve(scope);
-		} finally {
-		    scope.initializedField = previousField;
-			scope.lastVisibleFieldID = previousFieldID;
-		}
-	}
+//	public void resolve(MethodScope scope) {
+//
+//	    FieldBinding previousField = scope.initializedField;
+//		int previousFieldID = scope.lastVisibleFieldID;
+//		try {
+//		    scope.initializedField = null;
+//			scope.lastVisibleFieldID = lastVisibleFieldID;
+//			block.resolve(scope);
+//		} finally {
+//		    scope.initializedField = previousField;
+//			scope.lastVisibleFieldID = previousFieldID;
+//		}
+//	}
 
 	public void traverse(ASTVisitor visitor, MethodScope scope) {
 

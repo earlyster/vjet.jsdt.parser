@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IUndefinedLiteral;
@@ -24,12 +23,10 @@ public class UndefinedLiteral extends MagicLiteral implements IUndefinedLiteral 
 	static final char[] source = {'u' , 'n' , 'd' , 'e', 'f', 'i', 'n', 'e', 'd'};
 
 	public UndefinedLiteral(int s , int e) {
-
 		super(s,e);
 	}
 
 	public void computeConstant() {
-
 		constant = Constant.NotAConstant;
 	}
 
@@ -53,8 +50,8 @@ public class UndefinedLiteral extends MagicLiteral implements IUndefinedLiteral 
 		visitor.visit(this, scope);
 		visitor.endVisit(this, scope);
 	}
+	
 	public int getASTType() {
 		return IASTNode.UNDEFINED_LITERAL;
-	
 	}
 }

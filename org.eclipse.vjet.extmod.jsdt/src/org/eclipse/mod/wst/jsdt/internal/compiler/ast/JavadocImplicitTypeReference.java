@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2008 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IJsDocImplicitTypeReference;
@@ -37,13 +36,13 @@ public class JavadocImplicitTypeReference extends TypeReference implements IJsDo
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.wst.jsdt.internal.compiler.ast.TypeReference#getTypeBinding(org.eclipse.wst.jsdt.internal.compiler.lookup.Scope)
-	 */
-	protected TypeBinding getTypeBinding(Scope scope) {
-		this.constant = Constant.NotAConstant;
-		return this.resolvedType = scope.enclosingSourceType();
-	}
+//	/* (non-Javadoc)
+//	 * @see org.eclipse.wst.jsdt.internal.compiler.ast.TypeReference#getTypeBinding(org.eclipse.wst.jsdt.internal.compiler.lookup.Scope)
+//	 */
+//	protected TypeBinding getTypeBinding(Scope scope) {
+//		this.constant = Constant.NotAConstant;
+//		return this.resolvedType = scope.enclosingSourceType();
+//	}
 
 	public char[] getLastToken() {
 		return this.token;
@@ -63,42 +62,41 @@ public class JavadocImplicitTypeReference extends TypeReference implements IJsDo
 		return true;
 	}
 
-	/*
-	 * Resolves type on a Block, Class or JavaScriptUnit scope.
-	 * We need to modify resoling behavior to avoid raw type creation.
-	 */
-	private TypeBinding internalResolveType(Scope scope) {
-		// handle the error here
-		this.constant = Constant.NotAConstant;
-		if (this.resolvedType != null) // is a shared type reference which was already resolved
-			return this.resolvedType.isValidBinding() ? this.resolvedType : null; // already reported error
+//	/*
+//	 * Resolves type on a Block, Class or JavaScriptUnit scope.
+//	 * We need to modify resoling behavior to avoid raw type creation.
+//	 */
+//	private TypeBinding internalResolveType(Scope scope) {
+//		// handle the error here
+//		this.constant = Constant.NotAConstant;
+//		if (this.resolvedType != null) // is a shared type reference which was already resolved
+//			return this.resolvedType.isValidBinding() ? this.resolvedType : null; // already reported error
+//
+//		this.resolvedType = scope.enclosingSourceType();
+//		if (this.resolvedType == null)
+//			return null; // detected cycle while resolving hierarchy
+//		if (!this.resolvedType.isValidBinding()) {
+//			reportInvalidType(scope);
+//			return null;
+//		}
+//		if (isTypeUseDeprecated(this.resolvedType, scope))
+//			reportDeprecatedType(this.resolvedType, scope);
+//		return this.resolvedType;
+//	}
+//	protected void reportInvalidType(Scope scope) {
+//		scope.problemReporter().javadocInvalidType(this, this.resolvedType, scope.getDeclarationModifiers());
+//	}
+//	protected void reportDeprecatedType(TypeBinding type, Scope scope) {
+//		scope.problemReporter().javadocDeprecatedType(type, this, scope.getDeclarationModifiers());
+//	}
 
-		this.resolvedType = scope.enclosingSourceType();
-		if (this.resolvedType == null)
-			return null; // detected cycle while resolving hierarchy
-		if (!this.resolvedType.isValidBinding()) {
-			reportInvalidType(scope);
-			return null;
-		}
-		if (isTypeUseDeprecated(this.resolvedType, scope))
-			reportDeprecatedType(this.resolvedType, scope);
-		return this.resolvedType;
-	}
+//	public TypeBinding resolveType(BlockScope blockScope, boolean checkBounds) {
+//		return internalResolveType(blockScope);
+//	}
 
-	protected void reportInvalidType(Scope scope) {
-		scope.problemReporter().javadocInvalidType(this, this.resolvedType, scope.getDeclarationModifiers());
-	}
-	protected void reportDeprecatedType(TypeBinding type, Scope scope) {
-		scope.problemReporter().javadocDeprecatedType(type, this, scope.getDeclarationModifiers());
-	}
-
-	public TypeBinding resolveType(BlockScope blockScope, boolean checkBounds) {
-		return internalResolveType(blockScope);
-	}
-
-	public TypeBinding resolveType(ClassScope classScope) {
-		return internalResolveType(classScope);
-	}
+//	public TypeBinding resolveType(ClassScope classScope) {
+//		return internalResolveType(classScope);
+//	}
 
 	public void traverse(ASTVisitor visitor, BlockScope scope) {
 		visitor.visit(this, scope);

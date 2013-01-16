@@ -77,10 +77,10 @@ public int dimensions() {
 * When the receiver's dimension size is one then answer the leaf component type.
 */
 
-public TypeBinding elementsType() {
-	if (this.dimensions == 1) return this.leafComponentType;
-	return this.environment.createArrayType(this.leafComponentType, this.dimensions - 1);
-}
+//public TypeBinding elementsType() {
+//	if (this.dimensions == 1) return this.leafComponentType;
+//	return this.environment.createArrayType(this.leafComponentType, this.dimensions - 1);
+//}
 
 public LookupEnvironment environment() {
     return this.environment;
@@ -199,13 +199,9 @@ public String toString() {
 	return leafComponentType != null ? debugName() : "NULL TYPE ARRAY"; //$NON-NLS-1$
 }
 
-public FieldBinding[] availableFields() {
-	return referenceBinding.availableFields();
-}
-
-public MethodBinding[] availableMethods() {
-	return referenceBinding.availableMethods();
-}
+//public FieldBinding[] availableFields() {
+//	return referenceBinding.availableFields();
+//}
 
 public int fieldCount() {
 	return referenceBinding.fieldCount();
@@ -213,25 +209,6 @@ public int fieldCount() {
 
 public FieldBinding[] fields() {
 	return referenceBinding.fields();
-}
-
-//public InferredType getInferredType() {
-//	return referenceBinding.getInferredType();
-//}
-
-public MethodBinding[] getMethods(char[] selector) {
-	return referenceBinding.getMethods(selector);
-}
-
-boolean implementsMethod(MethodBinding method) {
-	return referenceBinding.implementsMethod(method);
-}
-
-public MethodBinding[] methods() {
-	return referenceBinding.methods();
-}
-public MethodBinding getExactMethod(char[] selector, TypeBinding[] argumentTypes, CompilationUnitScope refScope) {
-	return referenceBinding.getExactMethod(selector, argumentTypes, refScope);
 }
 
 public FieldBinding getField(char[] fieldName, boolean needResolve) {

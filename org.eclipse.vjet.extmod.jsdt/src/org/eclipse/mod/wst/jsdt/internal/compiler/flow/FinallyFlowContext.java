@@ -39,106 +39,106 @@ public class FinallyFlowContext extends FlowContext {
 		super(parent, associatedNode);
 	}
 
-/**
- * Given some contextual initialization info (derived from a try block or a catch block), this
- * code will check that the subroutine context does not also initialize a final variable potentially set
- * redundantly.
- */
-public void complainOnDeferredChecks(FlowInfo flowInfo, BlockScope scope) {
-
-	// check redundant final assignments
-	for (int i = 0; i < this.assignCount; i++) {
-		VariableBinding variable = this.finalVariables[i];
-		if (variable == null) continue;
-
-		boolean complained = false; // remember if have complained on this final assignment
-		if (variable instanceof FieldBinding) {
-			// final field
-			if (flowInfo.isPotentiallyAssigned((FieldBinding)variable)) {
-				complained = true;
-				scope.problemReporter().duplicateInitializationOfBlankFinalField((FieldBinding)variable, finalAssignments[i]);
-			}
-		} else {
-			// final local variable
-			if (flowInfo.isPotentiallyAssigned((LocalVariableBinding) variable)) {
-				complained = true;
-				scope.problemReporter().duplicateInitializationOfFinalLocal(
-					(LocalVariableBinding) variable,
-					this.finalAssignments[i]);
-			}
-		}
-		// any reference reported at this level is removed from the parent context
-		// where it could also be reported again
-		if (complained) {
-			FlowContext currentContext = this.parent;
-			while (currentContext != null) {
-				//if (currentContext.isSubRoutine()) {
-				currentContext.removeFinalAssignmentIfAny(this.finalAssignments[i]);
-				//}
-				currentContext = currentContext.parent;
-			}
-		}
-	}
-
-	// check inconsistent null checks
-	if (this.deferNullDiagnostic) { // within an enclosing loop, be conservative
-		for (int i = 0; i < this.nullCount; i++) {
-			this.parent.recordUsingNullReference(scope, this.nullLocals[i],
-					this.nullReferences[i],	this.nullCheckTypes[i], flowInfo);
-		}
-	}
-	else { // no enclosing loop, be as precise as possible right now
-		for (int i = 0; i < this.nullCount; i++) {
-			Expression expression = this.nullReferences[i];
-			// final local variable
-			LocalVariableBinding local = this.nullLocals[i];
-			switch (this.nullCheckTypes[i]) {
-				case CAN_ONLY_NULL_NON_NULL | IN_COMPARISON_NULL:
-				case CAN_ONLY_NULL_NON_NULL | IN_COMPARISON_NON_NULL:
-					if (flowInfo.isDefinitelyNonNull(local)) {
-						if (this.nullCheckTypes[i] == (CAN_ONLY_NULL_NON_NULL | IN_COMPARISON_NON_NULL)) {
-							scope.problemReporter().localVariableRedundantCheckOnNonNull(local, expression);
-						} else {
-							scope.problemReporter().localVariableNonNullComparedToNull(local, expression);
-						}
-						continue;
-					}
-				case CAN_ONLY_NULL | IN_COMPARISON_NULL:
-				case CAN_ONLY_NULL | IN_COMPARISON_NON_NULL:
-				case CAN_ONLY_NULL | IN_ASSIGNMENT:
-				case CAN_ONLY_NULL | IN_INSTANCEOF:
-					if (flowInfo.isDefinitelyNull(local)) {
-						switch(this.nullCheckTypes[i] & CONTEXT_MASK) {
-							case FlowContext.IN_COMPARISON_NULL:
-								scope.problemReporter().localVariableRedundantCheckOnNull(local, expression);
-								continue;
-							case FlowContext.IN_COMPARISON_NON_NULL:
-								scope.problemReporter().localVariableNullComparedToNonNull(local, expression);
-								continue;
-							case FlowContext.IN_ASSIGNMENT:
-								scope.problemReporter().localVariableRedundantNullAssignment(local, expression);
-								continue;
-							case FlowContext.IN_INSTANCEOF:
-								scope.problemReporter().localVariableNullInstanceof(local, expression);
-								continue;
-						}
-					}
-					break;
-				case MAY_NULL:
-					if (flowInfo.isDefinitelyNull(local)) {
-						scope.problemReporter().localVariableNullReference(local, expression);
-						continue;
-					}
-					if (flowInfo.isPotentiallyNull(local)) {
-						scope.problemReporter().localVariablePotentialNullReference(local, expression);
-					}
-					break;
-				default:
-					// should not happen
-			}
-		}
-	}
-}
+///**
+// * Given some contextual initialization info (derived from a try block or a catch block), this
+// * code will check that the subroutine context does not also initialize a final variable potentially set
+// * redundantly.
+// */
+//public void complainOnDeferredChecks(FlowInfo flowInfo, BlockScope scope) {
+//
+//	// check redundant final assignments
+//	for (int i = 0; i < this.assignCount; i++) {
+//		VariableBinding variable = this.finalVariables[i];
+//		if (variable == null) continue;
+//
+//		boolean complained = false; // remember if have complained on this final assignment
+//		if (variable instanceof FieldBinding) {
+//			// final field
+//			if (flowInfo.isPotentiallyAssigned((FieldBinding)variable)) {
+//				complained = true;
+//				scope.problemReporter().duplicateInitializationOfBlankFinalField((FieldBinding)variable, finalAssignments[i]);
+//			}
+//		} else {
+//			// final local variable
+//			if (flowInfo.isPotentiallyAssigned((LocalVariableBinding) variable)) {
+//				complained = true;
+//				scope.problemReporter().duplicateInitializationOfFinalLocal(
+//					(LocalVariableBinding) variable,
+//					this.finalAssignments[i]);
+//			}
+//		}
+//		// any reference reported at this level is removed from the parent context
+//		// where it could also be reported again
+//		if (complained) {
+//			FlowContext currentContext = this.parent;
+//			while (currentContext != null) {
+//				//if (currentContext.isSubRoutine()) {
+//				currentContext.removeFinalAssignmentIfAny(this.finalAssignments[i]);
+//				//}
+//				currentContext = currentContext.parent;
+//			}
+//		}
+//	}
+//
+//	// check inconsistent null checks
+//	if (this.deferNullDiagnostic) { // within an enclosing loop, be conservative
+//		for (int i = 0; i < this.nullCount; i++) {
+//			this.parent.recordUsingNullReference(scope, this.nullLocals[i],
+//					this.nullReferences[i],	this.nullCheckTypes[i], flowInfo);
+//		}
+//	}
+//	else { // no enclosing loop, be as precise as possible right now
+//		for (int i = 0; i < this.nullCount; i++) {
+//			Expression expression = this.nullReferences[i];
+//			// final local variable
+//			LocalVariableBinding local = this.nullLocals[i];
+//			switch (this.nullCheckTypes[i]) {
+//				case CAN_ONLY_NULL_NON_NULL | IN_COMPARISON_NULL:
+//				case CAN_ONLY_NULL_NON_NULL | IN_COMPARISON_NON_NULL:
+//					if (flowInfo.isDefinitelyNonNull(local)) {
+//						if (this.nullCheckTypes[i] == (CAN_ONLY_NULL_NON_NULL | IN_COMPARISON_NON_NULL)) {
+//							scope.problemReporter().localVariableRedundantCheckOnNonNull(local, expression);
+//						} else {
+//							scope.problemReporter().localVariableNonNullComparedToNull(local, expression);
+//						}
+//						continue;
+//					}
+//				case CAN_ONLY_NULL | IN_COMPARISON_NULL:
+//				case CAN_ONLY_NULL | IN_COMPARISON_NON_NULL:
+//				case CAN_ONLY_NULL | IN_ASSIGNMENT:
+//				case CAN_ONLY_NULL | IN_INSTANCEOF:
+//					if (flowInfo.isDefinitelyNull(local)) {
+//						switch(this.nullCheckTypes[i] & CONTEXT_MASK) {
+//							case FlowContext.IN_COMPARISON_NULL:
+//								scope.problemReporter().localVariableRedundantCheckOnNull(local, expression);
+//								continue;
+//							case FlowContext.IN_COMPARISON_NON_NULL:
+//								scope.problemReporter().localVariableNullComparedToNonNull(local, expression);
+//								continue;
+//							case FlowContext.IN_ASSIGNMENT:
+//								scope.problemReporter().localVariableRedundantNullAssignment(local, expression);
+//								continue;
+//							case FlowContext.IN_INSTANCEOF:
+//								scope.problemReporter().localVariableNullInstanceof(local, expression);
+//								continue;
+//						}
+//					}
+//					break;
+//				case MAY_NULL:
+//					if (flowInfo.isDefinitelyNull(local)) {
+//						scope.problemReporter().localVariableNullReference(local, expression);
+//						continue;
+//					}
+//					if (flowInfo.isPotentiallyNull(local)) {
+//						scope.problemReporter().localVariablePotentialNullReference(local, expression);
+//					}
+//					break;
+//				default:
+//					// should not happen
+//			}
+//		}
+//	}
+//}
 
 	public String individualToString() {
 

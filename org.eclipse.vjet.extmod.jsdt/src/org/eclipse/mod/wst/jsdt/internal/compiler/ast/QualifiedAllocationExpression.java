@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,18 +13,8 @@ package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IQualifiedAllocationExpression;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
-import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowContext;
-import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowInfo;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.impl.Constant;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.Binding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BlockScope;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ExtraCompilerModifiers;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.LocalTypeBinding;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.MethodBinding;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ProblemMethodBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ReferenceBinding;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeConstants;
 
 /**
  * Variation on allocation, where can optionally be specified any of:
@@ -48,31 +38,7 @@ public class QualifiedAllocationExpression extends AllocationExpression implemen
 		anonymousType.allocation = this;
 	}
 
-	public FlowInfo analyseCode(
-		BlockScope currentScope,
-		FlowContext flowContext,
-		FlowInfo flowInfo) {
-
-		// analyse the enclosing instance
-		if (this.enclosingInstance != null) {
-			flowInfo = this.enclosingInstance.analyseCode(currentScope, flowContext, flowInfo);
-		}
 	
-		// process arguments
-		if (this.arguments != null) {
-			for (int i = 0, count = this.arguments.length; i < count; i++) {
-				flowInfo = this.arguments[i].analyseCode(currentScope, flowContext, flowInfo);
-			}
-		}
-
-		// analyse the anonymous nested type
-		if (this.anonymousType != null) {
-			flowInfo = this.anonymousType.analyseCode(currentScope, flowContext, flowInfo);
-		}
-
-		manageEnclosingInstanceAccessIfNecessary(currentScope, flowInfo);
-		return flowInfo;
-	}
 
 	public Expression enclosingInstance() {
 
@@ -85,28 +51,6 @@ public class QualifiedAllocationExpression extends AllocationExpression implemen
 		return this.anonymousType != null;
 	}
 
-	/* Inner emulation consists in either recording a dependency
-	 * link only, or performing one level of propagation.
-	 *
-	 * Dependency mechanism is used whenever dealing with source target
-	 * types, since by the time we reach them, we might not yet know their
-	 * exact need.
-	 */
-	public void manageEnclosingInstanceAccessIfNecessary(BlockScope currentScope, FlowInfo flowInfo) {
-
-		if ((flowInfo.tagBits & FlowInfo.UNREACHABLE) == 0)	{
-		ReferenceBinding allocatedTypeErasure = this.binding.declaringClass;
-
-		// perform some extra emulation work in case there is some and we are inside a local type only
-		if (allocatedTypeErasure.isNestedType()
-			&& currentScope.enclosingSourceType().isLocalType()) {
-
-			if (allocatedTypeErasure.isLocalType()) {
-				((LocalTypeBinding) allocatedTypeErasure).addInnerEmulationDependent(currentScope, this.enclosingInstance != null);
-			}
-		}
-		}
-	}
 
 	public StringBuffer printExpression(int indent, StringBuffer output) {
 
@@ -119,9 +63,8 @@ public class QualifiedAllocationExpression extends AllocationExpression implemen
 		return output;
 	}
 
-	public TypeBinding resolveType(BlockScope scope) {
-
-		return null;
+//	public TypeBinding resolveType(BlockScope scope) {
+//
 //		// added for code assist...cannot occur with 'normal' code
 //		if (this.anonymousType == null && this.enclosingInstance == null) {
 //			return super.resolveType(scope);
@@ -139,14 +82,6 @@ public class QualifiedAllocationExpression extends AllocationExpression implemen
 //
 //		if (this.enclosingInstance != null) {
 //			if ((enclosingInstanceType = this.enclosingInstance.resolveType(scope)) == null){
-//				hasError = true;
-//			} else if (enclosingInstanceType.isBaseType() || enclosingInstanceType.isArrayType()) {
-//				scope.problemReporter().illegalPrimitiveOrArrayTypeForEnclosingInstance(
-//					enclosingInstanceType,
-//					this.enclosingInstance);
-//				hasError = true;
-//			} else if (this.type instanceof QualifiedTypeReference) {
-//				scope.problemReporter().illegalUsageOfQualifiedTypeReference((QualifiedTypeReference)this.type);
 //				hasError = true;
 //			} else {
 //				receiverType = ((SingleTypeReference) this.type).resolveTypeEnclosing(scope, (ReferenceBinding) enclosingInstanceType);
@@ -205,11 +140,6 @@ public class QualifiedAllocationExpression extends AllocationExpression implemen
 //			return this.resolvedType = receiverType;
 //		}
 //		if (this.anonymousType == null) {
-//			// qualified allocation with no anonymous type
-//			if (!receiverType.canBeInstantiated()) {
-//				scope.problemReporter().cannotInstantiate(this.type, receiverType);
-//				return this.resolvedType = receiverType;
-//			}
 //			ReferenceBinding allocationType = (ReferenceBinding) receiverType;
 //			if ((this.binding = scope.getConstructor(allocationType, argumentTypes, this)).isValidBinding()) {
 //				if (isMethodUseDeprecated(this.binding, scope, true)) {
@@ -229,7 +159,6 @@ public class QualifiedAllocationExpression extends AllocationExpression implemen
 //			if (expectedType != enclosingInstanceType) // must call before computeConversion() and typeMismatchError()
 //				scope.compilationUnitScope().recordTypeConversion(expectedType, enclosingInstanceType);
 //			if (enclosingInstanceType.isCompatibleWith(expectedType) || scope.isBoxingCompatibleWith(enclosingInstanceType, expectedType)) {
-//				this.enclosingInstance.computeConversion(scope, expectedType, enclosingInstanceType);
 //				return this.resolvedType = receiverType;
 //			}
 //			scope.problemReporter().typeMismatchError(enclosingInstanceType, expectedType, this.enclosingInstance);
@@ -255,13 +184,11 @@ public class QualifiedAllocationExpression extends AllocationExpression implemen
 //		if (this.enclosingInstance != null) {
 //			ReferenceBinding targetEnclosing = inheritedBinding.declaringClass.enclosingType();
 //			if (targetEnclosing == null) {
-//				scope.problemReporter().unnecessaryEnclosingInstanceSpecification(this.enclosingInstance, (ReferenceBinding)receiverType);
 //				return this.resolvedType = this.anonymousType.binding;
 //			} else if (!enclosingInstanceType.isCompatibleWith(targetEnclosing) && !scope.isBoxingCompatibleWith(enclosingInstanceType, targetEnclosing)) {
 //				scope.problemReporter().typeMismatchError(enclosingInstanceType, targetEnclosing, this.enclosingInstance);
 //				return this.resolvedType = this.anonymousType.binding;
 //			}
-//			this.enclosingInstance.computeConversion(scope, targetEnclosing, enclosingInstanceType);
 //		}
 //		if (this.arguments != null)
 //			checkInvocationArguments(scope, null, this.superTypeBinding, inheritedBinding, this.arguments, argumentTypes, argsContainCast, this);
@@ -269,7 +196,7 @@ public class QualifiedAllocationExpression extends AllocationExpression implemen
 //		// Update the anonymous inner class : superclass, interface
 //		this.binding = this.anonymousType.createDefaultConstructorWithBinding(inheritedBinding);
 //		return this.resolvedType = this.anonymousType.binding; // 1.2 change
-	}
+//	}
 
 	public void traverse(ASTVisitor visitor, BlockScope scope) {
 

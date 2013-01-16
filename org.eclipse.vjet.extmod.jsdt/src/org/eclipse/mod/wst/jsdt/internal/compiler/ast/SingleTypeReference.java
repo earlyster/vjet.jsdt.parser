@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.ISingleTypeReference;
@@ -42,17 +41,7 @@ public class SingleTypeReference extends TypeReference implements ISingleTypeRef
 	public char[] getLastToken() {
 		return this.token;
 	}
-	protected TypeBinding getTypeBinding(Scope scope) {
-		if (this.resolvedType != null)
-			return this.resolvedType;
 
-		this.resolvedType = scope.getType(token);
-
-		if (scope.kind == Scope.CLASS_SCOPE && this.resolvedType.isValidBinding())
-			if (((ClassScope) scope).detectHierarchyCycle(this.resolvedType, this))
-				return null;
-		return this.resolvedType;
-	}
 
 	public char [][] getTypeName() {
 		return new char[][] { token };
@@ -63,18 +52,17 @@ public class SingleTypeReference extends TypeReference implements ISingleTypeRef
 		return output.append(token);
 	}
 
-	public TypeBinding resolveTypeEnclosing(BlockScope scope, ReferenceBinding enclosingType) {
-
-		TypeBinding memberType = scope.getMemberType(token, enclosingType);
-		if (!memberType.isValidBinding()) {
-			this.resolvedType = memberType;
-			scope.problemReporter().invalidEnclosingType(this, memberType, enclosingType);
-			return null;
-		}
-		if (isTypeUseDeprecated(memberType, scope))
-			scope.problemReporter().deprecatedType(memberType, this);
-		return this.resolvedType = memberType;
-	}
+//	public TypeBinding resolveTypeEnclosing(BlockScope scope, ReferenceBinding enclosingType) {
+//
+//		TypeBinding memberType = scope.getMemberType(token, enclosingType);
+//		if (!memberType.isValidBinding()) {
+//			this.resolvedType = memberType;
+//			return null;
+//		}
+//		if (isTypeUseDeprecated(memberType, scope))
+//			scope.problemReporter().deprecatedType(memberType, this);
+//		return this.resolvedType = memberType;
+//	}
 
 	public void traverse(ASTVisitor visitor, BlockScope scope) {
 		visitor.visit(this, scope);

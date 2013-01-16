@@ -37,9 +37,9 @@ public LibraryAPIsScope(LibraryAPIs apis, LookupEnvironment environment) {
 	
 	this.currentPackageName = CharOperation.NO_CHAR_CHAR;
 	
-	this.resolvedTypes.put("any", TypeBinding.ANY);
-	this.resolvedTypes.put("Any", TypeBinding.ANY);
-	this.resolvedTypes.put("null", TypeBinding.NULL);
+//	this.resolvedTypes.put("any", TypeBinding.ANY);
+//	this.resolvedTypes.put("Any", TypeBinding.ANY);
+//	this.resolvedTypes.put("null", TypeBinding.NULL);
 
 	translations.put("object".toCharArray(), "Object".toCharArray());
 	translations.put("boolean".toCharArray(), "Boolean".toCharArray());
@@ -54,71 +54,9 @@ public LibraryAPIsScope(LibraryAPIs apis, LookupEnvironment environment) {
 	
 }
 
-
-
-
 public PackageBinding getDefaultPackage() {
 		return environment.defaultPackage;
 }
-
-
-public TypeBinding resolveType(String name)
-{
-	if (name==null)
-		return TypeBinding.ANY;
-	
-  TypeBinding binding = (TypeBinding)this.resolvedTypes.get(name);
-  if (binding!=null)
-	  return binding;
-  
-       
-        if (name.length()>1 && name.charAt(0)=='[' && name.charAt(name.length()-1)==']')
-		{
-        	name=name.substring(1, name.length()-1);
-        	
-			TypeBinding memberType = resolveType(name);
-			binding=new ArrayBinding(memberType, 1, this.compilationUnitScope().environment) ;
-
-		}
-		else {
-			if (name.indexOf('|')>0)
-			{
-				
-				char[][] names = CharOperation.splitAndTrimOn('|', name.toCharArray());
-				for (int i = 0; i < names.length; i++) {
-					names[i]=translateName(names[i]);
-				}
-				binding=new MultipleTypeBinding(this,names);
-			}
-			else
-			{
-			   binding = this.getType(translateName(name.toCharArray()));
-			}
-			/* the inferred type isn't valid, so don't assign it to the variable */
-			if(!binding.isValidBinding()) 
-				binding=TypeBinding.UNKNOWN;
-		}
-
-
-//		if (node!=null && !this.resolvedType.isValidBinding()) {
-//			libraryScope.problemReporter().invalidType(node, this.resolvedType);
-//			return null;
-//		}
-//		if (node!=null && node.isTypeUseDeprecated(this.resolvedType, libraryScope))
-//			libraryScope.problemReporter().deprecatedType(this.resolvedType, node);
-
-
-  this.resolvedTypes.put(name, binding);
-  return binding;
-}
-
-private char[] translateName(char[] name) {
-	char [] newName=(char[])this.translations.get(name);
-	return (newName!=null) ? newName : name;
-}
-
-
-
 
 public String toString() {
 	return "--- LibraryAPIsScope Scope : " + new String(referenceContext.getFileName()); //$NON-NLS-1$

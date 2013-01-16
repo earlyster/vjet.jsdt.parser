@@ -10,37 +10,36 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.lookup;
 
-import org.eclipse.mod.wst.jsdt.internal.compiler.ast.AbstractMethodDeclaration;
 
 public class FunctionTypeBinding extends SourceTypeBinding {
 
 
-	public MethodBinding functionBinding;
+//	public MethodBinding functionBinding;
 	SourceTypeBinding functionTypeBinding;
 	
 	
-	public FunctionTypeBinding(MethodBinding function, Scope scope) {
-		super(TypeConstants.FUNCTION, null, scope);
+//	public FunctionTypeBinding(MethodBinding function, Scope scope) {
+//		super(TypeConstants.FUNCTION, null, scope);
+//
+////		this.functionTypeBinding=(SourceTypeBinding)scope.getJavaLangFunction();
+//		this.functionBinding=function;
+//		this.fPackage=this.functionTypeBinding.fPackage;
+//	
+//		this.compoundName=this.functionTypeBinding.compoundName;
+//		this.sourceName=this.functionTypeBinding.sourceName;
+//		this.modifiers=this.functionTypeBinding.modifiers;
+//		this.fileName=this.functionTypeBinding.fileName;
+//		this.constantPoolName=this.functionTypeBinding.constantPoolName;
+//		this.signature=this.functionTypeBinding.signature;
+//		this.tagBits=this.functionTypeBinding.tagBits;
+//		this.id=this.functionTypeBinding.id;
+//
+//	}
 
-//		this.functionTypeBinding=(SourceTypeBinding)scope.getJavaLangFunction();
-		this.functionBinding=function;
-		this.fPackage=this.functionTypeBinding.fPackage;
-	
-		this.compoundName=this.functionTypeBinding.compoundName;
-		this.sourceName=this.functionTypeBinding.sourceName;
-		this.modifiers=this.functionTypeBinding.modifiers;
-		this.fileName=this.functionTypeBinding.fileName;
-		this.constantPoolName=this.functionTypeBinding.constantPoolName;
-		this.signature=this.functionTypeBinding.signature;
-		this.tagBits=this.functionTypeBinding.tagBits;
-		this.id=this.functionTypeBinding.id;
 
-	}
-
-
-	public void addMethod(MethodBinding binding) {
-		functionTypeBinding.addMethod(binding);
-	}
+//	public void addMethod(MethodBinding binding) {
+//		functionTypeBinding.addMethod(binding);
+//	}
 
 
 	public void cleanup() {
@@ -59,19 +58,19 @@ public class FunctionTypeBinding extends SourceTypeBinding {
 	}
 
 
-	public MethodBinding getExactConstructor(TypeBinding[] argumentTypes) {
-		return functionTypeBinding.getExactConstructor(argumentTypes);
-	}
+//	public MethodBinding getExactConstructor(TypeBinding[] argumentTypes) {
+//		return functionTypeBinding.getExactConstructor(argumentTypes);
+//	}
+//
+//
+//	public MethodBinding getExactMethod(char[] selector, TypeBinding[] argumentTypes, CompilationUnitScope refScope) {
+//		return functionTypeBinding.getExactMethod(selector, argumentTypes, refScope);
+//	}
 
-
-	public MethodBinding getExactMethod(char[] selector, TypeBinding[] argumentTypes, CompilationUnitScope refScope) {
-		return functionTypeBinding.getExactMethod(selector, argumentTypes, refScope);
-	}
-
-
-	public FieldBinding getField(char[] fieldName, boolean needResolve) {
-		return functionTypeBinding.getField(fieldName, needResolve);
-	}
+//
+//	public FieldBinding getField(char[] fieldName, boolean needResolve) {
+//		return functionTypeBinding.getField(fieldName, needResolve);
+//	}
 
 
 //	public InferredType getInferredType() {
@@ -79,9 +78,9 @@ public class FunctionTypeBinding extends SourceTypeBinding {
 //	}
 
 
-	public MethodBinding[] getMethods(char[] selector) {
-		return functionTypeBinding.getMethods(selector);
-	}
+//	public MethodBinding[] getMethods(char[] selector) {
+//		return functionTypeBinding.getMethods(selector);
+//	}
 
 
 	public boolean hasMemberTypes() {
@@ -89,9 +88,9 @@ public class FunctionTypeBinding extends SourceTypeBinding {
 	}
 
 
-	public boolean isEquivalentTo(TypeBinding otherType) {
-		return functionTypeBinding.isEquivalentTo(otherType);
-	}
+//	public boolean isEquivalentTo(TypeBinding otherType) {
+//		return functionTypeBinding.isEquivalentTo(otherType);
+//	}
 
 
 	public int kind() {
@@ -104,37 +103,37 @@ public class FunctionTypeBinding extends SourceTypeBinding {
 	}
 
 
-	public MethodBinding[] methods() {
-		return functionTypeBinding.methods();
-	}
+//	public MethodBinding[] methods() {
+//		return functionTypeBinding.methods();
+//	}
+//
+//
+//	public void setFields(FieldBinding[] fields) {
+//		functionTypeBinding.setFields(fields);
+//	}
 
 
-	public void setFields(FieldBinding[] fields) {
-		functionTypeBinding.setFields(fields);
-	}
+//	public void setMethods(MethodBinding[] methods) {
+//		functionTypeBinding.setMethods(methods);
+//	}
 
 
-	public void setMethods(MethodBinding[] methods) {
-		functionTypeBinding.setMethods(methods);
-	}
+//	public AbstractMethodDeclaration sourceMethod(MethodBinding binding) {
+//		return functionTypeBinding.sourceMethod(binding);
+//	}
 
 
-	public AbstractMethodDeclaration sourceMethod(MethodBinding binding) {
-		return functionTypeBinding.sourceMethod(binding);
-	}
-
-
-	public ReferenceBinding superclass() {
-		return functionTypeBinding.superclass();
-	}
+//	public ReferenceBinding superclass() {
+//		return functionTypeBinding.superclass();
+//	}
 
 	public String toString() {
 		return functionTypeBinding.toString();
 	}
 
-	void verifyMethods(MethodVerifier verifier) {
-		functionTypeBinding.verifyMethods(verifier);
-	}
+//	void verifyMethods(MethodVerifier verifier) {
+//		functionTypeBinding.verifyMethods(verifier);
+//	}
 	
 	
 	public boolean isFunctionType()

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IJsDocArgumentExpression;
@@ -34,31 +33,31 @@ public class JavadocArgumentExpression extends Expression implements IJsDocArgum
 		this.bits |= InsideJavadoc;
 	}
 
-	/*
-	 * Resolves type on a Block or Class scope.
-	 */
-	private TypeBinding internalResolveType(Scope scope) {
-		this.constant = Constant.NotAConstant;
-		if (this.resolvedType != null) // is a shared type reference which was already resolved
-			return this.resolvedType.isValidBinding() ? this.resolvedType : null; // already reported error
-
-		if (this.argument != null) {
-			TypeReference typeRef = this.argument.type;
-			if (typeRef != null) {
-				this.resolvedType = typeRef.getTypeBinding(scope);
-				typeRef.resolvedType = this.resolvedType;
-				if (!this.resolvedType.isValidBinding()) {
-					scope.problemReporter().javadocInvalidType(typeRef, this.resolvedType, scope.getDeclarationModifiers());
-					return null;
-				}
-				if (isTypeUseDeprecated(this.resolvedType, scope)) {
-					scope.problemReporter().javadocDeprecatedType(this.resolvedType, typeRef, scope.getDeclarationModifiers());
-				}
-				return this.resolvedType;
-			}
-		}
-		return null;
-	}
+//	/*
+//	 * Resolves type on a Block or Class scope.
+//	 */
+//	private TypeBinding internalResolveType(Scope scope) {
+//		this.constant = Constant.NotAConstant;
+//		if (this.resolvedType != null) // is a shared type reference which was already resolved
+//			return this.resolvedType.isValidBinding() ? this.resolvedType : null; // already reported error
+//
+//		if (this.argument != null) {
+//			TypeReference typeRef = this.argument.type;
+//			if (typeRef != null) {
+//				this.resolvedType = typeRef.getTypeBinding(scope);
+//				typeRef.resolvedType = this.resolvedType;
+//				if (!this.resolvedType.isValidBinding()) {
+//					scope.problemReporter().javadocInvalidType(typeRef, this.resolvedType, scope.getDeclarationModifiers());
+//					return null;
+//				}
+//				if (isTypeUseDeprecated(this.resolvedType, scope)) {
+//					scope.problemReporter().javadocDeprecatedType(this.resolvedType, typeRef, scope.getDeclarationModifiers());
+//				}
+//				return this.resolvedType;
+//			}
+//		}
+//		return null;
+//	}
 
 	public StringBuffer printExpression(int indent, StringBuffer output) {
 		if (this.argument == null) {
@@ -72,19 +71,19 @@ public class JavadocArgumentExpression extends Expression implements IJsDocArgum
 		return output;
 	}
 
-	public void resolve(BlockScope scope) {
-		if (this.argument != null) {
-			this.argument.resolve(scope);
-		}
-	}
-
-	public TypeBinding resolveType(BlockScope scope) {
-		return internalResolveType(scope);
-	}
-
-	public TypeBinding resolveType(ClassScope scope) {
-		return internalResolveType(scope);
-	}
+//	public void resolve(BlockScope scope) {
+//		if (this.argument != null) {
+//			this.argument.resolve(scope);
+//		}
+//	}
+//
+//	public TypeBinding resolveType(BlockScope scope) {
+//		return internalResolveType(scope);
+//	}
+//
+//	public TypeBinding resolveType(ClassScope scope) {
+//		return internalResolveType(scope);
+//	}
 
 	/* (non-Javadoc)
 	 * Redefine to capture javadoc specific signatures

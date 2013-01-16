@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IFalseLiteral;
@@ -26,9 +25,9 @@ public FalseLiteral(int s , int e) {
 public void computeConstant() {
 	constant = BooleanConstant.fromValue(false);
 }
-public TypeBinding literalType(BlockScope scope) {
-	return TypeBinding.BOOLEAN;
-}
+//public TypeBinding literalType(BlockScope scope) {
+//	return scope.getJavaLangBoolean();
+//}
 /**
  *
  */

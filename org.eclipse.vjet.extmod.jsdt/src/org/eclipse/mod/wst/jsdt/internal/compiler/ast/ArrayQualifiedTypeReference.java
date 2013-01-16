@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2008 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IArrayQualifiedTypeReference;
@@ -52,26 +51,6 @@ public class ArrayQualifiedTypeReference extends QualifiedTypeReference implemen
 		System.arraycopy(this.tokens, 0, qParamName, 0, length-1);
 		qParamName[length-1] = CharOperation.concat(this.tokens[length-1], dimChars);
 		return qParamName;
-	}
-
-	protected TypeBinding getTypeBinding(Scope scope) {
-
-		if (this.resolvedType != null)
-			return this.resolvedType;
-		if (this.dimensions > 255) {
-			scope.problemReporter().tooManyDimensions(this);
-		}
-		LookupEnvironment env = scope.environment();
-		try {
-			env.missingClassFileLocation = this;
-			TypeBinding leafComponentType = super.getTypeBinding(scope);
-			return this.resolvedType = scope.createArrayType(leafComponentType, dimensions);
-		} catch (AbortCompilation e) {
-			e.updateContext(this, scope.referenceCompilationUnit().compilationResult);
-			throw e;
-		} finally {
-			env.missingClassFileLocation = null;
-		}
 	}
 
 	public StringBuffer printExpression(int indent, StringBuffer output){

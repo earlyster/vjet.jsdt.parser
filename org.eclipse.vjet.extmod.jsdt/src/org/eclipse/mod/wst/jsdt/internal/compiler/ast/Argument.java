@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,19 +10,11 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
-
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IArgument;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ArrayBinding;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.Binding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ClassScope;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.LocalVariableBinding;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.MethodScope;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ReferenceBinding;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeIds;
 
 public class Argument extends LocalDeclaration implements IArgument {
 
@@ -41,45 +33,10 @@ public class Argument extends LocalDeclaration implements IArgument {
 		return this.comment;
 	}
 	
-	public void bind(MethodScope scope, TypeBinding typeBinding, boolean used) {
-
-		// record the resolved type into the type reference
-
-		Binding existingVariable = scope.getLocalBinding(name, Binding.VARIABLE, this, false /*do not resolve hidden field*/);
-		if (existingVariable != null && existingVariable.isValidBinding() && existingVariable instanceof LocalVariableBinding ){
-			LocalVariableBinding localVariableBinding=(LocalVariableBinding)existingVariable;
-//			if (existingVariable instanceof LocalVariableBinding && this.hiddenVariableDepth == 0) {
-//				scope.problemReporter().redefineArgument(this);
-//			} else {
-//				boolean isSpecialArgument = false;
-//				if (existingVariable instanceof FieldBinding) {
-//					if (scope.isInsideConstructor()) {
-//						isSpecialArgument = true; // constructor argument
-//					} else {
-//						AbstractMethodDeclaration methodDecl = scope.referenceMethod();
-//						if (methodDecl != null && CharOperation.prefixEquals(SET, methodDecl.selector)) {
-//							isSpecialArgument = true; // setter argument
-//						}
-//					}
-//				}
-				if (localVariableBinding.declaringScope.compilationUnitScope()==scope.compilationUnitScope())
-					scope.problemReporter().localVariableHiding(this, existingVariable, false);
-//			}
-		}
-
-		if (this.binding == null) {
-			this.binding = new LocalVariableBinding(this, typeBinding, this.modifiers, true);
-		}
-		scope.addLocalVariable(	this.binding );
-//		if (JavaScriptCore.IS_ECMASCRIPT4)
-//			resolveAnnotations(scope, this.annotations, this.binding);
-		//true stand for argument instead of just local
-		this.binding.declaration = this;
-		this.binding.useFlag = used ? LocalVariableBinding.USED : LocalVariableBinding.UNUSED;
-	}
+	
 
 	/**
-	 * @see org.eclipse.mod.wst.jsdt.internal.compiler.ast.AbstractVariableDeclaration#getKind()
+	 * @see org.eclipse.wst.jsdt.internal.compiler.ast.AbstractVariableDeclaration#getKind()
 	 */
 	public int getKind() {
 		return PARAMETER;
@@ -108,6 +65,7 @@ public class Argument extends LocalDeclaration implements IArgument {
 		return print(indent, output).append(';');
 	}
 
+	// VJET MOD - remove resolve
 //	public TypeBinding resolveForCatch(BlockScope scope) {
 //
 //		// resolution on an argument of a catch clause
@@ -119,16 +77,6 @@ public class Argument extends LocalDeclaration implements IArgument {
 //			this.type.resolveType(scope, true /* check bounds*/) : javaLangError;
 //		if (exceptionType == null) return null;
 //		boolean hasError = false;
-//		if (exceptionType.isArrayType() && ((ArrayBinding) exceptionType).leafComponentType == TypeBinding.VOID) {
-//			scope.problemReporter().variableTypeCannotBeVoidArray(this);
-//			hasError = true;
-//			// fall thru to create the variable - avoids additional errors because the variable is missing
-//		}
-//		if ( !(exceptionType==javaLangError) && exceptionType.findSuperTypeErasingTo(TypeIds.T_JavaLangThrowable, true) == null) {
-//			scope.problemReporter().cannotThrowType(this.type, exceptionType);
-//			hasError = true;
-//			// fall thru to create the variable - avoids additional errors because the variable is missing
-//		}
 //
 //		Binding existingVariable = scope.getBinding(name, Binding.VARIABLE, this, false /*do not resolve hidden field*/);
 //		if (existingVariable != null && existingVariable.isValidBinding()){
@@ -155,6 +103,7 @@ public class Argument extends LocalDeclaration implements IArgument {
 		}
 		visitor.endVisit(this, scope);
 	}
+	
 	public void traverse(ASTVisitor visitor, ClassScope scope) {
 
 		if (visitor.visit(this, scope)) {
@@ -163,8 +112,8 @@ public class Argument extends LocalDeclaration implements IArgument {
 		}
 		visitor.endVisit(this, scope);
 	}
+	
 	public int getASTType() {
 		return IASTNode.ARGUMENT;
-	
 	}
 }

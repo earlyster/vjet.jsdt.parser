@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IIntLiteral;
@@ -91,11 +90,12 @@ public void computeConstant() {
 	constant = IntConstant.fromValue(value = (int)computedValue);
 
 }
-public TypeBinding literalType(BlockScope scope) {
-	return TypeBinding.INT;
+//public TypeBinding literalType(BlockScope scope) {
+//	if(scope == null)
+//		return TypeBinding.INT;
 //	return scope.getJavaLangNumber();
-
-}
+//
+//}
 public final boolean mayRepresentMIN_VALUE(){
 	//a special autorized int literral is 2147483648
 	//which is ONE over the limit. This special case
@@ -115,19 +115,19 @@ public final boolean mayRepresentMIN_VALUE(){
 			(source[9] == '8') &&
 			(((this.bits & ASTNode.ParenthesizedMASK) >> ASTNode.ParenthesizedSHIFT) == 0));
 }
-public TypeBinding resolveType(BlockScope scope) {
-	// the format may be incorrect while the scanner could detect
-	// such an error only on painfull tests...easier and faster here
-
-	TypeBinding tb = super.resolveType(scope);
-	if (constant == FORMAT_ERROR) {
-		constant = Constant.NotAConstant;
-		scope.problemReporter().constantOutOfFormat(this);
-		this.resolvedType = null;
-		return null;
-	}
-	return tb;
-}
+//public TypeBinding resolveType(BlockScope scope) {
+//	// the format may be incorrect while the scanner could detect
+//	// such an error only on painfull tests...easier and faster here
+//
+//	TypeBinding tb = super.resolveType(scope);
+//	if (constant == FORMAT_ERROR) {
+//		constant = Constant.NotAConstant;
+//		scope.problemReporter().constantOutOfFormat(this);
+//		this.resolvedType = null;
+//		return null;
+//	}
+//	return tb;
+//}
 public StringBuffer printExpression(int indent, StringBuffer output){
 
 	if (source == null) {
@@ -145,6 +145,7 @@ public int getASTType() {
 	return IASTNode.INT_LITERAL;
 
 }
+
 public static IntLiteral getOne()
 {
 	return new IntLiteral(new char[]{'1'},0,0,1);//used for ++ and --

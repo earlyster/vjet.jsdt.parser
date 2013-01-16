@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IListExpression;
@@ -52,16 +51,7 @@ public ListExpression(Expression expression1, Expression expression2) {
 	this.sourceEnd = expressions[expressions.length-1].sourceEnd;
 }
 
-public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext,
-		FlowInfo flowInfo) {
-	// keep implementation in sync with CombinedBinaryExpression#analyseCode
-	 for (int i=0; i<this.expressions.length; i++)
-	 {
-		this.expressions[i].checkNPE(currentScope, flowContext, flowInfo);
-		flowInfo = this.expressions[i].analyseCode(currentScope, flowContext, flowInfo).unconditionalInits();
-	}
-	 return flowInfo;
-}
+
 
 
 public boolean isCompactableOperation() {
@@ -69,16 +59,6 @@ public boolean isCompactableOperation() {
 }
 
 
-
-public TypeBinding resolveType(BlockScope scope) {
-	// keep implementation in sync with CombinedBinaryExpression#resolveType
-	// and nonRecursiveResolveTypeUpwards
-	for (int i = 0; i < this.expressions.length; i++) {
-		this.resolvedType=this.expressions[i].resolveType(scope);
-	}
-
-	return this.resolvedType;
-}
 
 public void traverse(ASTVisitor visitor, BlockScope scope) {
 	if (visitor.visit(this, scope)) {
@@ -89,11 +69,13 @@ public void traverse(ASTVisitor visitor, BlockScope scope) {
 }
 
 public StringBuffer printExpression(int indent, StringBuffer output) {
+	output.append('(');
 	for (int i = 0; i < this.expressions.length; i++) {
 		if (i>0)
 			output.append(", "); //$NON-NLS-1$
 		this.expressions[i].printExpression(indent, output);
 	}
+	output.append(')');
 	return output;
 }
 public int getASTType() {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,30 +10,20 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
-
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.ISingleNameReference;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
-import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowContext;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowInfo;
-import org.eclipse.mod.wst.jsdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.mod.wst.jsdt.internal.compiler.impl.Constant;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.Binding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.FieldBinding;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.FunctionTypeBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.LocalVariableBinding;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.MethodBinding;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.MethodScope;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ProblemBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ProblemFieldBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ProblemReferenceBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.Scope;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TagBits;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.VariableBinding;
-import org.eclipse.mod.wst.jsdt.internal.compiler.problem.ProblemSeverities;
 
 public class SingleNameReference extends NameReference implements ISingleNameReference, OperatorIds {
 
@@ -44,132 +34,148 @@ public class SingleNameReference extends NameReference implements ISingleNameRef
 // 	public TypeBinding genericCast;
 
 	public SingleNameReference(char[] source, long pos) {
+		this(source, (int) (pos >>> 32), (int) pos);
+	}
+	
+	public SingleNameReference(char[] source, int sourceStart, int sourceEnd) {
 		super();
 		token = source;
-		sourceStart = (int) (pos >>> 32);
-		sourceEnd = (int) pos;
+		this.sourceStart = sourceStart;
+		this.sourceEnd = sourceEnd;
 	}
 	
 	public char[] getToken() {
 		return this.token;
 	}
-	public FlowInfo analyseAssignment(BlockScope currentScope, FlowContext flowContext, FlowInfo flowInfo, Assignment assignment, boolean isCompound) {
-
-		boolean isReachable = (flowInfo.tagBits & FlowInfo.UNREACHABLE) == 0;
-		// compound assignment extra work
-		if (isCompound) { // check the variable part is initialized if blank final
-			switch (bits & RestrictiveFlagMASK) {
-				case Binding.FIELD : // reading a field
-					manageSyntheticAccessIfNecessary(currentScope, flowInfo, true /*read-access*/);
-					break;
-				case Binding.LOCAL : // reading a local variable
-					// check if assigning a final blank field
-					LocalVariableBinding localBinding;
-					if (!flowInfo.isDefinitelyAssigned(localBinding = (LocalVariableBinding) binding)) {
-						currentScope.problemReporter().uninitializedLocalVariable(localBinding, this);
-						// we could improve error msg here telling "cannot use compound assignment on final local variable"
-					}
-					if (isReachable) {
-						localBinding.useFlag = LocalVariableBinding.USED;
-					} else if (localBinding.useFlag == LocalVariableBinding.UNUSED) {
-						localBinding.useFlag = LocalVariableBinding.FAKE_USED;
-					}
-			}
-		}
-		if (assignment.expression != null) {
-			flowInfo = assignment.expression.analyseCode(currentScope, flowContext, flowInfo).unconditionalInits();
-		}
-		switch (bits & RestrictiveFlagMASK) {
-			case Binding.FIELD : // assigning to a field
-				manageSyntheticAccessIfNecessary(currentScope, flowInfo, false /*write-access*/);
-
-				break;
-			case Binding.LOCAL : // assigning to a local variable
-				LocalVariableBinding localBinding = (LocalVariableBinding) binding;
-				if (!flowInfo.isDefinitelyAssigned(localBinding)){// for local variable debug attributes
-					bits |= FirstAssignmentToLocal;
-				} else {
-					bits &= ~FirstAssignmentToLocal;
-				}
-				if ((localBinding.tagBits & TagBits.IsArgument) != 0) {
-					currentScope.problemReporter().parameterAssignment(localBinding, this);
-				}
-				flowInfo.markAsDefinitelyAssigned(localBinding);
-		}
-		manageEnclosingInstanceAccessIfNecessary(currentScope, flowInfo);
-		return flowInfo;
-	}
-	public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, FlowInfo flowInfo) {
-		return analyseCode(currentScope, flowContext, flowInfo, true);
-	}
-	public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, FlowInfo flowInfo, boolean valueRequired) {
-
-		switch (bits & RestrictiveFlagMASK) {
-			case Binding.FIELD : // reading a field
-				if (valueRequired) {
-					manageSyntheticAccessIfNecessary(currentScope, flowInfo, true /*read-access*/);
-				}
-
-				break;
-			case Binding.LOCAL : // reading a local variable
-			case Binding.LOCAL | Binding.TYPE :
-				LocalVariableBinding localBinding= (LocalVariableBinding) binding;
-
-				if (localBinding.isSameCompilationUnit(currentScope) &&
-						!flowInfo.isDefinitelyAssigned(localBinding )) {
-					currentScope.problemReporter().uninitializedLocalVariable(localBinding, this);
-				}
-				if ((flowInfo.tagBits & FlowInfo.UNREACHABLE) == 0)	{
-					localBinding.useFlag = LocalVariableBinding.USED;
-				} else if (localBinding.useFlag == LocalVariableBinding.UNUSED) {
-					localBinding.useFlag = LocalVariableBinding.FAKE_USED;
-				}	
-				
-		}
-		if (valueRequired) {
-			manageEnclosingInstanceAccessIfNecessary(currentScope, flowInfo);
-		}
-		return flowInfo;
-	}
-
-	public TypeBinding checkFieldAccess(BlockScope scope) {
-
-		FieldBinding fieldBinding = (FieldBinding) binding;
-
-		bits &= ~RestrictiveFlagMASK; // clear bits
-		bits |= Binding.FIELD;
-		MethodScope methodScope = scope.methodScope();
-		boolean isStatic = fieldBinding.isStatic();
-		if (!isStatic) {
-			// must check for the static status....
-			if (methodScope!=null && methodScope.isStatic) {
-					// reference is ok if coming from compilation unit superclass
-				if (fieldBinding.declaringClass==null || !fieldBinding.declaringClass.equals(scope.compilationUnitScope().superBinding))
-				{
-					scope.problemReporter().staticFieldAccessToNonStaticVariable(this, fieldBinding);
-					this.constant = Constant.NotAConstant;
-					return fieldBinding.type;
-				}
-			}
-		}
-
-		if (isFieldUseDeprecated(fieldBinding, scope, (this.bits & IsStrictlyAssigned) !=0))
-			scope.problemReporter().deprecatedField(fieldBinding, this);
-
-//		if ((this.bits & IsStrictlyAssigned) == 0
-//				&& methodScope.enclosingSourceType() == fieldBinding.original().declaringClass
-//				&& methodScope.lastVisibleFieldID >= 0
-//				&& fieldBinding.id >= methodScope.lastVisibleFieldID
-//				&& (!fieldBinding.isStatic() || methodScope.isStatic)) {
-//			scope.problemReporter().forwardReference(this, 0, methodScope.enclosingSourceType());
-//			this.bits |= ASTNode.IgnoreNoEffectAssignCheck;
+//	public FlowInfo analyseAssignment(BlockScope currentScope, FlowContext flowContext, FlowInfo flowInfo, Assignment assignment, boolean isCompound) {
+//
+//		boolean isReachable = (flowInfo.tagBits & FlowInfo.UNREACHABLE) == 0;
+//		// compound assignment extra work
+//		if (isCompound) { // check the variable part is initialized if blank final
+//			switch (bits & RestrictiveFlagMASK) {
+//				case Binding.FIELD : // reading a field
+//					manageSyntheticAccessIfNecessary(currentScope, flowInfo, true /*read-access*/);
+//					break;
+//				case Binding.LOCAL : // reading a local variable
+//					// check if assigning a final blank field
+//					LocalVariableBinding localBinding;
+//					if (!flowInfo.isDefinitelyAssigned(localBinding = (LocalVariableBinding) binding)) {
+//						if (localBinding.declaringScope instanceof MethodScope) {
+//							currentScope.problemReporter().uninitializedLocalVariable(localBinding, this);
+//						}
+//						// we could improve error msg here telling "cannot use compound assignment on final local variable"
+//					}
+//					if (isReachable) {
+//						localBinding.useFlag = LocalVariableBinding.USED;
+//					} else if (localBinding.useFlag == LocalVariableBinding.UNUSED) {
+//						localBinding.useFlag = LocalVariableBinding.FAKE_USED;
+//					}
+//			}
 //		}
-		return fieldBinding.type;
+//		if (assignment.expression != null) {
+//			flowInfo = assignment.expression.analyseCode(currentScope, flowContext, flowInfo).unconditionalInits();
+//		}
+//		switch (bits & RestrictiveFlagMASK) {
+//			case Binding.FIELD : // assigning to a field
+//				manageSyntheticAccessIfNecessary(currentScope, flowInfo, false /*write-access*/);
+//
+//				break;
+//			case Binding.LOCAL : // assigning to a local variable
+//				LocalVariableBinding localBinding = (LocalVariableBinding) binding;
+//				if (!flowInfo.isDefinitelyAssigned(localBinding)){// for local variable debug attributes
+//					bits |= FirstAssignmentToLocal;
+//				} else {
+//					bits &= ~FirstAssignmentToLocal;
+//				}
+//				if ((localBinding.tagBits & TagBits.IsArgument) != 0) {
+//					currentScope.problemReporter().parameterAssignment(localBinding, this);
+//				}
+//				flowInfo.markAsDefinitelyAssigned(localBinding);
+//		}
+//		manageEnclosingInstanceAccessIfNecessary(currentScope, flowInfo);
+//		return flowInfo;
+//	}
+//	public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, FlowInfo flowInfo) {
+//		return analyseCode(currentScope, flowContext, flowInfo, true);
+//	}
+//	public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, FlowInfo flowInfo, boolean valueRequired) {
+//
+//		switch (bits & RestrictiveFlagMASK) {
+//			case Binding.FIELD : // reading a field
+//				if (valueRequired) {
+//					manageSyntheticAccessIfNecessary(currentScope, flowInfo, true /*read-access*/);
+//				}
+//
+//				break;
+//			case Binding.LOCAL : // reading a local variable
+//			case Binding.LOCAL | Binding.TYPE :
+//			case Binding.VARIABLE:
+//				if(binding instanceof LocalVariableBinding) {
+//					LocalVariableBinding localBinding= (LocalVariableBinding) binding;
+//	
+//					// ignore the arguments variable inside a function
+//					if(!(CharOperation.equals(localBinding.name, new char[]{'a','r','g','u','m','e','n','t','s'}) && (localBinding.declaringScope instanceof MethodScope))) {
+//						if(!flowInfo.isDefinitelyAssigned(localBinding)) {
+//							if (localBinding.declaringScope instanceof MethodScope) {
+//									currentScope.problemReporter().uninitializedLocalVariable(localBinding, this);		
+//							} else if(localBinding.isSameCompilationUnit(currentScope)) {
+//								currentScope.problemReporter().uninitializedGlobalVariable(localBinding, this);
+//							}
+//						}
+//					}
+//					
+//					if ((flowInfo.tagBits & FlowInfo.UNREACHABLE) == 0)	{
+//						localBinding.useFlag = LocalVariableBinding.USED;
+//					} else if (localBinding.useFlag == LocalVariableBinding.UNUSED) {
+//						localBinding.useFlag = LocalVariableBinding.FAKE_USED;
+//					}	
+//				}
+//				
+//		}
+//		if (valueRequired) {
+//			manageEnclosingInstanceAccessIfNecessary(currentScope, flowInfo);
+//		}
+//		return flowInfo;
+//	}
 
-	}
+//	public TypeBinding checkFieldAccess(BlockScope scope) {
+//
+//		FieldBinding fieldBinding = (FieldBinding) binding;
+//
+//		bits &= ~RestrictiveFlagMASK; // clear bits
+//		bits |= Binding.FIELD;
+//		MethodScope methodScope = scope.methodScope();
+//		boolean isStatic = fieldBinding.isStatic();
+//		if (!isStatic) {
+//			// must check for the static status....
+//			if (methodScope!=null && methodScope.isStatic) {
+//					// reference is ok if coming from compilation unit superclass
+//				if (fieldBinding.declaringClass==null || !fieldBinding.declaringClass.equals(scope.compilationUnitScope().superBinding))
+//				{
+//					scope.problemReporter().staticFieldAccessToNonStaticVariable(this, fieldBinding);
+//					this.constant = Constant.NotAConstant;
+//					return fieldBinding.type;
+//				}
+//			}
+//		}
+//
+//		if (isFieldUseDeprecated(fieldBinding, scope, (this.bits & IsStrictlyAssigned) !=0))
+//			scope.problemReporter().deprecatedField(fieldBinding, this);
+//
+////		if ((this.bits & IsStrictlyAssigned) == 0
+////				&& methodScope.enclosingSourceType() == fieldBinding.original().declaringClass
+////				&& methodScope.lastVisibleFieldID >= 0
+////				&& fieldBinding.id >= methodScope.lastVisibleFieldID
+////				&& (!fieldBinding.isStatic() || methodScope.isStatic)) {
+////			scope.problemReporter().forwardReference(this, 0, methodScope.enclosingSourceType());
+////			this.bits |= ASTNode.IgnoreNoEffectAssignCheck;
+////		}
+//		return fieldBinding.type;
+//
+//	}
 
 	/**
-	 * @see org.eclipse.mod.wst.jsdt.internal.compiler.ast.Expression#computeConversion(org.eclipse.mod.wst.jsdt.internal.compiler.lookup.Scope, org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding, org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding)
+	 * @see org.eclipse.wst.jsdt.internal.compiler.ast.Expression#computeConversion(org.eclipse.wst.jsdt.internal.compiler.lookup.Scope, org.eclipse.wst.jsdt.internal.compiler.lookup.TypeBinding, org.eclipse.wst.jsdt.internal.compiler.lookup.TypeBinding)
 	 */
 	public void computeConversion(Scope scope, TypeBinding runtimeTimeType, TypeBinding compileTimeType) {
 //		if (runtimeTimeType == null || compileTimeType == null)
@@ -194,7 +200,7 @@ public class SingleNameReference extends NameReference implements ISingleNameRef
 	}
 
 	/**
-	 * @see org.eclipse.mod.wst.jsdt.internal.compiler.lookup.InvocationSite#genericTypeArguments()
+	 * @see org.eclipse.wst.jsdt.internal.compiler.lookup.InvocationSite#genericTypeArguments()
 	 */
 	public TypeBinding[] genericTypeArguments() {
 		return null;
@@ -214,17 +220,17 @@ public class SingleNameReference extends NameReference implements ISingleNameRef
 		return null;
 	}
 
-	public void manageEnclosingInstanceAccessIfNecessary(BlockScope currentScope, FlowInfo flowInfo) {
-
-		if ((flowInfo.tagBits & FlowInfo.UNREACHABLE) == 0)	{
-		//If inlinable field, forget the access emulation, the code gen will directly target it
-		if (((bits & DepthMASK) == 0) || (constant != Constant.NotAConstant)) return;
-
-		if ((bits & RestrictiveFlagMASK) == Binding.LOCAL) {
-			currentScope.emulateOuterAccess((LocalVariableBinding) binding);
-		}
-		}
-	}
+//	public void manageEnclosingInstanceAccessIfNecessary(BlockScope currentScope, FlowInfo flowInfo) {
+//
+//		if ((flowInfo.tagBits & FlowInfo.UNREACHABLE) == 0)	{
+//		//If inlinable field, forget the access emulation, the code gen will directly target it
+//		if (((bits & DepthMASK) == 0) || (constant != Constant.NotAConstant)) return;
+//
+//		if ((bits & RestrictiveFlagMASK) == Binding.LOCAL) {
+//			currentScope.emulateOuterAccess((LocalVariableBinding) binding);
+//		}
+//		}
+//	}
 	public void manageSyntheticAccessIfNecessary(BlockScope currentScope, FlowInfo flowInfo, boolean isReadAccess) {
 
 //		if ((flowInfo.tagBits & FlowInfo.UNREACHABLE) != 0)	return;
@@ -293,7 +299,7 @@ public int nullStatus(FlowInfo flowInfo) {
 }
 
 	/**
-	 * @see org.eclipse.mod.wst.jsdt.internal.compiler.ast.Expression#postConversionType(Scope)
+	 * @see org.eclipse.wst.jsdt.internal.compiler.ast.Expression#postConversionType(Scope)
 	 */
 	public TypeBinding postConversionType(Scope scope) {
 		TypeBinding convertedType = this.resolvedType;
@@ -303,9 +309,6 @@ public int nullStatus(FlowInfo flowInfo) {
 		switch (runtimeType) {
 			case T_boolean :
 				convertedType = TypeBinding.BOOLEAN;
-				break;
-			case T_byte :
-				convertedType = TypeBinding.BYTE;
 				break;
 			case T_short :
 				convertedType = TypeBinding.SHORT;
@@ -351,117 +354,121 @@ public int nullStatus(FlowInfo flowInfo) {
 		return null;
 	}
 
-	public TypeBinding resolveType(BlockScope scope) {
-		return resolveType(scope,false,null);
-	}
-
-	public TypeBinding resolveType(BlockScope scope, boolean define, TypeBinding useType) {
-
-		// for code gen, harm the restrictiveFlag
-		constant = Constant.NotAConstant;
-
-		this.binding=findBinding(scope);
-		if (define && this.binding instanceof ProblemBinding)
-		{
-			LocalDeclaration localDeclaration = new LocalDeclaration(this.token,this.sourceEnd,this.sourceEnd);
-			LocalVariableBinding localBinding=new LocalVariableBinding(localDeclaration,TypeBinding.UNKNOWN,0,false);
-		    scope.compilationUnitScope().addLocalVariable(localBinding);
-			this.binding=localBinding;
-		}
-//		this.codegenBinding = this.binding;
-		if (this.binding.isValidBinding()) {
-			switch (bits & RestrictiveFlagMASK) {
-				case Binding.FIELD:
-				case Binding.LOCAL : // =========only variable============
-				case Binding.VARIABLE : // =========only variable============
-				case Binding.LOCAL | Binding.TYPE : //====both variable and type============
-				case Binding.VARIABLE | Binding.TYPE : //====both variable and type============
-					if (binding instanceof VariableBinding) {
-						VariableBinding variable = (VariableBinding) binding;
-						if (binding instanceof LocalVariableBinding) {
-							bits &= ~RestrictiveFlagMASK;  // clear bits
-							bits |= Binding.LOCAL;
-//							if (!variable.isFinal() && (bits & DepthMASK) != 0) {
-//								scope.problemReporter().cannotReferToNonFinalOuterLocal((LocalVariableBinding)variable, this);
+//	public TypeBinding resolveType(BlockScope scope) {
+//		return resolveType(scope,false,null);
+//	}
+//
+//	public TypeBinding resolveType(BlockScope scope, boolean define, TypeBinding useType) {
+//
+//		// for code gen, harm the restrictiveFlag
+//		constant = Constant.NotAConstant;
+//
+//		this.binding=findBinding(scope);
+//		if (define && this.binding instanceof ProblemBinding)
+//		{
+//			LocalDeclaration localDeclaration = new LocalDeclaration(this.token,this.sourceEnd,this.sourceEnd);
+//			LocalVariableBinding localBinding=new LocalVariableBinding(localDeclaration,TypeBinding.UNKNOWN,0,false);
+//		    scope.compilationUnitScope().addLocalVariable(localBinding);
+//			this.binding=localBinding;
+//		}
+////		this.codegenBinding = this.binding;
+//		if (this.binding.isValidBinding()) {
+//			switch (bits & RestrictiveFlagMASK) {
+//				case Binding.FIELD:
+//				case Binding.LOCAL : // =========only variable============
+//				case Binding.VARIABLE : // =========only variable============
+//				case Binding.LOCAL | Binding.TYPE : //====both variable and type============
+//				case Binding.VARIABLE | Binding.TYPE : //====both variable and type============
+//					if (binding instanceof VariableBinding) {
+//						VariableBinding variable = (VariableBinding) binding;
+//						if (binding instanceof LocalVariableBinding) {
+//							bits &= ~RestrictiveFlagMASK;  // clear bits
+//							bits |= Binding.LOCAL;
+////							if (!variable.isFinal() && (bits & DepthMASK) != 0) {
+////								scope.problemReporter().cannotReferToNonFinalOuterLocal((LocalVariableBinding)variable, this);
+////							}
+//							TypeBinding fieldType = variable.type;
+////							if (fieldType.isAnonymousType() && !fieldType.isObjectLiteralType()) {
+////								LocalDeclaration declaration = ((LocalVariableBinding)binding).declaration;
+////								if(declaration != null && !(declaration.getInitialization() instanceof AllocationExpression) &&
+////										! (declaration.getInitialization() instanceof Literal)) {
+////									bits |= Binding.TYPE;
+////								}
+////							}
+//								
+//							if (useType!=null && !(useType.id==T_null ||useType.id==T_any || useType.id==T_undefined))
+//							{
+//								if (define)
+//								{
+//									fieldType=variable.type=useType;
+//									if (useType.isFunctionType())	// add method binding if function
+//									{
+//										MethodBinding methodBinding = ((FunctionTypeBinding)useType).functionBinding.createNamedMethodBinding(this.token);
+//										MethodScope methodScope = scope.enclosingMethodScope();
+//										if (methodScope!=null)
+//											methodScope.addLocalMethod(methodBinding);
+//										else
+//											scope.compilationUnitScope().addLocalMethod(methodBinding);
+//									}
+//								}
+//								else
+//								{
+//									if (fieldType==TypeBinding.UNKNOWN)
+//										fieldType=variable.type=useType;
+//									else if (!fieldType.isCompatibleWith(useType))
+//										fieldType=variable.type=TypeBinding.ANY;
+//								}
 //							}
-							TypeBinding fieldType = variable.type;
-							if (fieldType.isAnonymousType() && !fieldType.isObjectLiteralType())
-								bits |= Binding.TYPE;
-							if (useType!=null && !(useType.id==T_null ||useType.id==T_any))
-							{
-								if (define)
-								{
-									fieldType=variable.type=useType;
-									if (useType.isFunctionType())	// add method binding if function
-									{
-										MethodBinding methodBinding = ((FunctionTypeBinding)useType).functionBinding.createNamedMethodBinding(this.token);
-										MethodScope methodScope = scope.enclosingMethodScope();
-										if (methodScope!=null)
-											methodScope.addLocalMethod(methodBinding);
-										else
-											scope.compilationUnitScope().addLocalMethod(methodBinding);
-									}
-								}
-								else
-								{
-									if (fieldType==TypeBinding.UNKNOWN)
-										fieldType=variable.type=useType;
-									else if (!fieldType.isCompatibleWith(useType))
-										fieldType=variable.type=TypeBinding.ANY;
-								}
-							}
-						
-							constant = Constant.NotAConstant;
-							
+//						
+//							constant = Constant.NotAConstant;
+//							
+//
+//							return this.resolvedType = fieldType;
+//						}
+//						// perform capture conversion if read access
+//						TypeBinding fieldType = checkFieldAccess(scope);
+//						if (fieldType.isAnonymousType())
+//							bits |= Binding.TYPE;
+//						
+//						return this.resolvedType = fieldType;
+//					}
+//
+//					if (binding instanceof MethodBinding)
+//					{
+//						return ((MethodBinding)binding).functionTypeBinding;
+//					}
+//					else
+//					{
+//					// thus it was a type
+//						bits &= ~RestrictiveFlagMASK;  // clear bits
+//						bits |= Binding.TYPE;
+//					}
+//
+//				case Binding.TYPE : //========only type==============
+//					constant = Constant.NotAConstant;
+//					//deprecated test
+//					TypeBinding type = (TypeBinding)binding;
+//					if (isTypeUseDeprecated(type, scope))
+//						scope.problemReporter().deprecatedType(type, this);
+//					return this.resolvedType = type;
+//			}
+//		}
+//
+//		// error scenarii
+//		return this.resolvedType = this.reportError(scope);
+//	}
 
-							return this.resolvedType = fieldType;
-						}
-						// a field
-						FieldBinding field = (FieldBinding) this.binding;
-						if (!field.isStatic() && scope.compilerOptions().getSeverity(CompilerOptions.UnqualifiedFieldAccess) != ProblemSeverities.Ignore) {
-							scope.problemReporter().unqualifiedFieldAccess(this, field);
-						}
-						// perform capture conversion if read access
-						TypeBinding fieldType = checkFieldAccess(scope);
-						if (fieldType.isAnonymousType())
-							bits |= Binding.TYPE;
-						
-						return this.resolvedType = fieldType;
-					}
-
-					if (binding instanceof MethodBinding)
-					{
-						return ((MethodBinding)binding).functionTypeBinding;
-					}
-					else
-					{
-					// thus it was a type
-						bits &= ~RestrictiveFlagMASK;  // clear bits
-						bits |= Binding.TYPE;
-					}
-
-				case Binding.TYPE : //========only type==============
-					constant = Constant.NotAConstant;
-					//deprecated test
-					TypeBinding type = (TypeBinding)binding;
-					if (isTypeUseDeprecated(type, scope))
-						scope.problemReporter().deprecatedType(type, this);
-					return this.resolvedType = type;
-			}
-		}
-
-		// error scenarii
-		return this.resolvedType = this.reportError(scope);
-	}
-
-	public Binding findBinding(BlockScope scope) {
-		if (this.actualReceiverType != null) {
-			return scope.getField(this.actualReceiverType, token, this);
-		} else {
-			this.actualReceiverType = scope.enclosingSourceType();
-			return  scope.getBinding(token, (Binding.TYPE|Binding.METHOD | bits)  & RestrictiveFlagMASK, this, true /*resolve*/);
-		}
-	}
+//	public Binding findBinding(BlockScope scope) {
+//		if (this.actualReceiverType != null) {
+//			Binding binding = scope.getField(this.actualReceiverType, token, this);
+//			if(!(binding instanceof ProblemFieldBinding))
+//				return binding;
+//			
+//		} else {
+//			this.actualReceiverType = scope.enclosingSourceType();
+//		}
+//		return  scope.getBinding(token, (Binding.TYPE|Binding.METHOD | bits)  & RestrictiveFlagMASK, this, true /*resolve*/);
+//	}
 
 	public void traverse(ASTVisitor visitor, BlockScope scope) {
 		visitor.visit(this, scope);
@@ -478,22 +485,22 @@ public int nullStatus(FlowInfo flowInfo) {
 		return new String(token);
 	}
 	
-	public TypeBinding resolveForAllocation(BlockScope scope, ASTNode location)
-	{
-		char[] memberName = this.token;
-		TypeBinding typeBinding=null;
-		this.binding=	
-				scope.getBinding(memberName, (Binding.TYPE|Binding.METHOD | bits)  & RestrictiveFlagMASK, this, true /*resolve*/);
-		if (binding instanceof TypeBinding)
-			typeBinding=(TypeBinding)binding;
-		else if (binding instanceof MethodBinding)
-			typeBinding=((MethodBinding)binding).returnType;
-		else if (binding!=null && !binding.isValidBinding())
-		{
-			typeBinding=new ProblemReferenceBinding(memberName,null,binding.problemId());
-		}
-		return typeBinding;
-	}
+//	public TypeBinding resolveForAllocation(BlockScope scope, ASTNode location)
+//	{
+//		char[] memberName = this.token;
+//		TypeBinding typeBinding=null;
+//		this.binding=	
+//				scope.getBinding(memberName, (Binding.TYPE|Binding.METHOD | bits)  & RestrictiveFlagMASK, this, true /*resolve*/);
+//		if (binding instanceof TypeBinding)
+//			typeBinding=(TypeBinding)binding;
+//		else if (binding instanceof MethodBinding)
+//			typeBinding=((MethodBinding)binding).returnType;
+//		else if (binding!=null && !binding.isValidBinding())
+//		{
+//			typeBinding=new ProblemReferenceBinding(memberName,null,binding.problemId());
+//		}
+//		return typeBinding;
+//	}
 	public int getASTType() {
 		return IASTNode.SINGLE_NAME_REFERENCE;
 	

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,6 @@
  *     David Thompson = bug 214171 -Class cast exception
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.lookup;
-
 
 import org.eclipse.mod.wst.jsdt.core.compiler.CharOperation;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ASTNode;
@@ -27,7 +26,7 @@ public class BlockScope extends Scope {
 
 	// Local variable management
 	public LocalVariableBinding[] locals;
-	public MethodBinding[] methods;
+//	public MethodBinding[] methods;
 	public int numberMethods; // for variable allocation throughout scopes
 	public int localIndex; // position for next variable
 	public int startIndex;	// start position in this scope - for ordering scopes vs. variables
@@ -55,7 +54,7 @@ public BlockScope(BlockScope parent) {
 public BlockScope(BlockScope parent, boolean addToParentScope) {
 	this(Scope.BLOCK_SCOPE, parent);
 	this.locals = new LocalVariableBinding[5];
-	this.methods=new MethodBinding[5];
+//	this.methods=new MethodBinding[5];
 	if (addToParentScope) parent.addSubscope(this);
 	this.startIndex = parent.localIndex;
 }
@@ -63,7 +62,7 @@ public BlockScope(BlockScope parent, boolean addToParentScope) {
 public BlockScope(BlockScope parent, int variableCount) {
 	this(Scope.BLOCK_SCOPE, parent);
 	this.locals = new LocalVariableBinding[variableCount];
-	this.methods=new MethodBinding[5];
+//	this.methods=new MethodBinding[5];
 	parent.addSubscope(this);
 	this.startIndex = parent.localIndex;
 }
@@ -71,25 +70,9 @@ public BlockScope(BlockScope parent, int variableCount) {
 protected BlockScope(int kind, Scope parent) {
 	super(kind, parent);
 	this.locals = new LocalVariableBinding[5];
-	this.methods=new MethodBinding[5];
+//	this.methods=new MethodBinding[5];
 }
 
-/* Create the class scope & binding for the anonymous type.
- */
-public final void addAnonymousType(TypeDeclaration anonymousType, ReferenceBinding superBinding) {
-	ClassScope anonymousClassScope = new ClassScope(this, anonymousType);
-	anonymousClassScope.buildAnonymousTypeBinding(
-		enclosingSourceType(),
-		superBinding);
-}
-
-/* Create the class scope & binding for the local type.
- */
-public final void addLocalType(TypeDeclaration localType) {
-	ClassScope localTypeScope = new ClassScope(this, localType);
-	addSubscope(localTypeScope);
-	localTypeScope.buildLocalTypeBinding(enclosingSourceType());
-}
 
 /* Insert a local variable into a given scope, updating its position
  * and checking there are not too many locals or arguments allocated.
@@ -113,26 +96,31 @@ public  void addLocalVariable(LocalVariableBinding binding) {
 	binding.id = (outerMostMethodScope!=null)? outerMostMethodScope.analysisIndex++ : this.compilationUnitScope().analysisIndex++;
 	// share the outermost method scope analysisIndex
 
-	if (binding.declaration!=null && binding.declaration.initialization instanceof FunctionExpression) {
-
-		MethodBinding methodBinding=
-			new MethodBinding(0, binding.name, TypeBinding.UNKNOWN, null,this.enclosingTypeBinding());
-		methodBinding.createFunctionTypeBinding(this);
-		addLocalMethod(methodBinding);
-
-	}
+	// added second checked for inferredType to fix
+	// https://bugs.eclipse.org/bugs/show_bug.cgi?id=268991
+	// VJET MOD -  NO INFERRED TYPING IN AST PARSER
+//	if ((binding.declaration!=null && binding.declaration.initialization instanceof FunctionExpression) || 
+//			(binding.declaration.inferredType != null && binding.declaration.inferredType.isFunction())) {
+//
+//		MethodBinding methodBinding=
+//			new MethodBinding(0, binding.name, TypeBinding.UNKNOWN, null,this.enclosingTypeBinding());
+//		methodBinding.createFunctionTypeBinding(this);
+//		addLocalMethod(methodBinding);
+//
+//  // VJET END MODE
+//	}
 }
 
-public void addLocalMethod(MethodBinding methodBinding) {
-	if (this.numberMethods == this.methods.length)
-		System.arraycopy(
-			this.methods,
-			0,
-			(this.methods = new MethodBinding[this.numberMethods * 2]),
-			0,
-			this.numberMethods);
-	this.methods[this.numberMethods++] = methodBinding;
-}
+//public void addLocalMethod(MethodBinding methodBinding) {
+//	if (this.numberMethods == this.methods.length)
+//		System.arraycopy(
+//			this.methods,
+//			0,
+//			(this.methods = new MethodBinding[this.numberMethods * 2]),
+//			0,
+//			this.numberMethods);
+//	this.methods[this.numberMethods++] = methodBinding;
+//}
 
 
 public void addSubscope(Scope childScope) {
@@ -150,16 +138,16 @@ public void addSubscope(Scope childScope) {
  *
  * in other words, it is inside an initializer, a constructor or a clinit
  */
-public final boolean allowBlankFinalFieldAssignment(FieldBinding binding) {
-	if (enclosingReceiverType() != binding.declaringClass)
-		return false;
-
-	MethodScope methodScope = methodScope();
-	if (methodScope.isStatic != binding.isStatic())
-		return false;
-	return methodScope.isInsideInitializer() // inside initializer
-			|| ((AbstractMethodDeclaration) methodScope.referenceContext).isInitializationMethod(); // inside constructor or clinit
-}
+//public final boolean allowBlankFinalFieldAssignment(FieldBinding binding) {
+//	if (enclosingReceiverType() != binding.declaringClass)
+//		return false;
+//
+//	MethodScope methodScope = methodScope();
+//	if (methodScope.isStatic != binding.isStatic())
+//		return false;
+//	return methodScope.isInsideInitializer() // inside initializer
+//			|| ((AbstractMethodDeclaration) methodScope.referenceContext).isInitializationMethod(); // inside constructor or clinit
+//}
 String basicToString(int tab) {
 	String newLine = "\n"; //$NON-NLS-1$
 	for (int i = tab; --i >= 0;)
@@ -176,9 +164,6 @@ String basicToString(int tab) {
 
 private void checkAndSetModifiersForVariable(LocalVariableBinding varBinding) {
 	int modifiers = varBinding.modifiers;
-	if ((modifiers & ExtraCompilerModifiers.AccAlternateModifierProblem) != 0 && varBinding.declaration != null){
-		problemReporter().duplicateModifierForVariable(varBinding.declaration, this instanceof MethodScope);
-	}
 	int realModifiers = modifiers & ExtraCompilerModifiers.AccJustFlag;
 
 	varBinding.modifiers = modifiers;
@@ -205,29 +190,29 @@ public void reportUnusedDeclarations()
 }
 
 
-/*
- *	Record the suitable binding denoting a synthetic field or constructor argument,
- * mapping to the actual outer local variable in the scope context.
- * Note that this may not need any effect, in case the outer local variable does not
- * need to be emulated and can directly be used as is (using its back pointer to its
- * declaring scope).
- */
-public void emulateOuterAccess(LocalVariableBinding outerLocalVariable) {
-	BlockScope outerVariableScope = outerLocalVariable.declaringScope;
-	if (outerVariableScope == null)
-		return; // no need to further emulate as already inserted (val$this$0)
-	MethodScope currentMethodScope = this.methodScope();
-	if (outerVariableScope.methodScope() != currentMethodScope &&
-			 this.enclosingSourceType() instanceof
-			NestedTypeBinding) {
-		NestedTypeBinding currentType = (NestedTypeBinding) this.enclosingSourceType();
-
-		//do nothing for member types, pre emulation was performed already
-		if (!currentType.isLocalType()) {
-			return;
-		}
-	}
-}
+///*
+// *	Record the suitable binding denoting a synthetic field or constructor argument,
+// * mapping to the actual outer local variable in the scope context.
+// * Note that this may not need any effect, in case the outer local variable does not
+// * need to be emulated and can directly be used as is (using its back pointer to its
+// * declaring scope).
+// */
+//public void emulateOuterAccess(LocalVariableBinding outerLocalVariable) {
+//	BlockScope outerVariableScope = outerLocalVariable.declaringScope;
+//	if (outerVariableScope == null)
+//		return; // no need to further emulate as already inserted (val$this$0)
+//	MethodScope currentMethodScope = this.methodScope();
+//	if (outerVariableScope.methodScope() != currentMethodScope &&
+//			 this.enclosingSourceType() instanceof
+//			NestedTypeBinding) {
+//		NestedTypeBinding currentType = (NestedTypeBinding) this.enclosingSourceType();
+//
+//		//do nothing for member types, pre emulation was performed already
+//		if (!currentType.isLocalType()) {
+//			return;
+//		}
+//	}
+//}
 
 /* Note that it must never produce a direct access to the targetEnclosingType,
  * but instead a field sequence (this$2.this$1.this$0) so as to handle such a test case:
@@ -248,51 +233,51 @@ public void emulateOuterAccess(LocalVariableBinding outerLocalVariable) {
  * }
  * where we only want to deal with ONE enclosing instance for C (could not figure out an A for C)
  */
-public final ReferenceBinding findLocalType(char[] name) {
-	long compliance = compilerOptions().complianceLevel;
-	for (int i = this.subscopeCount-1; i >= 0; i--) {
-		if (this.subscopes[i] instanceof ClassScope) {
-			LocalTypeBinding sourceType = (LocalTypeBinding)((ClassScope) this.subscopes[i]).getReferenceBinding();
-			// from 1.4 on, local types should not be accessed across switch case blocks (52221)
-			if (compliance >= ClassFileConstants.JDK1_4 && sourceType.enclosingCase != null) {
-				if (!this.isInsideCase(sourceType.enclosingCase)) {
-					continue;
-				}
-			}
-			if (CharOperation.equals(sourceType.sourceName(), name))
-				return sourceType;
-		}
-	}
-	return null;
-}
-public MethodBinding findMethod(char[] methodName,TypeBinding[]argumentTypes, boolean checkVars) {
-	int methodLength = methodName.length;
-	for (int i = this.numberMethods-1; i >= 0; i--) {
-		MethodBinding method;
-		char[] name;
-		if ((name = (method = this.methods[i]).selector).length == methodLength && CharOperation.equals(name, methodName))
-			return method;
-	}
-	if (checkVars)
-	{
-		LocalVariableBinding variable = findVariable(methodName);
-		if (variable!=null)
-		{
-			MethodBinding binding;
-			if (!(variable.type.isAnyType() || variable.type.isFunctionType()))
-			{
-			  binding=new ProblemMethodBinding(methodName,null,ProblemReasons.NotAFunction);	
-			}
-			else	
-			 binding = new MethodBinding(ClassFileConstants.AccPublic,
-					methodName,TypeBinding.UNKNOWN,null,variable.declaringScope.enclosingTypeBinding());
-			
-			addLocalMethod(binding);
-			return binding;
-		}
-	}
-	return null;
-}
+//public final ReferenceBinding findLocalType(char[] name) {
+//	long compliance = compilerOptions().complianceLevel;
+//	for (int i = this.subscopeCount-1; i >= 0; i--) {
+//		if (this.subscopes[i] instanceof ClassScope) {
+//			LocalTypeBinding sourceType = (LocalTypeBinding)((ClassScope) this.subscopes[i]).getReferenceBinding();
+//			// from 1.4 on, local types should not be accessed across switch case blocks (52221)
+//			if (compliance >= ClassFileConstants.JDK1_4 && sourceType.enclosingCase != null) {
+//				if (!this.isInsideCase(sourceType.enclosingCase)) {
+//					continue;
+//				}
+//			}
+//			if (CharOperation.equals(sourceType.sourceName(), name))
+//				return sourceType;
+//		}
+//	}
+//	return null;
+//}
+//public MethodBinding findMethod(char[] methodName,TypeBinding[]argumentTypes, boolean checkVars) {
+//	int methodLength = methodName.length;
+//	for (int i = this.numberMethods-1; i >= 0; i--) {
+//		MethodBinding method;
+//		char[] name;
+//		if ((name = (method = this.methods[i]).selector).length == methodLength && CharOperation.equals(name, methodName))
+//			return method;
+//	}
+//	if (checkVars)
+//	{
+//		LocalVariableBinding variable = findVariable(methodName);
+//		if (variable!=null)
+//		{
+//			MethodBinding binding;
+//			if (!(variable.type.isAnyType() || variable.type.isFunctionType()))
+//			{
+//			  binding=new ProblemMethodBinding(methodName,null,ProblemReasons.NotAFunction);	
+//			}
+//			else	
+//			 binding = new MethodBinding(ClassFileConstants.AccPublic,
+//					methodName,TypeBinding.UNKNOWN,null,variable.declaringScope.enclosingTypeBinding());
+//			
+//			addLocalMethod(binding);
+//			return binding;
+//		}
+//	}
+//	return null;
+//}
 
 
 /**
@@ -361,269 +346,269 @@ public LocalVariableBinding findVariable(char[] variableName) {
 	}
 	return null;
 }
-
-/* API
- * flag is a mask of the following values VARIABLE (= FIELD or LOCAL), TYPE.
- * Only bindings corresponding to the mask will be answered.
- *
- *	if the VARIABLE mask is set then
- *		If the first name provided is a field (or local) then the field (or local) is answered
- *		Otherwise, package names and type names are consumed until a field is found.
- *		In this case, the field is answered.
- *
- *	if the TYPE mask is set,
- *		package names and type names are consumed until the end of the input.
- *		Only if all of the input is consumed is the type answered
- *
- *	All other conditions are errors, and a problem binding is returned.
- *
- *	NOTE: If a problem binding is returned, senders should extract the compound name
- *	from the binding & not assume the problem applies to the entire compoundName.
- *
- *	The VARIABLE mask has precedence over the TYPE mask.
- *
- *	InvocationSite implements
- *		isSuperAccess(); this is used to determine if the discovered field is visible.
- *		setFieldIndex(int); this is used to record the number of names that were consumed.
- *
- *	For example, getBinding({"foo","y","q", VARIABLE, site) will answer
- *	the binding for the field or local named "foo" (or an error binding if none exists).
- *	In addition, setFieldIndex(1) will be sent to the invocation site.
- *	If a type named "foo" exists, it will not be detected (and an error binding will be answered)
- *
- *	IMPORTANT NOTE: This method is written under the assumption that compoundName is longer than length 1.
- */
-public Binding getBinding(char[][] compoundName, int mask, InvocationSite invocationSite, boolean needResolve) {
-	Binding binding = getBinding(compoundName[0], mask | Binding.TYPE | Binding.PACKAGE, invocationSite, needResolve);
-	invocationSite.setFieldIndex(1);
-	if (binding instanceof VariableBinding) return binding;
-	CompilationUnitScope unitScope = compilationUnitScope();
-	// in the problem case, we want to ensure we record the qualified dependency in case a type is added
-	// and we do not know that its package was also added (can happen with validationParticipants)
-	unitScope.recordQualifiedReference(compoundName);
-	if (!binding.isValidBinding()) return binding;
-
-	int length = compoundName.length;
-	int currentIndex = 1;
-	foundType : if (binding instanceof PackageBinding) {
-		PackageBinding packageBinding = (PackageBinding) binding;
-		while (currentIndex < length) {
-			unitScope.recordReference(packageBinding.compoundName, compoundName[currentIndex]);
-			binding = packageBinding.getTypeOrPackage(compoundName[currentIndex++], mask);
-			invocationSite.setFieldIndex(currentIndex);
-			if (binding == null) {
-				if (currentIndex == length) {
-					// must be a type if its the last name, otherwise we have no idea if its a package or type
-					return new ProblemReferenceBinding(
-						CharOperation.subarray(compoundName, 0, currentIndex),
-						null,
-						ProblemReasons.NotFound);
-				}
-				return new ProblemBinding(
-					CharOperation.subarray(compoundName, 0, currentIndex),
-					ProblemReasons.NotFound);
-			}
-			if (binding instanceof ReferenceBinding) {
-				if (!binding.isValidBinding())
-					return new ProblemReferenceBinding(
-						CharOperation.subarray(compoundName, 0, currentIndex),
-						((ReferenceBinding)binding).closestMatch(),
-						binding.problemId());
-				if (!((ReferenceBinding) binding).canBeSeenBy(this))
-					return new ProblemReferenceBinding(
-						CharOperation.subarray(compoundName, 0, currentIndex),
-						(ReferenceBinding) binding,
-						ProblemReasons.NotVisible);
-				break foundType;
-			}
-			packageBinding = (PackageBinding) binding;
-		}
-
-		// It is illegal to request a PACKAGE from this method.
-		return new ProblemReferenceBinding(
-			CharOperation.subarray(compoundName, 0, currentIndex),
-			null,
-			ProblemReasons.NotFound);
-	}
-
-	// know binding is now a ReferenceBinding
-	ReferenceBinding referenceBinding = (ReferenceBinding) binding;
-	binding = referenceBinding;
-	if (invocationSite instanceof ASTNode) {
-		ASTNode invocationNode = (ASTNode) invocationSite;
-		if (invocationNode.isTypeUseDeprecated(referenceBinding, this)) {
-			problemReporter().deprecatedType(referenceBinding, invocationNode);
-		}
-	}
-	while (currentIndex < length) {
-		referenceBinding = (ReferenceBinding) binding;
-		char[] nextName = compoundName[currentIndex++];
-		invocationSite.setFieldIndex(currentIndex);
-		invocationSite.setActualReceiverType(referenceBinding);
-		if ((mask & Binding.FIELD) != 0 && (binding = findField(referenceBinding, nextName, invocationSite, true /*resolve*/)) != null) {
-			if (!binding.isValidBinding()) {
-				return new ProblemFieldBinding(
-					((ProblemFieldBinding)binding).closestMatch,
-					((ProblemFieldBinding)binding).declaringClass,
-					CharOperation.concatWith(CharOperation.subarray(compoundName, 0, currentIndex), '.'),
-					binding.problemId());
-			}
-			break; // binding is now a field
-		}
-		if ((binding = findMemberType(nextName, referenceBinding)) == null) {
-			if ((mask & Binding.FIELD) != 0) {
-				return new ProblemBinding(
-					CharOperation.subarray(compoundName, 0, currentIndex),
-					referenceBinding,
-					ProblemReasons.NotFound);
-			}
-			return new ProblemReferenceBinding(
-				CharOperation.subarray(compoundName, 0, currentIndex),
-				referenceBinding,
-				ProblemReasons.NotFound);
-		}
-		// binding is a ReferenceBinding
-		if (!binding.isValidBinding())
-			return new ProblemReferenceBinding(
-				CharOperation.subarray(compoundName, 0, currentIndex),
-				((ReferenceBinding)binding).closestMatch(),
-				binding.problemId());
-		if (invocationSite instanceof ASTNode) {
-			referenceBinding = (ReferenceBinding) binding;
-			ASTNode invocationNode = (ASTNode) invocationSite;
-			if (invocationNode.isTypeUseDeprecated(referenceBinding, this)) {
-				problemReporter().deprecatedType(referenceBinding, invocationNode);
-			}
-		}
-	}
-	if ((mask & Binding.FIELD) != 0 && (binding instanceof FieldBinding)) {
-		// was looking for a field and found a field
-		FieldBinding field = (FieldBinding) binding;
-		if (!field.isStatic())
-			return new ProblemFieldBinding(
-				field,
-				field.declaringClass,
-				CharOperation.concatWith(CharOperation.subarray(compoundName, 0, currentIndex), '.'),
-				ProblemReasons.NonStaticReferenceInStaticContext);
-		return binding;
-	}
-	if ((mask & Binding.TYPE) != 0 && (binding instanceof ReferenceBinding)) {
-		// was looking for a type and found a type
-		return binding;
-	}
-
-	// handle the case when a field or type was asked for but we resolved the compoundName to a type or field
-	return new ProblemBinding(
-		CharOperation.subarray(compoundName, 0, currentIndex),
-		ProblemReasons.NotFound);
-}
+//
+///* API
+// * flag is a mask of the following values VARIABLE (= FIELD or LOCAL), TYPE.
+// * Only bindings corresponding to the mask will be answered.
+// *
+// *	if the VARIABLE mask is set then
+// *		If the first name provided is a field (or local) then the field (or local) is answered
+// *		Otherwise, package names and type names are consumed until a field is found.
+// *		In this case, the field is answered.
+// *
+// *	if the TYPE mask is set,
+// *		package names and type names are consumed until the end of the input.
+// *		Only if all of the input is consumed is the type answered
+// *
+// *	All other conditions are errors, and a problem binding is returned.
+// *
+// *	NOTE: If a problem binding is returned, senders should extract the compound name
+// *	from the binding & not assume the problem applies to the entire compoundName.
+// *
+// *	The VARIABLE mask has precedence over the TYPE mask.
+// *
+// *	InvocationSite implements
+// *		isSuperAccess(); this is used to determine if the discovered field is visible.
+// *		setFieldIndex(int); this is used to record the number of names that were consumed.
+// *
+// *	For example, getBinding({"foo","y","q", VARIABLE, site) will answer
+// *	the binding for the field or local named "foo" (or an error binding if none exists).
+// *	In addition, setFieldIndex(1) will be sent to the invocation site.
+// *	If a type named "foo" exists, it will not be detected (and an error binding will be answered)
+// *
+// *	IMPORTANT NOTE: This method is written under the assumption that compoundName is longer than length 1.
+// */
+//public Binding getBinding(char[][] compoundName, int mask, InvocationSite invocationSite, boolean needResolve) {
+//	Binding binding = getBinding(compoundName[0], mask | Binding.TYPE | Binding.PACKAGE, invocationSite, needResolve);
+//	invocationSite.setFieldIndex(1);
+//	if (binding instanceof VariableBinding) return binding;
+//	CompilationUnitScope unitScope = compilationUnitScope();
+//	// in the problem case, we want to ensure we record the qualified dependency in case a type is added
+//	// and we do not know that its package was also added (can happen with validationParticipants)
+//	unitScope.recordQualifiedReference(compoundName);
+//	if (!binding.isValidBinding()) return binding;
+//
+//	int length = compoundName.length;
+//	int currentIndex = 1;
+//	foundType : if (binding instanceof PackageBinding) {
+//		PackageBinding packageBinding = (PackageBinding) binding;
+//		while (currentIndex < length) {
+//			unitScope.recordReference(packageBinding.compoundName, compoundName[currentIndex]);
+//			binding = packageBinding.getTypeOrPackage(compoundName[currentIndex++], mask);
+//			invocationSite.setFieldIndex(currentIndex);
+//			if (binding == null) {
+//				if (currentIndex == length) {
+//					// must be a type if its the last name, otherwise we have no idea if its a package or type
+//					return new ProblemReferenceBinding(
+//						CharOperation.subarray(compoundName, 0, currentIndex),
+//						null,
+//						ProblemReasons.NotFound);
+//				}
+//				return new ProblemBinding(
+//					CharOperation.subarray(compoundName, 0, currentIndex),
+//					ProblemReasons.NotFound);
+//			}
+//			if (binding instanceof ReferenceBinding) {
+//				if (!binding.isValidBinding())
+//					return new ProblemReferenceBinding(
+//						CharOperation.subarray(compoundName, 0, currentIndex),
+//						((ReferenceBinding)binding).closestMatch(),
+//						binding.problemId());
+//				if (!((ReferenceBinding) binding).canBeSeenBy(this))
+//					return new ProblemReferenceBinding(
+//						CharOperation.subarray(compoundName, 0, currentIndex),
+//						(ReferenceBinding) binding,
+//						ProblemReasons.NotVisible);
+//				break foundType;
+//			}
+//			packageBinding = (PackageBinding) binding;
+//		}
+//
+//		// It is illegal to request a PACKAGE from this method.
+//		return new ProblemReferenceBinding(
+//			CharOperation.subarray(compoundName, 0, currentIndex),
+//			null,
+//			ProblemReasons.NotFound);
+//	}
+//
+//	// know binding is now a ReferenceBinding
+//	ReferenceBinding referenceBinding = (ReferenceBinding) binding;
+//	binding = referenceBinding;
+//	if (invocationSite instanceof ASTNode) {
+//		ASTNode invocationNode = (ASTNode) invocationSite;
+//		if (invocationNode.isTypeUseDeprecated(referenceBinding, this)) {
+//			problemReporter().deprecatedType(referenceBinding, invocationNode);
+//		}
+//	}
+//	while (currentIndex < length) {
+//		referenceBinding = (ReferenceBinding) binding;
+//		char[] nextName = compoundName[currentIndex++];
+//		invocationSite.setFieldIndex(currentIndex);
+//		invocationSite.setActualReceiverType(referenceBinding);
+//		if ((mask & Binding.FIELD) != 0 && (binding = findField(referenceBinding, nextName, invocationSite, true /*resolve*/)) != null) {
+//			if (!binding.isValidBinding()) {
+//				return new ProblemFieldBinding(
+//					((ProblemFieldBinding)binding).closestMatch,
+//					((ProblemFieldBinding)binding).declaringClass,
+//					CharOperation.concatWith(CharOperation.subarray(compoundName, 0, currentIndex), '.'),
+//					binding.problemId());
+//			}
+//			break; // binding is now a field
+//		}
+//		if ((binding = findMemberType(nextName, referenceBinding)) == null) {
+//			if ((mask & Binding.FIELD) != 0) {
+//				return new ProblemBinding(
+//					CharOperation.subarray(compoundName, 0, currentIndex),
+//					referenceBinding,
+//					ProblemReasons.NotFound);
+//			}
+//			return new ProblemReferenceBinding(
+//				CharOperation.subarray(compoundName, 0, currentIndex),
+//				referenceBinding,
+//				ProblemReasons.NotFound);
+//		}
+//		// binding is a ReferenceBinding
+//		if (!binding.isValidBinding())
+//			return new ProblemReferenceBinding(
+//				CharOperation.subarray(compoundName, 0, currentIndex),
+//				((ReferenceBinding)binding).closestMatch(),
+//				binding.problemId());
+//		if (invocationSite instanceof ASTNode) {
+//			referenceBinding = (ReferenceBinding) binding;
+//			ASTNode invocationNode = (ASTNode) invocationSite;
+//			if (invocationNode.isTypeUseDeprecated(referenceBinding, this)) {
+//				problemReporter().deprecatedType(referenceBinding, invocationNode);
+//			}
+//		}
+//	}
+//	if ((mask & Binding.FIELD) != 0 && (binding instanceof FieldBinding)) {
+//		// was looking for a field and found a field
+//		FieldBinding field = (FieldBinding) binding;
+//		if (!field.isStatic())
+//			return new ProblemFieldBinding(
+//				field,
+//				field.declaringClass,
+//				CharOperation.concatWith(CharOperation.subarray(compoundName, 0, currentIndex), '.'),
+//				ProblemReasons.NonStaticReferenceInStaticContext);
+//		return binding;
+//	}
+//	if ((mask & Binding.TYPE) != 0 && (binding instanceof ReferenceBinding)) {
+//		// was looking for a type and found a type
+//		return binding;
+//	}
+//
+//	// handle the case when a field or type was asked for but we resolved the compoundName to a type or field
+//	return new ProblemBinding(
+//		CharOperation.subarray(compoundName, 0, currentIndex),
+//		ProblemReasons.NotFound);
+//}
 
 // Added for code assist... NOT Public API
-public final Binding getBinding(char[][] compoundName, InvocationSite invocationSite) {
-	int currentIndex = 0;
-	int length = compoundName.length;
-	Binding binding =
-		getBinding(
-			compoundName[currentIndex++],
-			Binding.VARIABLE | Binding.TYPE | Binding.PACKAGE,
-			invocationSite,
-			true /*resolve*/);
-	if (!binding.isValidBinding())
-		return binding;
-
-	foundType : if (binding instanceof PackageBinding) {
-		while (currentIndex < length) {
-			PackageBinding packageBinding = (PackageBinding) binding;
-			binding = packageBinding.getTypeOrPackage(compoundName[currentIndex++], Binding.VARIABLE | Binding.TYPE | Binding.PACKAGE);
-
-			if (binding == null) {
-				if (currentIndex == length) {
-					// must be a type if its the last name, otherwise we have no idea if its a package or type
-					return new ProblemReferenceBinding(
-						CharOperation.subarray(compoundName, 0, currentIndex),
-						null,
-						ProblemReasons.NotFound);
-				}
-				return new ProblemBinding(
-					CharOperation.subarray(compoundName, 0, currentIndex),
-					ProblemReasons.NotFound);
-			}
-			if (binding instanceof ReferenceBinding) {
-				if (!binding.isValidBinding())
-					return new ProblemReferenceBinding(
-						CharOperation.subarray(compoundName, 0, currentIndex),
-						((ReferenceBinding)binding).closestMatch(),
-						binding.problemId());
-				if (!((ReferenceBinding) binding).canBeSeenBy(this))
-					return new ProblemReferenceBinding(
-						CharOperation.subarray(compoundName, 0, currentIndex),
-						(ReferenceBinding) binding,
-						ProblemReasons.NotVisible);
-				break foundType;
-			}
-		}
-		return binding;
-	}
-
-	foundField : if (binding instanceof ReferenceBinding) {
-		while (currentIndex < length) {
-			ReferenceBinding typeBinding = (ReferenceBinding) binding;
-			char[] nextName = compoundName[currentIndex++];
-			if ((binding = findField(typeBinding, nextName, invocationSite, true /*resolve*/)) != null) {
-				if (!binding.isValidBinding()) {
-					return new ProblemFieldBinding(
-						(FieldBinding) binding,
-						((FieldBinding) binding).declaringClass,
-						CharOperation.concatWith(CharOperation.subarray(compoundName, 0, currentIndex), '.'),
-						binding.problemId());
-				}
-				if (!((FieldBinding) binding).isStatic())
-					return new ProblemFieldBinding(
-						(FieldBinding) binding,
-						((FieldBinding) binding).declaringClass,
-						CharOperation.concatWith(CharOperation.subarray(compoundName, 0, currentIndex), '.'),
-						ProblemReasons.NonStaticReferenceInStaticContext);
-				break foundField; // binding is now a field
-			}
-			if ((binding = findMemberType(nextName, typeBinding)) == null) {
-				return new ProblemBinding(
-					CharOperation.subarray(compoundName, 0, currentIndex),
-					typeBinding,
-					ProblemReasons.NotFound);
-			}
-			if (!binding.isValidBinding()) {
-				return new ProblemReferenceBinding(
-					CharOperation.subarray(compoundName, 0, currentIndex),
-					((ReferenceBinding)binding).closestMatch(),
-					binding.problemId());
-			}
-		}
-		return binding;
-	}
-
-	VariableBinding variableBinding = (VariableBinding) binding;
-	while (currentIndex < length) {
-		TypeBinding typeBinding = variableBinding.type;
-		if (typeBinding == null) {
-			return new ProblemFieldBinding(
-				null,
-				null,
-				CharOperation.concatWith(CharOperation.subarray(compoundName, 0, currentIndex), '.'),
-				ProblemReasons.NotFound);
-		}
-		variableBinding = findField(typeBinding, compoundName[currentIndex++], invocationSite, true /*resolve*/);
-		if (variableBinding == null) {
-			return new ProblemFieldBinding(
-				null,
-				null,
-				CharOperation.concatWith(CharOperation.subarray(compoundName, 0, currentIndex), '.'),
-				ProblemReasons.NotFound);
-		}
-		if (!variableBinding.isValidBinding())
-			return variableBinding;
-	}
-	return variableBinding;
-}
+//public final Binding getBinding(char[][] compoundName, InvocationSite invocationSite) {
+//	int currentIndex = 0;
+//	int length = compoundName.length;
+//	Binding binding =
+//		getBinding(
+//			compoundName[currentIndex++],
+//			Binding.VARIABLE | Binding.TYPE | Binding.PACKAGE,
+//			invocationSite,
+//			true /*resolve*/);
+//	if (!binding.isValidBinding())
+//		return binding;
+//
+//	foundType : if (binding instanceof PackageBinding) {
+//		while (currentIndex < length) {
+//			PackageBinding packageBinding = (PackageBinding) binding;
+//			binding = packageBinding.getTypeOrPackage(compoundName[currentIndex++], Binding.VARIABLE | Binding.TYPE | Binding.PACKAGE);
+//
+//			if (binding == null) {
+//				if (currentIndex == length) {
+//					// must be a type if its the last name, otherwise we have no idea if its a package or type
+//					return new ProblemReferenceBinding(
+//						CharOperation.subarray(compoundName, 0, currentIndex),
+//						null,
+//						ProblemReasons.NotFound);
+//				}
+//				return new ProblemBinding(
+//					CharOperation.subarray(compoundName, 0, currentIndex),
+//					ProblemReasons.NotFound);
+//			}
+//			if (binding instanceof ReferenceBinding) {
+//				if (!binding.isValidBinding())
+//					return new ProblemReferenceBinding(
+//						CharOperation.subarray(compoundName, 0, currentIndex),
+//						((ReferenceBinding)binding).closestMatch(),
+//						binding.problemId());
+//				if (!((ReferenceBinding) binding).canBeSeenBy(this))
+//					return new ProblemReferenceBinding(
+//						CharOperation.subarray(compoundName, 0, currentIndex),
+//						(ReferenceBinding) binding,
+//						ProblemReasons.NotVisible);
+//				break foundType;
+//			}
+//		}
+//		return binding;
+//	}
+//
+//	foundField : if (binding instanceof ReferenceBinding) {
+//		while (currentIndex < length) {
+//			ReferenceBinding typeBinding = (ReferenceBinding) binding;
+//			char[] nextName = compoundName[currentIndex++];
+//			if ((binding = findField(typeBinding, nextName, invocationSite, true /*resolve*/)) != null) {
+//				if (!binding.isValidBinding()) {
+//					return new ProblemFieldBinding(
+//						(FieldBinding) binding,
+//						((FieldBinding) binding).declaringClass,
+//						CharOperation.concatWith(CharOperation.subarray(compoundName, 0, currentIndex), '.'),
+//						binding.problemId());
+//				}
+//				if (!((FieldBinding) binding).isStatic())
+//					return new ProblemFieldBinding(
+//						(FieldBinding) binding,
+//						((FieldBinding) binding).declaringClass,
+//						CharOperation.concatWith(CharOperation.subarray(compoundName, 0, currentIndex), '.'),
+//						ProblemReasons.NonStaticReferenceInStaticContext);
+//				break foundField; // binding is now a field
+//			}
+//			if ((binding = findMemberType(nextName, typeBinding)) == null) {
+//				return new ProblemBinding(
+//					CharOperation.subarray(compoundName, 0, currentIndex),
+//					typeBinding,
+//					ProblemReasons.NotFound);
+//			}
+//			if (!binding.isValidBinding()) {
+//				return new ProblemReferenceBinding(
+//					CharOperation.subarray(compoundName, 0, currentIndex),
+//					((ReferenceBinding)binding).closestMatch(),
+//					binding.problemId());
+//			}
+//		}
+//		return binding;
+//	}
+//
+//	VariableBinding variableBinding = (VariableBinding) binding;
+//	while (currentIndex < length) {
+//		TypeBinding typeBinding = variableBinding.type;
+//		if (typeBinding == null) {
+//			return new ProblemFieldBinding(
+//				null,
+//				null,
+//				CharOperation.concatWith(CharOperation.subarray(compoundName, 0, currentIndex), '.'),
+//				ProblemReasons.NotFound);
+//		}
+//		variableBinding = findField(typeBinding, compoundName[currentIndex++], invocationSite, true /*resolve*/);
+//		if (variableBinding == null) {
+//			return new ProblemFieldBinding(
+//				null,
+//				null,
+//				CharOperation.concatWith(CharOperation.subarray(compoundName, 0, currentIndex), '.'),
+//				ProblemReasons.NotFound);
+//		}
+//		if (!variableBinding.isValidBinding())
+//			return variableBinding;
+//	}
+//	return variableBinding;
+//}
 
 /*
  * This retrieves the argument that maps to an enclosing instance of the suitable type,
@@ -642,18 +627,18 @@ public final Binding getBinding(char[][] compoundName, InvocationSite invocation
  * 				this$2 . this$1 . this$0 . this$1 . this$0
  * 		thus the code generation will be more compact and runtime faster
  */
-public VariableBinding[] getEmulationPath(LocalVariableBinding outerLocalVariable) {
-	MethodScope currentMethodScope = this.methodScope();
-	SourceTypeBinding sourceType = currentMethodScope.enclosingSourceType();
-
-	// identity check
-	BlockScope variableScope = outerLocalVariable.declaringScope;
-	if (variableScope == null /*val$this$0*/ || currentMethodScope == variableScope.methodScope()) {
-		return new VariableBinding[] { outerLocalVariable };
-		// implicit this is good enough
-	}
-	return null;
-}
+//public VariableBinding[] getEmulationPath(LocalVariableBinding outerLocalVariable) {
+//	MethodScope currentMethodScope = this.methodScope();
+//	SourceTypeBinding sourceType = currentMethodScope.enclosingSourceType();
+//
+//	// identity check
+//	BlockScope variableScope = outerLocalVariable.declaringScope;
+//	if (variableScope == null /*val$this$0*/ || currentMethodScope == variableScope.methodScope()) {
+//		return new VariableBinding[] { outerLocalVariable };
+//		// implicit this is good enough
+//	}
+//	return null;
+//}
 
 /*
  * This retrieves the argument that maps to an enclosing instance of the suitable type,
@@ -666,75 +651,75 @@ public VariableBinding[] getEmulationPath(LocalVariableBinding outerLocalVariabl
  * 	null 		 															: not found
  *	jls 15.9.2 + http://www.ergnosis.com/java-spec-report/java-language/jls-8.8.5.1-d.html
  */
-public Object[] getEmulationPath(ReferenceBinding targetEnclosingType, boolean onlyExactMatch, boolean denyEnclosingArgInConstructorCall) {
-	MethodScope currentMethodScope = this.methodScope();
-	SourceTypeBinding sourceType = currentMethodScope.enclosingSourceType();
-
-	// use 'this' if possible
-	if (!currentMethodScope.isStatic && !currentMethodScope.isConstructorCall) {
-		if (sourceType == targetEnclosingType || (!onlyExactMatch && sourceType.findSuperTypeWithSameErasure(targetEnclosingType) != null)) {
-			return BlockScope.EmulationPathToImplicitThis; // implicit this is good enough
-		}
-	}
-	if (!sourceType.isNestedType() || sourceType.isStatic()) { // no emulation from within non-inner types
-		if (currentMethodScope.isConstructorCall) {
-			return BlockScope.NoEnclosingInstanceInConstructorCall;
-		} else if (currentMethodScope.isStatic){
-			return BlockScope.NoEnclosingInstanceInStaticContext;
-		}
-		return null;
-	}
-	boolean insideConstructor = currentMethodScope.isInsideInitializerOrConstructor();
-
-	// use a direct synthetic field then
-	if (currentMethodScope.isStatic) {
-		return BlockScope.NoEnclosingInstanceInStaticContext;
-	}
-	if (sourceType.isAnonymousType()) {
-		ReferenceBinding enclosingType = sourceType.enclosingType();
-		if (enclosingType.isNestedType()) {
-			NestedTypeBinding nestedEnclosingType = (NestedTypeBinding) enclosingType;
-		}
-	}
-
-	// could be reached through a sequence of enclosing instance link (nested members)
-	Object[] path = new Object[2]; // probably at least 2 of them
-	ReferenceBinding currentType = sourceType.enclosingType();
-	if (insideConstructor) {
-	} else {
-		if (currentMethodScope.isConstructorCall){
-			return BlockScope.NoEnclosingInstanceInConstructorCall;
-		}
-	}
-	if (path[0] != null) { // keep accumulating
-
-		int count = 1;
-		ReferenceBinding currentEnclosingType;
-		while ((currentEnclosingType = currentType.enclosingType()) != null) {
-
-			//done?
-			if (currentType == targetEnclosingType
-				|| (!onlyExactMatch && currentType.findSuperTypeWithSameErasure(targetEnclosingType) != null))	break;
-
-			if (currentMethodScope != null) {
-				currentMethodScope = currentMethodScope.enclosingMethodScope();
-				if (currentMethodScope != null && currentMethodScope.isConstructorCall){
-					return BlockScope.NoEnclosingInstanceInConstructorCall;
-				}
-				if (currentMethodScope != null && currentMethodScope.isStatic){
-					return BlockScope.NoEnclosingInstanceInStaticContext;
-				}
-			}
-
-			break;
-		}
-		if (currentType == targetEnclosingType
-			|| (!onlyExactMatch && currentType.findSuperTypeWithSameErasure(targetEnclosingType) != null)) {
-			return path;
-		}
-	}
-	return null;
-}
+//public Object[] getEmulationPath(ReferenceBinding targetEnclosingType, boolean onlyExactMatch, boolean denyEnclosingArgInConstructorCall) {
+//	MethodScope currentMethodScope = this.methodScope();
+//	SourceTypeBinding sourceType = currentMethodScope.enclosingSourceType();
+//
+//	// use 'this' if possible
+//	if (!currentMethodScope.isStatic && !currentMethodScope.isConstructorCall) {
+//		if (sourceType == targetEnclosingType || (!onlyExactMatch && sourceType.findSuperTypeWithSameErasure(targetEnclosingType) != null)) {
+//			return BlockScope.EmulationPathToImplicitThis; // implicit this is good enough
+//		}
+//	}
+//	if (!sourceType.isNestedType() || sourceType.isStatic()) { // no emulation from within non-inner types
+//		if (currentMethodScope.isConstructorCall) {
+//			return BlockScope.NoEnclosingInstanceInConstructorCall;
+//		} else if (currentMethodScope.isStatic){
+//			return BlockScope.NoEnclosingInstanceInStaticContext;
+//		}
+//		return null;
+//	}
+//	boolean insideConstructor = currentMethodScope.isInsideInitializerOrConstructor();
+//
+//	// use a direct synthetic field then
+//	if (currentMethodScope.isStatic) {
+//		return BlockScope.NoEnclosingInstanceInStaticContext;
+//	}
+//	if (sourceType.isAnonymousType()) {
+//		ReferenceBinding enclosingType = sourceType.enclosingType();
+//		if (enclosingType.isNestedType()) {
+//			NestedTypeBinding nestedEnclosingType = (NestedTypeBinding) enclosingType;
+//		}
+//	}
+//
+//	// could be reached through a sequence of enclosing instance link (nested members)
+//	Object[] path = new Object[2]; // probably at least 2 of them
+//	ReferenceBinding currentType = sourceType.enclosingType();
+//	if (insideConstructor) {
+//	} else {
+//		if (currentMethodScope.isConstructorCall){
+//			return BlockScope.NoEnclosingInstanceInConstructorCall;
+//		}
+//	}
+//	if (path[0] != null) { // keep accumulating
+//
+//		int count = 1;
+//		ReferenceBinding currentEnclosingType;
+//		while ((currentEnclosingType = currentType.enclosingType()) != null) {
+//
+//			//done?
+//			if (currentType == targetEnclosingType
+//				|| (!onlyExactMatch && currentType.findSuperTypeWithSameErasure(targetEnclosingType) != null))	break;
+//
+//			if (currentMethodScope != null) {
+//				currentMethodScope = currentMethodScope.enclosingMethodScope();
+//				if (currentMethodScope != null && currentMethodScope.isConstructorCall){
+//					return BlockScope.NoEnclosingInstanceInConstructorCall;
+//				}
+//				if (currentMethodScope != null && currentMethodScope.isStatic){
+//					return BlockScope.NoEnclosingInstanceInStaticContext;
+//				}
+//			}
+//
+//			break;
+//		}
+//		if (currentType == targetEnclosingType
+//			|| (!onlyExactMatch && currentType.findSuperTypeWithSameErasure(targetEnclosingType) != null)) {
+//			return path;
+//		}
+//	}
+//	return null;
+//}
 
 /* Answer true if the variable name already exists within the receiver's scope.
  */
@@ -795,9 +780,9 @@ public int scopeIndex() {
 	}
 	return -1;
 }
-public void setMethods(MethodBinding[] methods) {
-	this.methods = methods;
-}
+//public void setMethods(MethodBinding[] methods) {
+//	this.methods = methods;
+//}
 // start position in this scope - for ordering scopes vs. variables
 int startIndex() {
 	return this.startIndex;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,16 +10,10 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
-
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IWithStatement;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
-import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowContext;
-import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowInfo;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BlockScope;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ReferenceBinding;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.WithScope;
 
 public class WithStatement extends Statement implements IWithStatement {
 
@@ -27,7 +21,6 @@ public class WithStatement extends Statement implements IWithStatement {
 	public Statement action;
 
 	public WithStatement(Expression condition, Statement action, int s, int e) {
-
 		this.condition = condition;
 		this.action = action;
 		// remember useful empty statement
@@ -36,36 +29,15 @@ public class WithStatement extends Statement implements IWithStatement {
 		sourceEnd = e;
 	}
 
-	public FlowInfo analyseCode(
-		BlockScope currentScope,
-		FlowContext flowContext,
-		FlowInfo flowInfo) {
 
-		flowInfo =
-			condition.analyseCode(currentScope, flowContext, flowInfo);
-
-		if (this.action != null) {
-			// Save info for code gen
-//			thenInitStateIndex =
-//				currentScope.methodScope().recordInitializationStates(thenFlowInfo);
-			if (!action.complainIfUnreachable(flowInfo, currentScope, false)) {
-				flowInfo =
-					this.action.analyseCode(currentScope, flowContext, flowInfo);
-			}
-		}
-
-
-		return flowInfo;
-	}
-
-	public void resolve(BlockScope parentScope) {
-
-		TypeBinding type = condition.resolveTypeExpecting(parentScope, TypeBinding.ANY);
-        BlockScope scope = (type instanceof ReferenceBinding)?
-        		new WithScope(parentScope,(ReferenceBinding)type) : parentScope;
-		if (action != null)
-			action.resolve(scope);
-	}
+//	public void resolve(BlockScope parentScope) {
+//
+//		TypeBinding type = condition.resolveTypeExpecting(parentScope, TypeBinding.ANY);
+//        BlockScope scope = (type instanceof ReferenceBinding)?
+//        		new WithScope(parentScope,(ReferenceBinding)type) : parentScope;
+//		if (action != null)
+//			action.resolve(scope);
+//	}
 
 	public StringBuffer printStatement(int tab, StringBuffer output) {
 
@@ -89,8 +61,8 @@ public class WithStatement extends Statement implements IWithStatement {
 		}
 		visitor.endVisit(this, blockScope);
 	}
+	
 	public int getASTType() {
 		return IASTNode.WITH_STATEMENT;
-	
 	}
 }

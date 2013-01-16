@@ -73,47 +73,47 @@ public ExceptionHandlingFlowContext(
 	this.initsOnReturn = FlowInfo.DEAD_END;
 }
 
-public void complainIfUnusedExceptionHandlers(AbstractMethodDeclaration method) {
-	MethodScope scope = method.scope;
-	// can optionally skip overriding methods
-	if ((method.binding.modifiers & (ExtraCompilerModifiers.AccOverriding | ExtraCompilerModifiers.AccImplementing)) != 0
-	        && !scope.compilerOptions().reportUnusedDeclaredThrownExceptionWhenOverriding) {
-	    return;
-	}
+//public void complainIfUnusedExceptionHandlers(AbstractMethodDeclaration method) {
+//	MethodScope scope = method.scope;
+//	// can optionally skip overriding methods
+//	if ((method.binding.modifiers & (ExtraCompilerModifiers.AccOverriding | ExtraCompilerModifiers.AccImplementing)) != 0
+//	        && !scope.compilerOptions().reportUnusedDeclaredThrownExceptionWhenOverriding) {
+//	    return;
+//	}
+//
+//	// report errors for unreachable exception handlers
+//	for (int i = 0, count = this.handledExceptions.length; i < count; i++) {
+//		int index = this.indexes.get(this.handledExceptions[i]);
+//		int cacheIndex = index / ExceptionHandlingFlowContext.BitCacheSize;
+//		int bitMask = 1 << (index % ExceptionHandlingFlowContext.BitCacheSize);
+//		if ((this.isReached[cacheIndex] & bitMask) == 0) {
+//			scope.problemReporter().unusedDeclaredThrownException(
+//				this.handledExceptions[index],
+//				method,
+//				null);
+//		}
+//	}
+//}
 
-	// report errors for unreachable exception handlers
-	for (int i = 0, count = this.handledExceptions.length; i < count; i++) {
-		int index = this.indexes.get(this.handledExceptions[i]);
-		int cacheIndex = index / ExceptionHandlingFlowContext.BitCacheSize;
-		int bitMask = 1 << (index % ExceptionHandlingFlowContext.BitCacheSize);
-		if ((this.isReached[cacheIndex] & bitMask) == 0) {
-			scope.problemReporter().unusedDeclaredThrownException(
-				this.handledExceptions[index],
-				method,
-				null);
-		}
-	}
-}
-
-public void complainIfUnusedExceptionHandlers(BlockScope scope,TryStatement tryStatement) {
-	// report errors for unreachable exception handlers
-	for (int i = 0, count = this.handledExceptions.length; i < count; i++) {
-		int index = this.indexes.get(this.handledExceptions[i]);
-		int cacheIndex = index / ExceptionHandlingFlowContext.BitCacheSize;
-		int bitMask = 1 << (index % ExceptionHandlingFlowContext.BitCacheSize);
-		if ((this.isReached[cacheIndex] & bitMask) == 0) {
-			scope.problemReporter().unreachableCatchBlock(
-				this.handledExceptions[index],
-				tryStatement.catchArguments[index] );
-		} else {
-			if ((this.isNeeded[cacheIndex] & bitMask) == 0) {
-				scope.problemReporter().hiddenCatchBlock(
-					this.handledExceptions[index],
-					tryStatement.catchArguments[index].type);
-			}
-		}
-	}
-}
+//public void complainIfUnusedExceptionHandlers(BlockScope scope,TryStatement tryStatement) {
+//	// report errors for unreachable exception handlers
+//	for (int i = 0, count = this.handledExceptions.length; i < count; i++) {
+//		int index = this.indexes.get(this.handledExceptions[i]);
+//		int cacheIndex = index / ExceptionHandlingFlowContext.BitCacheSize;
+//		int bitMask = 1 << (index % ExceptionHandlingFlowContext.BitCacheSize);
+//		if ((this.isReached[cacheIndex] & bitMask) == 0) {
+//			scope.problemReporter().unreachableCatchBlock(
+//				this.handledExceptions[index],
+//				tryStatement.catchArguments[index] );
+//		} else {
+//			if ((this.isNeeded[cacheIndex] & bitMask) == 0) {
+//				scope.problemReporter().hiddenCatchBlock(
+//					this.handledExceptions[index],
+//					tryStatement.catchArguments[index].type);
+//			}
+//		}
+//	}
+//}
 
 public String individualToString() {
 	StringBuffer buffer = new StringBuffer("Exception flow context"); //$NON-NLS-1$

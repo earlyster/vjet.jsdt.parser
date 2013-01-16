@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
-
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IExpression;
 import org.eclipse.mod.wst.jsdt.core.ast.IFieldDeclaration;
@@ -18,15 +17,15 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
 import org.eclipse.mod.wst.jsdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowContext;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowInfo;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ArrayBinding;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BaseTypeBinding;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.Binding;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ClassScope;
+import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ArrayBinding;
+import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BaseTypeBinding;
+import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.Binding;
+import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.MethodScope;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.Scope;
+import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.Scope;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.SourceTypeBinding;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding;
+import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding;
 
 public class FieldDeclaration extends AbstractVariableDeclaration implements IFieldDeclaration {
 
@@ -57,37 +56,8 @@ public FieldDeclaration(	char[] name, int sourceStart, int sourceEnd) {
 	this.sourceEnd = sourceEnd;
 }
 
-public FlowInfo analyseCode(MethodScope initializationScope, FlowContext flowContext, FlowInfo flowInfo) {
-	if (this.binding != null && !this.binding.isUsed()) {
-		if (this.binding.isPrivate() || (this.binding.declaringClass != null && this.binding.declaringClass.isLocalType())) {
-			if (!initializationScope.referenceCompilationUnit().compilationResult.hasSyntaxError) {
-				initializationScope.problemReporter().unusedPrivateField(this);
-			}
-		}
-	}
-	// cannot define static non-constant field inside nested class
-	if (this.binding != null
-			&& this.binding.isValidBinding()
-			&& this.binding.isStatic()
-			&& this.binding.declaringClass.isNestedType()
-			&& !this.binding.declaringClass.isStatic()) {
-		initializationScope.problemReporter().unexpectedStaticModifierForField(
-			(SourceTypeBinding) this.binding.declaringClass,
-			this);
-	}
-
-	if (this.initialization != null) {
-		flowInfo =
-			this.initialization
-				.analyseCode(initializationScope, flowContext, flowInfo)
-				.unconditionalInits();
-		flowInfo.markAsDefinitelyAssigned(this.binding);
-	}
-	return flowInfo;
-}
-
 /**
- * @see org.eclipse.mod.wst.jsdt.internal.compiler.ast.AbstractVariableDeclaration#getKind()
+ * @see org.eclipse.wst.jsdt.internal.compiler.ast.AbstractVariableDeclaration#getKind()
  */
 public int getKind() {
 //	return this.type == null ? ENUM_CONSTANT : FIELD;
@@ -106,10 +76,8 @@ public StringBuffer printStatement(int indent, StringBuffer output) {
 	}
 	return super.printStatement(indent, output);
 }
-
-public void resolve(MethodScope initializationScope) {
-	
-	return;
+//
+//public void resolve(MethodScope initializationScope) {
 //	// the two <constant = Constant.NotAConstant> could be regrouped into
 //	// a single line but it is clearer to have two lines while the reason of their
 //	// existence is not at all the same. See comment for the second one.
@@ -179,7 +147,6 @@ public void resolve(MethodScope initializationScope) {
 //
 //				if ((initializationType = this.initialization.resolveTypeExpecting(initializationScope, fieldType)) != null) {
 //					((ArrayInitializer) this.initialization).binding = (ArrayBinding) initializationType;
-//					this.initialization.computeConversion(initializationScope, fieldType, initializationType);
 //				}
 //			} else if ((initializationType = this.initialization.resolveType(initializationScope)) != null) {
 //
@@ -188,13 +155,11 @@ public void resolve(MethodScope initializationScope) {
 //				if (this.initialization.isConstantValueOfTypeAssignableToType(initializationType, fieldType)
 //						|| (fieldType.isBaseType() && BaseTypeBinding.isWidening(fieldType.id, initializationType.id))
 //						|| initializationType.isCompatibleWith(fieldType)) {
-//					this.initialization.computeConversion(initializationScope, fieldType, initializationType);
 //				} else if (initializationScope.isBoxingCompatibleWith(initializationType, fieldType)
 //									|| (initializationType.isBaseType()  // narrowing then boxing ?
 //											&& initializationScope.compilerOptions().sourceLevel >= ClassFileConstants.JDK1_5 // autoboxing
 //											&& !fieldType.isBaseType()
 //											&& initialization.isConstantValueOfTypeAssignableToType(initializationType, initializationScope.environment().computeBoxingType(fieldType)))) {
-//					this.initialization.computeConversion(initializationScope, fieldType, initializationType);
 //				} else {
 //					initializationScope.problemReporter().typeMismatchError(initializationType, fieldType, this);
 //				}
@@ -219,7 +184,7 @@ public void resolve(MethodScope initializationScope) {
 //		initializationScope.initializedField = previousField;
 //		initializationScope.lastVisibleFieldID = previousFieldID;
 //	}
-}
+//}
 
 public void traverse(ASTVisitor visitor, MethodScope scope) {
 	if (visitor.visit(this, scope)) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,10 +10,9 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
-
-import org.eclipse.mod.wst.jsdt.core.JavaScriptConstants;
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IBlock;
+import org.eclipse.mod.wst.jsdt.core.ast.IStatement;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowContext;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowInfo;
@@ -29,25 +28,11 @@ public class Block extends Statement implements IBlock {
 	public Block(int explicitDeclarations) {
 		this.explicitDeclarations = explicitDeclarations;
 	}
-
-	public FlowInfo analyseCode(
-		BlockScope currentScope,
-		FlowContext flowContext,
-		FlowInfo flowInfo) {
-
-		// empty block
-		if (statements == null)	return flowInfo;
-		boolean didAlreadyComplain = false;
-		for (int i = 0, max = statements.length; i < max; i++) {
-			Statement stat = statements[i];
-			if (!stat.complainIfUnreachable(flowInfo, scope, didAlreadyComplain)) {
-				flowInfo = stat.analyseCode(scope, flowContext, flowInfo);
-			} else {
-				didAlreadyComplain = true;
-			}
-		}
-		return flowInfo;
+	
+	public IStatement[] getStatements() {
+		return statements;
 	}
+	
 	public boolean isEmptyBlock() {
 
 		return statements == null;
@@ -71,35 +56,35 @@ public class Block extends Statement implements IBlock {
 		return printIndent(indent, output).append('}');
 	}
 
-	public void resolve(BlockScope upperScope) {
-
-		if ((this.bits & UndocumentedEmptyBlock) != 0) {
-			upperScope.problemReporter().undocumentedEmptyBlock(this.sourceStart, this.sourceEnd);
-		}
-		if (statements != null) {
-			scope =
-				(!JavaScriptConstants.IS_ECMASCRIPT4 || explicitDeclarations == 0)
-					? upperScope
-					: new BlockScope(upperScope, explicitDeclarations);
-			for (int i = 0, length = statements.length; i < length; i++) {
-				statements[i].resolve(scope);
-			}
-		}
-	}
-
-	public void resolveUsing(BlockScope givenScope) {
-
-		if ((this.bits & UndocumentedEmptyBlock) != 0) {
-			givenScope.problemReporter().undocumentedEmptyBlock(this.sourceStart, this.sourceEnd);
-		}
-		// this optimized resolve(...) is sent only on none empty blocks
-		scope = givenScope;
-		if (statements != null) {
-			for (int i = 0, length = statements.length; i < length; i++) {
-				statements[i].resolve(scope);
-			}
-		}
-	}
+//	public void resolve(BlockScope upperScope) {
+//
+//		if ((this.bits & UndocumentedEmptyBlock) != 0) {
+//			upperScope.problemReporter().undocumentedEmptyBlock(this.sourceStart, this.sourceEnd);
+//		}
+//		if (statements != null) {
+//			scope =
+//				(!JavaScriptCore.IS_ECMASCRIPT4 || explicitDeclarations == 0)
+//					? upperScope
+//					: new BlockScope(upperScope, explicitDeclarations);
+//			for (int i = 0, length = statements.length; i < length; i++) {
+//				statements[i].resolve(scope);
+//			}
+//		}
+//	}
+//
+//	public void resolveUsing(BlockScope givenScope) {
+//
+//		if ((this.bits & UndocumentedEmptyBlock) != 0) {
+//			givenScope.problemReporter().undocumentedEmptyBlock(this.sourceStart, this.sourceEnd);
+//		}
+//		// this optimized resolve(...) is sent only on none empty blocks
+//		scope = givenScope;
+//		if (statements != null) {
+//			for (int i = 0, length = statements.length; i < length; i++) {
+//				statements[i].resolve(scope);
+//			}
+//		}
+//	}
 
 	public void traverse(
 		ASTVisitor visitor,

@@ -60,58 +60,58 @@ public class LocalVariableBinding extends VariableBinding {
 	 * declaringUniqueKey # scopeIndex / varName
 	 * p.X { void foo() { int local; } } --> Lp/X;.foo()V#1/local
 	 */
-	public char[] computeUniqueKey(boolean isLeaf) {
-		StringBuffer buffer = new StringBuffer();
-
-		// declaring method or type
- 		BlockScope scope = this.declaringScope;
-		if (scope != null) {
-			// the scope can be null. See https://bugs.eclipse.org/bugs/show_bug.cgi?id=185129
-
-		if (scope instanceof CompilationUnitScope) {
-			CompilationUnitScope compilationUnitScope = (CompilationUnitScope) scope;
-			buffer.append(compilationUnitScope.referenceContext.compilationUnitBinding.computeUniqueKey(false));
-		}
-		else
-		{
-			ReferenceContext referenceContext = null;
-			MethodScope methodScope = scope instanceof MethodScope ? (MethodScope) scope : scope.enclosingMethodScope();
-			if (methodScope!=null)
-			{
-				referenceContext = methodScope.referenceContext;
-			}
-			else
-				referenceContext =	scope.enclosingCompilationUnit().scope.referenceCompilationUnit();
-			if (referenceContext instanceof AbstractMethodDeclaration) {
-				MethodBinding methodBinding = ((AbstractMethodDeclaration) referenceContext).binding;
-				if (methodBinding != null) {
-					buffer.append(methodBinding.computeUniqueKey(false/*not a leaf*/));
-				}
-			} else if (referenceContext instanceof TypeDeclaration) {
-				TypeBinding typeBinding = ((TypeDeclaration) referenceContext).binding;
-				if (typeBinding != null) {
-					buffer.append(typeBinding.computeUniqueKey(false/*not a leaf*/));
-				}
-			} else if (referenceContext instanceof CompilationUnitDeclaration) {
-				 CompilationUnitBinding compilationUnitBinding = ((CompilationUnitDeclaration) referenceContext).compilationUnitBinding;
-				if (compilationUnitBinding != null) {
-					buffer.append(compilationUnitBinding.computeUniqueKey(false/*not a leaf*/));
-				}
-			}
-		}
-		}
-		// scope index
-		getScopeKey(scope, buffer);
-
-		// variable name
-		buffer.append('#');
-		buffer.append(this.name);
-
-		int length = buffer.length();
-		char[] uniqueKey = new char[length];
-		buffer.getChars(0, length, uniqueKey, 0);
-		return uniqueKey;
-	}
+//	public char[] computeUniqueKey(boolean isLeaf) {
+//		StringBuffer buffer = new StringBuffer();
+//
+//		// declaring method or type
+// 		BlockScope scope = this.declaringScope;
+//		if (scope != null) {
+//			// the scope can be null. See https://bugs.eclipse.org/bugs/show_bug.cgi?id=185129
+//
+//		if (scope instanceof CompilationUnitScope) {
+//			CompilationUnitScope compilationUnitScope = (CompilationUnitScope) scope;
+//			buffer.append(compilationUnitScope.referenceContext.compilationUnitBinding.computeUniqueKey(false));
+//		}
+//		else
+//		{
+//			ReferenceContext referenceContext = null;
+//			MethodScope methodScope = scope instanceof MethodScope ? (MethodScope) scope : scope.enclosingMethodScope();
+//			if (methodScope!=null)
+//			{
+//				referenceContext = methodScope.referenceContext;
+//			}
+//			else
+//				referenceContext =	scope.enclosingCompilationUnit().scope.referenceCompilationUnit();
+//			if (referenceContext instanceof AbstractMethodDeclaration) {
+//				MethodBinding methodBinding = ((AbstractMethodDeclaration) referenceContext).binding;
+//				if (methodBinding != null) {
+//					buffer.append(methodBinding.computeUniqueKey(false/*not a leaf*/));
+//				}
+//			} else if (referenceContext instanceof TypeDeclaration) {
+//				TypeBinding typeBinding = ((TypeDeclaration) referenceContext).binding;
+//				if (typeBinding != null) {
+//					buffer.append(typeBinding.computeUniqueKey(false/*not a leaf*/));
+//				}
+//			} else if (referenceContext instanceof CompilationUnitDeclaration) {
+//				 CompilationUnitBinding compilationUnitBinding = ((CompilationUnitDeclaration) referenceContext).compilationUnitBinding;
+//				if (compilationUnitBinding != null) {
+//					buffer.append(compilationUnitBinding.computeUniqueKey(false/*not a leaf*/));
+//				}
+//			}
+//		}
+//		}
+//		// scope index
+//		getScopeKey(scope, buffer);
+//
+//		// variable name
+//		buffer.append('#');
+//		buffer.append(this.name);
+//
+//		int length = buffer.length();
+//		char[] uniqueKey = new char[length];
+//		buffer.getChars(0, length, uniqueKey, 0);
+//		return uniqueKey;
+//	}
 
 //	public AnnotationBinding[] getAnnotations() {
 //		if (this.declaringScope == null) {

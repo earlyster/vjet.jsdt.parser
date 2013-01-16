@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,14 +10,13 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
-
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.ITypeReference;
+import org.eclipse.mod.wst.jsdt.core.compiler.CharOperation;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowContext;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowInfo;
 import org.eclipse.mod.wst.jsdt.internal.compiler.impl.Constant;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ArrayBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ReferenceBinding;
@@ -52,8 +51,6 @@ public static final TypeReference baseTypeReference(int baseType, int dim) {
 				return new SingleTypeReference(TypeBinding.FLOAT.simpleName, 0);
 			case (TypeIds.T_double) :
 				return new SingleTypeReference(TypeBinding.DOUBLE.simpleName, 0);
-			case (TypeIds.T_byte) :
-				return new SingleTypeReference(TypeBinding.BYTE.simpleName, 0);
 			case (TypeIds.T_short) :
 				return new SingleTypeReference(TypeBinding.SHORT.simpleName, 0);
 			case (TypeIds.T_int) :
@@ -73,8 +70,6 @@ public static final TypeReference baseTypeReference(int baseType, int dim) {
 			return new ArrayTypeReference(TypeBinding.FLOAT.simpleName, dim, 0);
 		case (TypeIds.T_double) :
 			return new ArrayTypeReference(TypeBinding.DOUBLE.simpleName, dim, 0);
-		case (TypeIds.T_byte) :
-			return new ArrayTypeReference(TypeBinding.BYTE.simpleName, dim, 0);
 		case (TypeIds.T_short) :
 			return new ArrayTypeReference(TypeBinding.SHORT.simpleName, dim, 0);
 		case (TypeIds.T_int) :
@@ -83,9 +78,7 @@ public static final TypeReference baseTypeReference(int baseType, int dim) {
 			return new ArrayTypeReference(TypeBinding.LONG.simpleName, dim, 0);
 	}
 }
-public void checkBounds(Scope scope) {
-	// only parameterized type references have bounds
-}
+
 public abstract TypeReference copyDims(int dim);
 public int dimensions() {
 	return 0;
@@ -93,14 +86,7 @@ public int dimensions() {
 
 public abstract char[] getLastToken();
 
-/**
- * @return char[][]
- * TODO (jerome) should merge back into #getTypeName()
- */
-public char [][] getParameterizedTypeName(){
-	return getTypeName();
-}
-protected abstract TypeBinding getTypeBinding(Scope scope);
+//protected abstract TypeBinding getTypeBinding(Scope scope);
 /**
  * @return char[][]
  */
@@ -111,73 +97,71 @@ public char[] getSimpleTypeName()
 	char[][] typeName = getTypeName();
 	return typeName[typeName.length-1];
 }
+
+public char[] getFullTypeName() {
+	char[][] typeName = getTypeName();
+	return CharOperation.concatWith(typeName, '.');
+}
+
 public boolean isTypeReference() {
 	return true;
 }
-public TypeBinding resolveSuperType(ClassScope scope) {
-	// assumes the implementation of resolveType(ClassScope) will call back to detect cycles
-	if (resolveType(scope) == null) return null;
+//public TypeBinding resolveSuperType(ClassScope scope) {
+//	// assumes the implementation of resolveType(ClassScope) will call back to detect cycles
+//	if (resolveType(scope) == null) return null;
+//
+//	return this.resolvedType;
+//}
 
-	return this.resolvedType;
-}
+//public final TypeBinding resolveType(BlockScope blockScope) {
+//	return resolveType(blockScope, true /* checkbounds if any */);
+//}
 
-public final TypeBinding resolveType(BlockScope blockScope) {
-	return resolveType(blockScope, true /* checkbounds if any */);
-}
+//public TypeBinding resolveType(BlockScope scope, boolean checkBounds) {
+//	// handle the error here
+//	this.constant = Constant.NotAConstant;
+//	if (this.resolvedType != null) // is a shared type reference which was already resolved
+//		return this.resolvedType.isValidBinding() ? this.resolvedType : null; // already reported error
+//
+//	TypeBinding type = this.resolvedType = getTypeBinding(scope);
+//	if (type == null)
+//		return null; // detected cycle while resolving hierarchy
+//	if (!type.isValidBinding()) {
+//		reportInvalidType(scope);
+//		return null;
+//	}
+//
+//	if (isTypeUseDeprecated(type, scope))
+//		reportDeprecatedType(type, scope);
+//
+//	return this.resolvedType = type;
+//}
+//public TypeBinding resolveType(ClassScope scope) {
+//	// handle the error here
+//	this.constant = Constant.NotAConstant;
+//	if (this.resolvedType != null) // is a shared type reference which was already resolved
+//		return this.resolvedType.isValidBinding() ? this.resolvedType : null; // already reported error
+//
+//	TypeBinding type = this.resolvedType = getTypeBinding(scope);
+//	if (type == null)
+//		return null; // detected cycle while resolving hierarchy
+//	if (!type.isValidBinding()) {
+//		reportInvalidType(scope);
+//		return null;
+//	}
+//	if (isTypeUseDeprecated(type, scope))
+//		reportDeprecatedType(type, scope);
+//
+//	return this.resolvedType = type;
+//}
 
-public TypeBinding resolveType(BlockScope scope, boolean checkBounds) {
-	// handle the error here
-	this.constant = Constant.NotAConstant;
-	if (this.resolvedType != null) // is a shared type reference which was already resolved
-		return this.resolvedType.isValidBinding() ? this.resolvedType : null; // already reported error
-
-	TypeBinding type = this.resolvedType = getTypeBinding(scope);
-	if (type == null)
-		return null; // detected cycle while resolving hierarchy
-	if (!type.isValidBinding()) {
-		reportInvalidType(scope);
-		return null;
-	}
-	if (type.isArrayType() && ((ArrayBinding) type).leafComponentType == TypeBinding.VOID) {
-		scope.problemReporter().cannotAllocateVoidArray(this);
-		return null;
-	}
-
-	if (isTypeUseDeprecated(type, scope))
-		reportDeprecatedType(type, scope);
-
-	return this.resolvedType = type;
-}
-public TypeBinding resolveType(ClassScope scope) {
-	// handle the error here
-	this.constant = Constant.NotAConstant;
-	if (this.resolvedType != null) // is a shared type reference which was already resolved
-		return this.resolvedType.isValidBinding() ? this.resolvedType : null; // already reported error
-
-	TypeBinding type = this.resolvedType = getTypeBinding(scope);
-	if (type == null)
-		return null; // detected cycle while resolving hierarchy
-	if (!type.isValidBinding()) {
-		reportInvalidType(scope);
-		return null;
-	}
-	if (type.isArrayType() && ((ArrayBinding) type).leafComponentType == TypeBinding.VOID) {
-		scope.problemReporter().cannotAllocateVoidArray(this);
-		return null;
-	}
-	if (isTypeUseDeprecated(type, scope))
-		reportDeprecatedType(type, scope);
-
-	return this.resolvedType = type;
-}
-
-public TypeBinding resolveTypeArgument(BlockScope blockScope, ReferenceBinding genericType, int rank) {
-    return resolveType(blockScope, true /* check bounds*/);
-}
-
-public TypeBinding resolveTypeArgument(ClassScope classScope, ReferenceBinding genericType, int rank) {
-    return resolveType(classScope);
-}
+//public TypeBinding resolveTypeArgument(BlockScope blockScope, ReferenceBinding genericType, int rank) {
+//    return resolveType(blockScope, true /* check bounds*/);
+//}
+//
+//public TypeBinding resolveTypeArgument(ClassScope classScope, ReferenceBinding genericType, int rank) {
+//    return resolveType(classScope);
+//}
 
 protected void reportInvalidType(Scope scope) {
 	scope.problemReporter().invalidType(this, this.resolvedType);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2012 IBM Corporation and others.
+ * Copyright (c) 2005, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IFunctionExpression;
@@ -50,30 +49,24 @@ public class FunctionExpression extends Expression implements IFunctionExpressio
 	}
 
 
-	public TypeBinding resolveType(BlockScope scope) {
-		constant = Constant.NotAConstant;
-		this.methodDeclaration.scope=new MethodScope(scope,this.methodDeclaration,false);
-		this.methodDeclaration.binding=this.methodDeclaration.scope.createMethod(this.methodDeclaration, null, scope.enclosingCompilationUnit(), false, false);
-		this.methodDeclaration.binding.createFunctionTypeBinding(scope);
-		this.methodDeclaration.resolve(scope);
-		return this.methodDeclaration.binding.functionTypeBinding;
-	}
+//	public TypeBinding resolveType(BlockScope scope) {
+//		constant = Constant.NotAConstant;
+//		this.methodDeclaration.scope=new MethodScope(scope,this.methodDeclaration,false);
+//		this.methodDeclaration.binding=this.methodDeclaration.scope.createMethod(this.methodDeclaration, null, scope.enclosingCompilationUnit(), false, false);
+//		methodDeclaration.bindArguments();
+//		this.methodDeclaration.binding.createFunctionTypeBinding(scope);
+//		this.methodDeclaration.resolve(scope);
+//		return this.methodDeclaration.binding.functionTypeBinding;
+//	}
 
-	public TypeBinding resolveForAllocation(BlockScope scope, ASTNode location) {
-		return this.resolveType(scope);
-	}
+//	public TypeBinding resolveForAllocation(BlockScope scope, ASTNode location) {
+//		return this.resolveType(scope);
+//	}
 
 	public int nullStatus(FlowInfo flowInfo) {
 			return FlowInfo.NON_NULL; // constant expression cannot be null
 	}
 
-	public FlowInfo analyseCode(
-			BlockScope classScope,
-			FlowContext initializationContext,
-			FlowInfo flowInfo) {
-		this.methodDeclaration.analyseCode(classScope, initializationContext, flowInfo.copy());
-		return flowInfo;
-	}
 	public int getASTType() {
 		return IASTNode.FUNCTION_EXPRESSION;
 	

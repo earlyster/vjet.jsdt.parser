@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,11 +10,10 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
-
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IEqualExpression;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
-//import org.eclipse.mod.wst.jsdt.internal.compiler.classfmt.ClassFileConstants;
+import org.eclipse.mod.wst.jsdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowContext;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowInfo;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.UnconditionalFlowInfo;
@@ -71,68 +70,6 @@ public class EqualExpression extends BinaryExpression implements IEqualExpressio
 	// does not preclude the variable from being null in an enclosing scope
 	}
 
-	public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, FlowInfo flowInfo) {
-		FlowInfo result;
-		if (((bits & OperatorMASK) >> OperatorSHIFT) == EQUAL_EQUAL) {
-			if ((left.constant != Constant.NotAConstant) && (left.constant.typeID() == T_boolean)) {
-				if (left.constant.booleanValue()) { //  true == anything
-					//  this is equivalent to the right argument inits
-					result = right.analyseCode(currentScope, flowContext, flowInfo);
-				} else { // false == anything
-					//  this is equivalent to the right argument inits negated
-					result = right.analyseCode(currentScope, flowContext, flowInfo).asNegatedCondition();
-				}
-			}
-			else if ((right.constant != Constant.NotAConstant) && (right.constant.typeID() == T_boolean)) {
-				if (right.constant.booleanValue()) { //  anything == true
-					//  this is equivalent to the left argument inits
-					result = left.analyseCode(currentScope, flowContext, flowInfo);
-				} else { // anything == false
-					//  this is equivalent to the right argument inits negated
-					result = left.analyseCode(currentScope, flowContext, flowInfo).asNegatedCondition();
-				}
-			}
-			else {
-				result = right.analyseCode(
-					currentScope, flowContext,
-					left.analyseCode(currentScope, flowContext, flowInfo).unconditionalInits()).unconditionalInits();
-			}
-		} else { //NOT_EQUAL :
-			if ((left.constant != Constant.NotAConstant) && (left.constant.typeID() == T_boolean)) {
-				if (!left.constant.booleanValue()) { //  false != anything
-					//  this is equivalent to the right argument inits
-					result = right.analyseCode(currentScope, flowContext, flowInfo);
-				} else { // true != anything
-					//  this is equivalent to the right argument inits negated
-					result = right.analyseCode(currentScope, flowContext, flowInfo).asNegatedCondition();
-				}
-			}
-			else if ((right.constant != Constant.NotAConstant) && (right.constant.typeID() == T_boolean)) {
-				if (!right.constant.booleanValue()) { //  anything != false
-					//  this is equivalent to the right argument inits
-					result = left.analyseCode(currentScope, flowContext, flowInfo);
-				} else { // anything != true
-					//  this is equivalent to the right argument inits negated
-					result = left.analyseCode(currentScope, flowContext, flowInfo).asNegatedCondition();
-				}
-			}
-			else {
-				result = right.analyseCode(
-					currentScope, flowContext,
-					left.analyseCode(currentScope, flowContext, flowInfo).unconditionalInits()).
-					/* unneeded since we flatten it: asNegatedCondition(). */
-					unconditionalInits();
-			}
-		}
-		if (result instanceof UnconditionalFlowInfo &&
-				(result.tagBits & FlowInfo.UNREACHABLE) == 0) { // the flow info is flat
-			result = FlowInfo.conditional(result.copy(), result.copy());
-			// TODO (maxime) check, reintroduced copy
-		}
-	  checkNullComparison(currentScope, flowContext, result, result.initsWhenTrue(), result.initsWhenFalse());
-	  return result;
-	}
-
 	public final void computeConstant(TypeBinding leftType, TypeBinding rightType) {
 		if ((this.left.constant != Constant.NotAConstant) && (this.right.constant != Constant.NotAConstant)) {
 			this.constant =
@@ -151,83 +88,7 @@ public class EqualExpression extends BinaryExpression implements IEqualExpressio
 	public boolean isCompactableOperation() {
 		return false;
 	}
-	public TypeBinding resolveType(BlockScope scope) {
-
-//		constant = Constant.NotAConstant;
-//			boolean leftIsCast, rightIsCast;
-//			TypeBinding originalLeftType = left.resolveType(scope);
-//
-//			TypeBinding originalRightType = right.resolveType(scope);
-//
-//		// always return BooleanBinding
-//		if (originalLeftType == null || originalRightType == null){
-//			constant = Constant.NotAConstant;
-//			return null;
-//		}
-//
-//		// autoboxing support
-//		boolean use15specifics = scope.compilerOptions().sourceLevel >= ClassFileConstants.JDK1_5;
-//		TypeBinding leftType = originalLeftType, rightType = originalRightType;
-//		if (use15specifics) {
-//			if (leftType != TypeBinding.NULL && leftType.isBaseType()) {
-//				if (!rightType.isBaseType()) {
-//					rightType = scope.environment().computeBoxingType(rightType);
-//				}
-//			} else {
-//				if (rightType != TypeBinding.NULL && rightType.isBaseType()) {
-//					leftType = scope.environment().computeBoxingType(leftType);
-//				}
-//			}
-//		}
-//		// both base type
-//		if (leftType.isAnyType() || rightType.isAnyType())
-//		{
-//		  return  TypeBinding.BOOLEAN;
-//		}
-//		if ( leftType.isBasicType() && rightType.isBasicType()) {
-//			int leftTypeID = leftType.id;
-//			int rightTypeID = rightType.id;
-//
-//			// the code is an int
-//			// (cast)  left   == (cast)  right --> result
-//			//  0000   0000       0000   0000      0000
-//			//  <<16   <<12       <<8    <<4       <<0
-//			int operatorSignature = OperatorSignatures[EQUAL_EQUAL][ (leftTypeID << 4) + rightTypeID];
-//			left.computeConversion(scope, TypeBinding.wellKnownType(scope, (operatorSignature >>> 16) & 0x0000F), originalLeftType);
-//			right.computeConversion(scope, TypeBinding.wellKnownType(scope, (operatorSignature >>> 8) & 0x0000F), originalRightType);
-//			bits |= operatorSignature & 0xF;
-//			if ((operatorSignature & 0x0000F) == T_undefined) {
-//				constant = Constant.NotAConstant;
-//				scope.problemReporter().invalidOperator(this, leftType, rightType);
-//				return null;
-//			}
-//
-//			computeConstant(leftType, rightType);
-//			return this.resolvedType = TypeBinding.BOOLEAN;
-//		}
-//
-//		// Object references
-//		// spec 15.20.3
-//		if ((!leftType.isBaseType() || leftType == TypeBinding.NULL) // cannot compare: Object == (int)0
-//				&& (!rightType.isBaseType() || rightType == TypeBinding.NULL)
-//				&& (this.checkCastTypesCompatibility(scope, leftType, rightType, null)
-//						|| this.checkCastTypesCompatibility(scope, rightType, leftType, null))) {
-//
-//			// (special case for String)
-//			if ((rightType.id == T_JavaLangString) && (leftType.id == T_JavaLangString)) {
-//				computeConstant(leftType, rightType);
-//			} else {
-//				constant = Constant.NotAConstant;
-//			}
-//			TypeBinding objectType = scope.getJavaLangObject();
-//			left.computeConversion(scope, objectType, leftType);
-//			right.computeConversion(scope, objectType, rightType);
-//			return this.resolvedType = TypeBinding.BOOLEAN;
-//		}
-//		constant = Constant.NotAConstant;
-//		scope.problemReporter().notCompatibleTypesError(this, leftType, rightType);
-		return null;
-	}
+	
 	public void traverse(ASTVisitor visitor, BlockScope scope) {
 		if (visitor.visit(this, scope)) {
 			left.traverse(visitor, scope);

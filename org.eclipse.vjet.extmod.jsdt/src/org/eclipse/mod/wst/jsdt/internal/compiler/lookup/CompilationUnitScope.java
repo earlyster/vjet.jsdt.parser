@@ -16,7 +16,7 @@ import java.util.HashSet;
 
 //import org.eclipse.mod.wst.jsdt.core.LibrarySuperType;
 import org.eclipse.mod.wst.jsdt.core.compiler.CharOperation;
-import org.eclipse.mod.wst.jsdt.core.infer.InferredType;
+//import org.eclipse.mod.wst.jsdt.core.infer.InferredType;
 //import org.eclipse.mod.wst.jsdt.core.infer.InferrenceProvider;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ASTNode;
@@ -46,7 +46,7 @@ public PackageBinding fPackage;
 public ImportBinding[] imports;
 public HashtableOfObject typeOrPackageCache; // used in Scope.getTypeOrPackage()
 
-public SourceTypeBinding[] topLevelTypes;
+//public SourceTypeBinding[] topLevelTypes;
 
 private CompoundNameVector qualifiedReferences;
 private SimpleNameVector simpleNameReferences;
@@ -70,35 +70,35 @@ public HashSet externalCompilationUnits=new HashSet();
 public static final char FILENAME_DOT_SUBSTITUTION='#';
 
 
-class DeclarationVisitor extends ASTVisitor
-{
-	ArrayList methods=new ArrayList();
-	public boolean visit(LocalDeclaration localDeclaration, BlockScope scope) {
-		TypeBinding type=localDeclaration.resolveVarType(scope);
-		LocalVariableBinding binding = new LocalVariableBinding(localDeclaration, type, 0, false);
-		localDeclaration.binding=binding;
-		addLocalVariable(binding);
-		return false;
-	}
-
-	public boolean visit(MethodDeclaration methodDeclaration, Scope parentScope) {
-		if (methodDeclaration.selector!=null)
-		{
-			MethodScope scope = new MethodScope(parentScope,methodDeclaration, false);
-			MethodBinding methodBinding = scope.createMethod(methodDeclaration,methodDeclaration.selector,referenceContext.compilationUnitBinding,false,false);
-			if (methodBinding != null && methodBinding.selector!=null) // is null if binding could not be created
-				methods.add(methodBinding);
-			if (methodBinding.selector!=null)
-			{
-				environment.defaultPackage.addBinding(methodBinding, methodBinding.selector,Binding.METHOD);
-				fPackage.addBinding(methodBinding, methodBinding.selector,Binding.METHOD);
-			}
-			methodDeclaration.binding=methodBinding;
-		}
-		return false;
-	}
-
-}
+//class DeclarationVisitor extends ASTVisitor
+//{
+//	ArrayList methods=new ArrayList();
+//	public boolean visit(LocalDeclaration localDeclaration, BlockScope scope) {
+//		TypeBinding type=localDeclaration.resolveVarType(scope);
+//		LocalVariableBinding binding = new LocalVariableBinding(localDeclaration, type, 0, false);
+//		localDeclaration.binding=binding;
+//		addLocalVariable(binding);
+//		return false;
+//	}
+//
+//	public boolean visit(MethodDeclaration methodDeclaration, Scope parentScope) {
+//		if (methodDeclaration.selector!=null)
+//		{
+//			MethodScope scope = new MethodScope(parentScope,methodDeclaration, false);
+//			MethodBinding methodBinding = scope.createMethod(methodDeclaration,methodDeclaration.selector,referenceContext.compilationUnitBinding,false,false);
+//			if (methodBinding != null && methodBinding.selector!=null) // is null if binding could not be created
+//				methods.add(methodBinding);
+//			if (methodBinding.selector!=null)
+//			{
+//				environment.defaultPackage.addBinding(methodBinding, methodBinding.selector,Binding.METHOD);
+//				fPackage.addBinding(methodBinding, methodBinding.selector,Binding.METHOD);
+//			}
+//			methodDeclaration.binding=methodBinding;
+//		}
+//		return false;
+//	}
+//
+//}
 
 
 
@@ -164,214 +164,214 @@ public ClassScope classScope() {
 	return super.classScope();
 }
 
-void buildFieldsAndMethods() {
-	for (int i = 0, length = topLevelTypes.length; i < length; i++)
-		topLevelTypes[i].buildFieldsAndMethods();
-}
-void buildTypeBindings(AccessRestriction accessRestriction) {
-	topLevelTypes = new SourceTypeBinding[0]; // want it initialized if the package cannot be resolved
-//	boolean firstIsSynthetic = false;
-	if (referenceContext.compilationResult.compilationUnit != null) {
-		char[][] expectedPackageName = referenceContext.compilationResult.compilationUnit.getPackageName();
-//		if (expectedPackageName != null
-//				&& !CharOperation.equals(currentPackageName, expectedPackageName)) {
-//
-//			// only report if the unit isn't structurally empty
-//			if (referenceContext.currentPackage != null
-//					|| referenceContext.types != null
-//					|| referenceContext.imports != null) {
-//				problemReporter().packageIsNotExpectedPackage(referenceContext);
-//			}
-			currentPackageName = (expectedPackageName==null || expectedPackageName.length == 0 ) ? CharOperation.NO_CHAR_CHAR : expectedPackageName;
+//void buildFieldsAndMethods() {
+//	for (int i = 0, length = topLevelTypes.length; i < length; i++)
+//		topLevelTypes[i].buildFieldsAndMethods();
+//}
+//void buildTypeBindings(AccessRestriction accessRestriction) {
+//	topLevelTypes = new SourceTypeBinding[0]; // want it initialized if the package cannot be resolved
+////	boolean firstIsSynthetic = false;
+//	if (referenceContext.compilationResult.compilationUnit != null) {
+//		char[][] expectedPackageName = referenceContext.compilationResult.compilationUnit.getPackageName();
+////		if (expectedPackageName != null
+////				&& !CharOperation.equals(currentPackageName, expectedPackageName)) {
+////
+////			// only report if the unit isn't structurally empty
+////			if (referenceContext.currentPackage != null
+////					|| referenceContext.types != null
+////					|| referenceContext.imports != null) {
+////				problemReporter().packageIsNotExpectedPackage(referenceContext);
+////			}
+//			currentPackageName = (expectedPackageName==null || expectedPackageName.length == 0 ) ? CharOperation.NO_CHAR_CHAR : expectedPackageName;
+////		}
+//	}
+//	if (currentPackageName == CharOperation.NO_CHAR_CHAR) {
+//		fPackage = environment.defaultPackage;
+////		if ((fPackage = environment.defaultPackage) == null) {
+////			problemReporter().mustSpecifyPackage(referenceContext);
+////			return;
+////		}
+//	} else {
+//		if ((fPackage = environment.createPackage(currentPackageName)) == null) {
+////			problemReporter().packageCollidesWithType(referenceContext);
+////			return;
+////		} else if (referenceContext.isPackageInfo()) {
+////			// resolve package annotations now if this is "package-info.js".
+////			if (referenceContext.types == null || referenceContext.types.length == 0) {
+////				referenceContext.types = new TypeDeclaration[1];
+////				TypeDeclaration declaration = new TypeDeclaration(referenceContext.compilationResult);
+////				referenceContext.types[0] = declaration;
+////				declaration.name = TypeConstants.PACKAGE_INFO_NAME;
+////				declaration.modifiers = ClassFileConstants.AccDefault | ClassFileConstants.AccInterface;
+////				firstIsSynthetic = true;
+////			}
 //		}
-	}
-	if (currentPackageName == CharOperation.NO_CHAR_CHAR) {
-		fPackage = environment.defaultPackage;
-//		if ((fPackage = environment.defaultPackage) == null) {
-//			problemReporter().mustSpecifyPackage(referenceContext);
-//			return;
-//		}
-	} else {
-		if ((fPackage = environment.createPackage(currentPackageName)) == null) {
-//			problemReporter().packageCollidesWithType(referenceContext);
-//			return;
-//		} else if (referenceContext.isPackageInfo()) {
-//			// resolve package annotations now if this is "package-info.js".
-//			if (referenceContext.types == null || referenceContext.types.length == 0) {
-//				referenceContext.types = new TypeDeclaration[1];
-//				TypeDeclaration declaration = new TypeDeclaration(referenceContext.compilationResult);
-//				referenceContext.types[0] = declaration;
-//				declaration.name = TypeConstants.PACKAGE_INFO_NAME;
-//				declaration.modifiers = ClassFileConstants.AccDefault | ClassFileConstants.AccInterface;
-//				firstIsSynthetic = true;
-//			}
-		}
-//		recordQualifiedReference(currentPackageName); // always dependent on your own package
-	}
-
-//	// Skip typeDeclarations which know of previously reported errors
-//	TypeDeclaration[] types = referenceContext.types;
-//	int typeLength = (types == null) ? 0 : types.length;
-//	topLevelTypes = new SourceTypeBinding[typeLength];
-//	int count = 0;
-//	nextType: for (int i = 0; i < typeLength; i++) {
-//		TypeDeclaration typeDecl = types[i];
-//		ReferenceBinding typeBinding = fPackage.getType0(typeDecl.name);
-//		recordSimpleReference(typeDecl.name); // needed to detect collision cases
-//		if (typeBinding != null && !(typeBinding instanceof UnresolvedReferenceBinding)) {
-//			// if a type exists, it must be a valid type - cannot be a NotFound problem type
-//			// unless its an unresolved type which is now being defined
-//			problemReporter().duplicateTypes(referenceContext, typeDecl);
-//			continue nextType;
-//		}
-//		if (fPackage != environment.defaultPackage && fPackage.getPackage(typeDecl.name) != null) {
-//			// if a package exists, it must be a valid package - cannot be a NotFound problem package
-//			problemReporter().typeCollidesWithPackage(referenceContext, typeDecl);
-//			continue nextType;
-//		}
-//
-//		if ((typeDecl.modifiers & ClassFileConstants.AccPublic) != 0) {
-//			char[] mainTypeName;
-//			if ((mainTypeName = referenceContext.getMainTypeName()) != null // mainTypeName == null means that implementor of IJavaScriptUnit decided to return null
-//					&& !CharOperation.equals(mainTypeName, typeDecl.name)) {
-//				problemReporter().publicClassMustMatchFileName(referenceContext, typeDecl);
-//				// tolerate faulty main type name (91091), allow to proceed into type construction
-//			}
-//		}
-//
-//		ClassScope child = new ClassScope(this, typeDecl);
-//		SourceTypeBinding type = child.buildType(null, fPackage, accessRestriction);
-//		if (firstIsSynthetic && i == 0)
-//			type.modifiers |= ClassFileConstants.AccSynthetic;
-//		if (type != null)
-//			topLevelTypes[count++] = type;
+////		recordQualifiedReference(currentPackageName); // always dependent on your own package
 //	}
 //
+////	// Skip typeDeclarations which know of previously reported errors
+////	TypeDeclaration[] types = referenceContext.types;
+////	int typeLength = (types == null) ? 0 : types.length;
+////	topLevelTypes = new SourceTypeBinding[typeLength];
+////	int count = 0;
+////	nextType: for (int i = 0; i < typeLength; i++) {
+////		TypeDeclaration typeDecl = types[i];
+////		ReferenceBinding typeBinding = fPackage.getType0(typeDecl.name);
+////		recordSimpleReference(typeDecl.name); // needed to detect collision cases
+////		if (typeBinding != null && !(typeBinding instanceof UnresolvedReferenceBinding)) {
+////			// if a type exists, it must be a valid type - cannot be a NotFound problem type
+////			// unless its an unresolved type which is now being defined
+////			problemReporter().duplicateTypes(referenceContext, typeDecl);
+////			continue nextType;
+////		}
+////		if (fPackage != environment.defaultPackage && fPackage.getPackage(typeDecl.name) != null) {
+////			// if a package exists, it must be a valid package - cannot be a NotFound problem package
+////			problemReporter().typeCollidesWithPackage(referenceContext, typeDecl);
+////			continue nextType;
+////		}
+////
+////		if ((typeDecl.modifiers & ClassFileConstants.AccPublic) != 0) {
+////			char[] mainTypeName;
+////			if ((mainTypeName = referenceContext.getMainTypeName()) != null // mainTypeName == null means that implementor of IJavaScriptUnit decided to return null
+////					&& !CharOperation.equals(mainTypeName, typeDecl.name)) {
+////				problemReporter().publicClassMustMatchFileName(referenceContext, typeDecl);
+////				// tolerate faulty main type name (91091), allow to proceed into type construction
+////			}
+////		}
+////
+////		ClassScope child = new ClassScope(this, typeDecl);
+////		SourceTypeBinding type = child.buildType(null, fPackage, accessRestriction);
+////		if (firstIsSynthetic && i == 0)
+////			type.modifiers |= ClassFileConstants.AccSynthetic;
+////		if (type != null)
+////			topLevelTypes[count++] = type;
+////	}
+////
+////	// shrink topLevelTypes... only happens if an error was reported
+////	if (count != topLevelTypes.length)
+////		System.arraycopy(topLevelTypes, 0, topLevelTypes = new SourceTypeBinding[count], 0, count);
+////
+//
+//	this.faultInImports();
+//
+//	// Skip typeDeclarations which know of previously reported errors
+//	int typeLength = referenceContext.numberInferredTypes;
+//
+//	/* Include super type whild building */
+////	if(superTypeName!=null) {
+////		superType = environment.askForType(new char[][] {superTypeName});
+////	}
+//
+////			//((SourceTypeBinding)superType).classScope.buildInferredType(null, environment.defaultPackage,accessRestriction);
+////			//((SourceTypeBinding)superType).classScope.connectTypeHierarchy();
+////			//FieldBinding[] fields = superType.fields();
+////			//addSubscope(((SourceTypeBinding)superType).classScope);
+////
+////
+////		//	this.parent = ((SourceTypeBinding)superType).classScope;
+////
+////
+////		}
+////
+////
+////	}
+//
+//	/* may need to get the actual binding here */
+////	if(libSuperType!=null) {
+////		//JsGlobalScopeContainerInitializer cinit = libSuperType.getContainerInitializer();
+////		//IIncludePathEntry[] entries = libSuperType.getClasspathEntries();
+////		IPackageFragment[] fragments = libSuperType.getPackageFragments();
+////		for(int i = 0;i<fragments.length;i++) {
+////			String packageName = fragments[i].getElementName();
+////			PackageBinding binding = environment.getPackage0(packageName.toCharArray());
+////			superBinding  = binding.getType(libSuperType.getSuperTypeName().toCharArray());
+////			if(superBinding!=null) break;
+////
+////		}
+////
+////	}else
+//
+//
+//	topLevelTypes = new SourceTypeBinding[typeLength];
+//
+//	int count = 0;
+//
+//
+//	SimpleSetOfCharArray addTypes=new SimpleSetOfCharArray(10);
+////	nextType:
+//	String fileName=new String(this.referenceContext.getFileName());
+//	for (int i = 0; i < typeLength; i++) {
+//		InferredType typeDecl =  referenceContext.inferredTypes[i];
+//		if (typeDecl.isDefinition && !typeDecl.isEmptyGlobal()) {
+//			ReferenceBinding typeBinding = environment.defaultPackage
+//					.getType0(typeDecl.getName());
+//			recordSimpleReference(typeDecl.getName()); // needed to detect collision cases
+//			SourceTypeBinding existingBinding=null;
+//			if (typeBinding != null
+//					&& !(typeBinding instanceof UnresolvedReferenceBinding)) {
+//				// if a type exists, it must be a valid type - cannot be a NotFound problem type
+//				// unless its an unresolved type which is now being defined
+////				problemReporter().duplicateTypes(referenceContext, typeDecl);
+////				continue nextType;
+//				if (typeBinding instanceof SourceTypeBinding)
+//					existingBinding=(SourceTypeBinding)typeBinding;
+//			}
+//			ClassScope child = new ClassScope(this, typeDecl);
+//			SourceTypeBinding type = child.buildInferredType(null, environment.defaultPackage,
+//					accessRestriction);
+//			//		SourceTypeBinding type = buildType(typeDecl,null, fPackage, accessRestriction);
+//			if (type != null)
+//			{
+//				if (existingBinding!=null && typeDecl.isNamed()  )
+//				{
+//					if (existingBinding.nextType!=null)
+//					{
+//						existingBinding.addNextType(type);
+//					}
+//					else
+//					{
+//						if (!CharOperation.equals(type.fileName, existingBinding.fileName))
+//							existingBinding.addNextType(type);
+//					}
+//					environment.defaultPackage.addType(existingBinding);
+//					fPackage.addType(existingBinding);
+//				}
+//				else
+//					if (typeDecl.isNamed() )
+//						addTypes.add(typeDecl.getName());
+////					  environment.addUnitsContainingBinding(null, typeDecl.getName(), Binding.TYPE,fileName);
+//				topLevelTypes[count++] = type;
+//			}
+//		}
+//	}
+//
+//	
+//	char [][] typeNames= new  char [addTypes.elementSize] [];
+//	addTypes.asArray(typeNames);
+//	for (int i = 0; i < typeNames.length; i++) {
+//		  environment.addUnitsContainingBinding(null, typeNames[i], Binding.TYPE,fileName);
+//	}
+//
+//	
 //	// shrink topLevelTypes... only happens if an error was reported
 //	if (count != topLevelTypes.length)
 //		System.arraycopy(topLevelTypes, 0, topLevelTypes = new SourceTypeBinding[count], 0, count);
 //
-
-	this.faultInImports();
-
-	// Skip typeDeclarations which know of previously reported errors
-	int typeLength = referenceContext.numberInferredTypes;
-
-	/* Include super type whild building */
-//	if(superTypeName!=null) {
-//		superType = environment.askForType(new char[][] {superTypeName});
-//	}
-
-//			//((SourceTypeBinding)superType).classScope.buildInferredType(null, environment.defaultPackage,accessRestriction);
-//			//((SourceTypeBinding)superType).classScope.connectTypeHierarchy();
-//			//FieldBinding[] fields = superType.fields();
-//			//addSubscope(((SourceTypeBinding)superType).classScope);
+//
+////	 buildSuperType();
 //
 //
-//		//	this.parent = ((SourceTypeBinding)superType).classScope;
+//	char [] path=CharOperation.concatWith(this.currentPackageName, '/');
+//	referenceContext.compilationUnitBinding=new CompilationUnitBinding(this,environment.defaultPackage,path, superBinding);
 //
+//	if (fPackage!=environment.defaultPackage)
+//		fPackage.addBinding(referenceContext.compilationUnitBinding, referenceContext.getMainTypeName(), Binding.COMPILATION_UNIT);
 //
-//		}
-//
-//
-//	}
-
-	/* may need to get the actual binding here */
-//	if(libSuperType!=null) {
-//		//JsGlobalScopeContainerInitializer cinit = libSuperType.getContainerInitializer();
-//		//IIncludePathEntry[] entries = libSuperType.getClasspathEntries();
-//		IPackageFragment[] fragments = libSuperType.getPackageFragments();
-//		for(int i = 0;i<fragments.length;i++) {
-//			String packageName = fragments[i].getElementName();
-//			PackageBinding binding = environment.getPackage0(packageName.toCharArray());
-//			superBinding  = binding.getType(libSuperType.getSuperTypeName().toCharArray());
-//			if(superBinding!=null) break;
-//
-//		}
-//
-//	}else
-
-
-	topLevelTypes = new SourceTypeBinding[typeLength];
-
-	int count = 0;
-
-
-	SimpleSetOfCharArray addTypes=new SimpleSetOfCharArray(10);
-//	nextType:
-	String fileName=new String(this.referenceContext.getFileName());
-	for (int i = 0; i < typeLength; i++) {
-		InferredType typeDecl =  referenceContext.inferredTypes[i];
-		if (typeDecl.isDefinition && !typeDecl.isEmptyGlobal()) {
-			ReferenceBinding typeBinding = environment.defaultPackage
-					.getType0(typeDecl.getName());
-			recordSimpleReference(typeDecl.getName()); // needed to detect collision cases
-			SourceTypeBinding existingBinding=null;
-			if (typeBinding != null
-					&& !(typeBinding instanceof UnresolvedReferenceBinding)) {
-				// if a type exists, it must be a valid type - cannot be a NotFound problem type
-				// unless its an unresolved type which is now being defined
-//				problemReporter().duplicateTypes(referenceContext, typeDecl);
-//				continue nextType;
-				if (typeBinding instanceof SourceTypeBinding)
-					existingBinding=(SourceTypeBinding)typeBinding;
-			}
-			ClassScope child = new ClassScope(this, typeDecl);
-			SourceTypeBinding type = child.buildInferredType(null, environment.defaultPackage,
-					accessRestriction);
-			//		SourceTypeBinding type = buildType(typeDecl,null, fPackage, accessRestriction);
-			if (type != null)
-			{
-				if (existingBinding!=null && typeDecl.isNamed()  )
-				{
-					if (existingBinding.nextType!=null)
-					{
-						existingBinding.addNextType(type);
-					}
-					else
-					{
-						if (!CharOperation.equals(type.fileName, existingBinding.fileName))
-							existingBinding.addNextType(type);
-					}
-					environment.defaultPackage.addType(existingBinding);
-					fPackage.addType(existingBinding);
-				}
-				else
-					if (typeDecl.isNamed() )
-						addTypes.add(typeDecl.getName());
-//					  environment.addUnitsContainingBinding(null, typeDecl.getName(), Binding.TYPE,fileName);
-				topLevelTypes[count++] = type;
-			}
-		}
-	}
-
-	
-	char [][] typeNames= new  char [addTypes.elementSize] [];
-	addTypes.asArray(typeNames);
-	for (int i = 0; i < typeNames.length; i++) {
-		  environment.addUnitsContainingBinding(null, typeNames[i], Binding.TYPE,fileName);
-	}
-
-	
-	// shrink topLevelTypes... only happens if an error was reported
-	if (count != topLevelTypes.length)
-		System.arraycopy(topLevelTypes, 0, topLevelTypes = new SourceTypeBinding[count], 0, count);
-
-
-//	 buildSuperType();
-
-
-	char [] path=CharOperation.concatWith(this.currentPackageName, '/');
-	referenceContext.compilationUnitBinding=new CompilationUnitBinding(this,environment.defaultPackage,path, superBinding);
-
-	if (fPackage!=environment.defaultPackage)
-		fPackage.addBinding(referenceContext.compilationUnitBinding, referenceContext.getMainTypeName(), Binding.COMPILATION_UNIT);
-
-	DeclarationVisitor visitor = new DeclarationVisitor();
-	this.referenceContext.traverse(visitor, this);
-	MethodBinding[] methods = (MethodBinding[])visitor.methods.toArray(new MethodBinding[visitor.methods.size()]);
-	referenceContext.compilationUnitBinding.setMethods(methods);
-}
+//	DeclarationVisitor visitor = new DeclarationVisitor();
+//	this.referenceContext.traverse(visitor, this);
+//	MethodBinding[] methods = (MethodBinding[])visitor.methods.toArray(new MethodBinding[visitor.methods.size()]);
+//	referenceContext.compilationUnitBinding.setMethods(methods);
+//}
 
 //public void buildSuperType() {
 //
@@ -442,30 +442,30 @@ void buildTypeBindings(AccessRestriction accessRestriction) {
 //	}
 //}
 
-SourceTypeBinding buildType(InferredType inferredType, SourceTypeBinding enclosingType, PackageBinding packageBinding, AccessRestriction accessRestriction) {
-	// provide the typeDeclaration with needed scopes
-
-	if (enclosingType == null) {
-		char[][] className = CharOperation.arrayConcat(packageBinding.compoundName, inferredType.getName());
-		inferredType.binding = new SourceTypeBinding(className, packageBinding, this);
-
-		//@GINO: Anonymous set bits
-		if( inferredType.isAnonymous )
-			inferredType.binding.tagBits |= TagBits.AnonymousTypeMask;
-
-	} else {
-//		char[][] className = CharOperation.deepCopy(enclosingType.compoundName);
-//		className[className.length - 1] =
-//			CharOperation.concat(className[className.length - 1], inferredType.getName(), '$');
-//		inferredType.binding = new MemberTypeBinding(className, this, enclosingType);
-	}
-
-	SourceTypeBinding sourceType = inferredType.binding;
-	environment().setAccessRestriction(sourceType, accessRestriction);
-	environment().defaultPackage.addType(sourceType);
-	sourceType.fPackage.addType(sourceType);
-	return sourceType;
-}
+//SourceTypeBinding buildType(InferredType inferredType, SourceTypeBinding enclosingType, PackageBinding packageBinding, AccessRestriction accessRestriction) {
+//	// provide the typeDeclaration with needed scopes
+//
+//	if (enclosingType == null) {
+//		char[][] className = CharOperation.arrayConcat(packageBinding.compoundName, inferredType.getName());
+//		inferredType.binding = new SourceTypeBinding(className, packageBinding, this);
+//
+//		//@GINO: Anonymous set bits
+//		if( inferredType.isAnonymous )
+//			inferredType.binding.tagBits |= TagBits.AnonymousTypeMask;
+//
+//	} else {
+////		char[][] className = CharOperation.deepCopy(enclosingType.compoundName);
+////		className[className.length - 1] =
+////			CharOperation.concat(className[className.length - 1], inferredType.getName(), '$');
+////		inferredType.binding = new MemberTypeBinding(className, this, enclosingType);
+//	}
+//
+//	SourceTypeBinding sourceType = inferredType.binding;
+//	environment().setAccessRestriction(sourceType, accessRestriction);
+//	environment().defaultPackage.addType(sourceType);
+//	sourceType.fPackage.addType(sourceType);
+//	return sourceType;
+//}
 
 
 public PackageBinding getDefaultPackage() {
@@ -535,234 +535,234 @@ void checkAndSetImports() {
  * Innerclasses get their name computed as they are generated, since some may not
  * be actually outputed if sitting inside unreachable code.
  */
-public char[] computeConstantPoolName(LocalTypeBinding localType) {
-	if (localType.constantPoolName() != null) {
-		return localType.constantPoolName();
-	}
-	// delegates to the outermost enclosing classfile, since it is the only one with a global vision of its innertypes.
-
-	if (constantPoolNameUsage == null)
-		constantPoolNameUsage = new HashtableOfType();
-
-	ReferenceBinding outerMostEnclosingType = localType.scope.outerMostClassScope().enclosingSourceType();
-
-	// ensure there is not already such a local type name defined by the user
-	int index = 0;
-	char[] candidateName;
-	boolean isCompliant15 = compilerOptions().complianceLevel >= ClassFileConstants.JDK1_5;
-	while(true) {
-		if (localType.isMemberType()){
-			if (index == 0){
-				candidateName = CharOperation.concat(
-					localType.enclosingType().constantPoolName(),
-					localType.sourceName,
-					'$');
-			} else {
-				// in case of collision, then member name gets extra $1 inserted
-				// e.g. class X { { class L{} new X(){ class L{} } } }
-				candidateName = CharOperation.concat(
-					localType.enclosingType().constantPoolName(),
-					'$',
-					String.valueOf(index).toCharArray(),
-					'$',
-					localType.sourceName);
-			}
-		} else if (localType.isAnonymousType()){
-			if (isCompliant15) {
-				// from 1.5 on, use immediately enclosing type name
-				candidateName = CharOperation.concat(
-					localType.enclosingType.constantPoolName(),
-					String.valueOf(index+1).toCharArray(),
-					'$');
-			} else {
-				candidateName = CharOperation.concat(
-					outerMostEnclosingType.constantPoolName(),
-					String.valueOf(index+1).toCharArray(),
-					'$');
-			}
-		} else {
-			// local type
-			if (isCompliant15) {
-				candidateName = CharOperation.concat(
-					CharOperation.concat(
-						localType.enclosingType().constantPoolName(),
-						String.valueOf(index+1).toCharArray(),
-						'$'),
-					localType.sourceName);
-			} else {
-				candidateName = CharOperation.concat(
-					outerMostEnclosingType.constantPoolName(),
-					'$',
-					String.valueOf(index+1).toCharArray(),
-					'$',
-					localType.sourceName);
-			}
-		}
-		if (constantPoolNameUsage.get(candidateName) != null) {
-			index ++;
-		} else {
-			constantPoolNameUsage.put(candidateName, localType);
-			break;
-		}
-	}
-	return candidateName;
-}
-
-void connectTypeHierarchy() {
-
-
-	//	if(superType!=null) {
-//			if(superType instanceof SourceTypeBinding) {
-//				((SourceTypeBinding)superType).classScope.buildFieldsAndMethods();
-//				((SourceTypeBinding)superType).classScope.connectTypeHierarchy();
+//public char[] computeConstantPoolName(LocalTypeBinding localType) {
+//	if (localType.constantPoolName() != null) {
+//		return localType.constantPoolName();
+//	}
+//	// delegates to the outermost enclosing classfile, since it is the only one with a global vision of its innertypes.
 //
+//	if (constantPoolNameUsage == null)
+//		constantPoolNameUsage = new HashtableOfType();
+//
+//	ReferenceBinding outerMostEnclosingType = localType.scope.outerMostClassScope().enclosingSourceType();
+//
+//	// ensure there is not already such a local type name defined by the user
+//	int index = 0;
+//	char[] candidateName;
+//	boolean isCompliant15 = compilerOptions().complianceLevel >= ClassFileConstants.JDK1_5;
+//	while(true) {
+//		if (localType.isMemberType()){
+//			if (index == 0){
+//				candidateName = CharOperation.concat(
+//					localType.enclosingType().constantPoolName(),
+//					localType.sourceName,
+//					'$');
+//			} else {
+//				// in case of collision, then member name gets extra $1 inserted
+//				// e.g. class X { { class L{} new X(){ class L{} } } }
+//				candidateName = CharOperation.concat(
+//					localType.enclosingType().constantPoolName(),
+//					'$',
+//					String.valueOf(index).toCharArray(),
+//					'$',
+//					localType.sourceName);
 //			}
-//			ReferenceBinding[] memberTypes = superType.memberTypes();
-//			ReferenceBinding[] memberFields = superType.typeVariables();
-//			FunctionBinding[] memberMethods = superType.availableMethods();
-//			for(int i=0;i<memberTypes.length;i++) {
-//				recordReference(memberTypes[i], memberTypes[i].sourceName);
+//		} else if (localType.isAnonymousType()){
+//			if (isCompliant15) {
+//				// from 1.5 on, use immediately enclosing type name
+//				candidateName = CharOperation.concat(
+//					localType.enclosingType.constantPoolName(),
+//					String.valueOf(index+1).toCharArray(),
+//					'$');
+//			} else {
+//				candidateName = CharOperation.concat(
+//					outerMostEnclosingType.constantPoolName(),
+//					String.valueOf(index+1).toCharArray(),
+//					'$');
+//			}
+//		} else {
+//			// local type
+//			if (isCompliant15) {
+//				candidateName = CharOperation.concat(
+//					CharOperation.concat(
+//						localType.enclosingType().constantPoolName(),
+//						String.valueOf(index+1).toCharArray(),
+//						'$'),
+//					localType.sourceName);
+//			} else {
+//				candidateName = CharOperation.concat(
+//					outerMostEnclosingType.constantPoolName(),
+//					'$',
+//					String.valueOf(index+1).toCharArray(),
+//					'$',
+//					localType.sourceName);
 //			}
 //		}
-
-//	if(superTypeName!=null) {
-//		ReferenceBinding binding = environment.askForType(new char[][] {superTypeName});
-//		this.recordSuperTypeReference(binding);
+//		if (constantPoolNameUsage.get(candidateName) != null) {
+//			index ++;
+//		} else {
+//			constantPoolNameUsage.put(candidateName, localType);
+//			break;
+//		}
 //	}
-	if(classScope!=null) classScope.connectTypeHierarchy();
-		for (int i=0;i<referenceContext.numberInferredTypes;i++) {
-			InferredType inferredType = referenceContext.inferredTypes[i];
-			if (inferredType.binding!=null)
- 			  inferredType.binding.classScope.connectTypeHierarchy();
+//	return candidateName;
+//}
 
-		}
-}
-void faultInImports() {
-	if (this.typeOrPackageCache != null)
-		return; // can be called when a field constant is resolved before static imports
-	if (referenceContext.imports == null) {
-		this.typeOrPackageCache = new HashtableOfObject(1);
-		return;
-	}
-
-	// collect the top level type names if a single type import exists
-	int numberOfStatements = referenceContext.imports.length;
-	HashtableOfType typesBySimpleNames = null;
-	for (int i = 0; i < numberOfStatements; i++) {
-		if ((referenceContext.imports[i].bits & ASTNode.OnDemand) == 0) {
-			typesBySimpleNames = new HashtableOfType(topLevelTypes.length + numberOfStatements);
-			for (int j = 0, length = topLevelTypes.length; j < length; j++)
-				typesBySimpleNames.put(topLevelTypes[j].sourceName, topLevelTypes[j]);
-			break;
-		}
-	}
-
-	// allocate the import array, add java.lang.* by default
-	ImportBinding[] defaultImports = getDefaultImports();
-	int numberOfImports = numberOfStatements + defaultImports.length;
-	for (int i = 0; i < numberOfStatements; i++) {
-		ImportReference importReference = referenceContext.imports[i];
-		if (((importReference.bits & ASTNode.OnDemand) != 0) && CharOperation.equals(JAVA_LANG, importReference.tokens)) {
-			numberOfImports--;
-			break;
-		}
-	}
-	ImportBinding[] resolvedImports = new ImportBinding[numberOfImports];
-	System.arraycopy(defaultImports, 0, resolvedImports, 0, defaultImports.length);
-	int index = defaultImports.length;
-
-	// keep static imports with normal imports until there is a reason to split them up
-	// on demand imports continue to be packages & types. need to check on demand type imports for fields/methods
-	// single imports change from being just types to types or fields
-	nextImport : for (int i = 0; i < numberOfStatements; i++) {
-		ImportReference importReference = referenceContext.imports[i];
-		char[][] compoundName = importReference.tokens;
-
-		// skip duplicates or imports of the current package
-		for (int j = 0; j < index; j++) {
-			ImportBinding resolved = resolvedImports[j];
-			if (resolved.onDemand == ((importReference.bits & ASTNode.OnDemand) != 0)) {
-				if (CharOperation.equals(compoundName, resolved.compoundName)) {
-					continue nextImport;
-				}
-			}
-		}
-		if ((importReference.bits & ASTNode.OnDemand) != 0) {
-			if (CharOperation.equals(compoundName, currentPackageName)) {
-				continue nextImport;
-			}
-
-			Binding importBinding = findImport(compoundName, compoundName.length);
-			if (!importBinding.isValidBinding()) {
-				problemReporter().importProblem(importReference, importBinding);
-				continue nextImport;
-			}
-			resolvedImports[index++] = new ImportBinding(compoundName, true, importBinding, importReference);
-		} else {
-			Binding importBinding = findSingleImport(compoundName);
-			if (!importBinding.isValidBinding()) {
-				problemReporter().importProblem(importReference, importBinding);
-				continue nextImport;
-			}
-			if (importBinding instanceof PackageBinding) {
-				problemReporter().cannotImportPackage(importReference);
-				continue nextImport;
-			}
-			ReferenceBinding conflictingType = null;
-			if (importBinding instanceof MethodBinding) {
-				conflictingType = (ReferenceBinding) getType(compoundName, compoundName.length);
-				if (!conflictingType.isValidBinding())
-					conflictingType = null;
-			}
-			// collisions between an imported static field & a type should be checked according to spec... but currently not by javac
-			if (importBinding instanceof ReferenceBinding || conflictingType != null) {
-				ReferenceBinding referenceBinding = conflictingType == null ? (ReferenceBinding) importBinding : conflictingType;
-				if (importReference.isTypeUseDeprecated(referenceBinding, this))
-					problemReporter().deprecatedType(referenceBinding, importReference);
-
-				ReferenceBinding existingType = typesBySimpleNames.get(compoundName[compoundName.length - 1]);
-				if (existingType != null) {
-					// duplicate test above should have caught this case, but make sure
-					if (existingType == referenceBinding)
-						continue nextImport;
-					// either the type collides with a top level type or another imported type
-					for (int j = 0, length = topLevelTypes.length; j < length; j++) {
-						if (CharOperation.equals(topLevelTypes[j].sourceName, existingType.sourceName)) {
-							problemReporter().conflictingImport(importReference);
-							continue nextImport;
-						}
-					}
-					problemReporter().duplicateImport(importReference);
-					continue nextImport;
-				}
-				typesBySimpleNames.put(compoundName[compoundName.length - 1], referenceBinding);
-			} 
-			resolvedImports[index++] = conflictingType == null
-				? new ImportBinding(compoundName, false, importBinding, importReference)
-				: new ImportConflictBinding(compoundName, importBinding, conflictingType, importReference);
-		}
-	}
-
-	// shrink resolvedImports... only happens if an error was reported
-	if (resolvedImports.length > index)
-		System.arraycopy(resolvedImports, 0, resolvedImports = new ImportBinding[index], 0, index);
-	imports = resolvedImports;
-
-	int length = imports.length;
-	this.typeOrPackageCache = new HashtableOfObject(length);
-	for (int i = 0; i < length; i++) {
-		ImportBinding binding = imports[i];
-		if (!binding.onDemand && binding.resolvedImport instanceof ReferenceBinding || binding instanceof ImportConflictBinding)
-			this.typeOrPackageCache.put(binding.compoundName[binding.compoundName.length - 1], binding);
-	}
-}
-public void faultInTypes() {
-	faultInImports();
-
-	this.referenceContext.compilationUnitBinding.faultInTypesForFieldsAndMethods();
-	for (int i = 0, length = topLevelTypes.length; i < length; i++)
-		topLevelTypes[i].faultInTypesForFieldsAndMethods();
-}
+//void connectTypeHierarchy() {
+//
+//
+//	//	if(superType!=null) {
+////			if(superType instanceof SourceTypeBinding) {
+////				((SourceTypeBinding)superType).classScope.buildFieldsAndMethods();
+////				((SourceTypeBinding)superType).classScope.connectTypeHierarchy();
+////
+////			}
+////			ReferenceBinding[] memberTypes = superType.memberTypes();
+////			ReferenceBinding[] memberFields = superType.typeVariables();
+////			FunctionBinding[] memberMethods = superType.availableMethods();
+////			for(int i=0;i<memberTypes.length;i++) {
+////				recordReference(memberTypes[i], memberTypes[i].sourceName);
+////			}
+////		}
+//
+////	if(superTypeName!=null) {
+////		ReferenceBinding binding = environment.askForType(new char[][] {superTypeName});
+////		this.recordSuperTypeReference(binding);
+////	}
+//	if(classScope!=null) classScope.connectTypeHierarchy();
+//		for (int i=0;i<referenceContext.numberInferredTypes;i++) {
+//			InferredType inferredType = referenceContext.inferredTypes[i];
+//			if (inferredType.binding!=null)
+// 			  inferredType.binding.classScope.connectTypeHierarchy();
+//
+//		}
+//}
+//void faultInImports() {
+//	if (this.typeOrPackageCache != null)
+//		return; // can be called when a field constant is resolved before static imports
+//	if (referenceContext.imports == null) {
+//		this.typeOrPackageCache = new HashtableOfObject(1);
+//		return;
+//	}
+//
+//	// collect the top level type names if a single type import exists
+//	int numberOfStatements = referenceContext.imports.length;
+//	HashtableOfType typesBySimpleNames = null;
+//	for (int i = 0; i < numberOfStatements; i++) {
+//		if ((referenceContext.imports[i].bits & ASTNode.OnDemand) == 0) {
+//			typesBySimpleNames = new HashtableOfType(topLevelTypes.length + numberOfStatements);
+//			for (int j = 0, length = topLevelTypes.length; j < length; j++)
+//				typesBySimpleNames.put(topLevelTypes[j].sourceName, topLevelTypes[j]);
+//			break;
+//		}
+//	}
+//
+//	// allocate the import array, add java.lang.* by default
+//	ImportBinding[] defaultImports = getDefaultImports();
+//	int numberOfImports = numberOfStatements + defaultImports.length;
+//	for (int i = 0; i < numberOfStatements; i++) {
+//		ImportReference importReference = referenceContext.imports[i];
+//		if (((importReference.bits & ASTNode.OnDemand) != 0) && CharOperation.equals(JAVA_LANG, importReference.tokens)) {
+//			numberOfImports--;
+//			break;
+//		}
+//	}
+//	ImportBinding[] resolvedImports = new ImportBinding[numberOfImports];
+//	System.arraycopy(defaultImports, 0, resolvedImports, 0, defaultImports.length);
+//	int index = defaultImports.length;
+//
+//	// keep static imports with normal imports until there is a reason to split them up
+//	// on demand imports continue to be packages & types. need to check on demand type imports for fields/methods
+//	// single imports change from being just types to types or fields
+//	nextImport : for (int i = 0; i < numberOfStatements; i++) {
+//		ImportReference importReference = referenceContext.imports[i];
+//		char[][] compoundName = importReference.tokens;
+//
+//		// skip duplicates or imports of the current package
+//		for (int j = 0; j < index; j++) {
+//			ImportBinding resolved = resolvedImports[j];
+//			if (resolved.onDemand == ((importReference.bits & ASTNode.OnDemand) != 0)) {
+//				if (CharOperation.equals(compoundName, resolved.compoundName)) {
+//					continue nextImport;
+//				}
+//			}
+//		}
+//		if ((importReference.bits & ASTNode.OnDemand) != 0) {
+//			if (CharOperation.equals(compoundName, currentPackageName)) {
+//				continue nextImport;
+//			}
+//
+//			Binding importBinding = findImport(compoundName, compoundName.length);
+//			if (!importBinding.isValidBinding()) {
+//				problemReporter().importProblem(importReference, importBinding);
+//				continue nextImport;
+//			}
+//			resolvedImports[index++] = new ImportBinding(compoundName, true, importBinding, importReference);
+//		} else {
+//			Binding importBinding = findSingleImport(compoundName);
+//			if (!importBinding.isValidBinding()) {
+//				problemReporter().importProblem(importReference, importBinding);
+//				continue nextImport;
+//			}
+//			if (importBinding instanceof PackageBinding) {
+//				problemReporter().cannotImportPackage(importReference);
+//				continue nextImport;
+//			}
+//			ReferenceBinding conflictingType = null;
+//			if (importBinding instanceof MethodBinding) {
+//				conflictingType = (ReferenceBinding) getType(compoundName, compoundName.length);
+//				if (!conflictingType.isValidBinding())
+//					conflictingType = null;
+//			}
+//			// collisions between an imported static field & a type should be checked according to spec... but currently not by javac
+//			if (importBinding instanceof ReferenceBinding || conflictingType != null) {
+//				ReferenceBinding referenceBinding = conflictingType == null ? (ReferenceBinding) importBinding : conflictingType;
+//				if (importReference.isTypeUseDeprecated(referenceBinding, this))
+//					problemReporter().deprecatedType(referenceBinding, importReference);
+//
+//				ReferenceBinding existingType = typesBySimpleNames.get(compoundName[compoundName.length - 1]);
+//				if (existingType != null) {
+//					// duplicate test above should have caught this case, but make sure
+//					if (existingType == referenceBinding)
+//						continue nextImport;
+//					// either the type collides with a top level type or another imported type
+//					for (int j = 0, length = topLevelTypes.length; j < length; j++) {
+//						if (CharOperation.equals(topLevelTypes[j].sourceName, existingType.sourceName)) {
+//							problemReporter().conflictingImport(importReference);
+//							continue nextImport;
+//						}
+//					}
+//					problemReporter().duplicateImport(importReference);
+//					continue nextImport;
+//				}
+//				typesBySimpleNames.put(compoundName[compoundName.length - 1], referenceBinding);
+//			} 
+//			resolvedImports[index++] = conflictingType == null
+//				? new ImportBinding(compoundName, false, importBinding, importReference)
+//				: new ImportConflictBinding(compoundName, importBinding, conflictingType, importReference);
+//		}
+//	}
+//
+//	// shrink resolvedImports... only happens if an error was reported
+//	if (resolvedImports.length > index)
+//		System.arraycopy(resolvedImports, 0, resolvedImports = new ImportBinding[index], 0, index);
+//	imports = resolvedImports;
+//
+//	int length = imports.length;
+//	this.typeOrPackageCache = new HashtableOfObject(length);
+//	for (int i = 0; i < length; i++) {
+//		ImportBinding binding = imports[i];
+//		if (!binding.onDemand && binding.resolvedImport instanceof ReferenceBinding || binding instanceof ImportConflictBinding)
+//			this.typeOrPackageCache.put(binding.compoundName[binding.compoundName.length - 1], binding);
+//	}
+//}
+//public void faultInTypes() {
+//	faultInImports();
+//
+//	this.referenceContext.compilationUnitBinding.faultInTypesForFieldsAndMethods();
+//	for (int i = 0, length = topLevelTypes.length; i < length; i++)
+//		topLevelTypes[i].faultInTypesForFieldsAndMethods();
+//}
 
 //this API is for code assist purpose
 public Binding findImport(char[][] compoundName, boolean onDemand) {
@@ -839,24 +839,24 @@ private Binding findSingleImport(char[][] compoundName) {
 	return findImport(compoundName, compoundName.length);
 }
 
-MethodBinding findStaticMethod(ReferenceBinding currentType, char[] selector) {
-	if (!currentType.canBeSeenBy(this))
-		return null;
-
-	do {
-		MethodBinding[] methods = currentType.getMethods(selector);
-		if (methods != Binding.NO_METHODS) {
-			for (int i = methods.length; --i >= 0;) {
-				MethodBinding method = methods[i];
-				if (method.isStatic() && method.canBeSeenBy(environment.defaultPackage))
-					return method;
-			}
-		}
-		
-		((SourceTypeBinding) currentType).classScope.connectTypeHierarchy();
-	} while ((currentType = currentType.superclass()) != null);
-	return null;
-}
+//MethodBinding findStaticMethod(ReferenceBinding currentType, char[] selector) {
+//	if (!currentType.canBeSeenBy(this))
+//		return null;
+//
+//	do {
+//		MethodBinding[] methods = currentType.getMethods(selector);
+//		if (methods != Binding.NO_METHODS) {
+//			for (int i = methods.length; --i >= 0;) {
+//				MethodBinding method = methods[i];
+//				if (method.isStatic() && method.canBeSeenBy(environment.defaultPackage))
+//					return method;
+//			}
+//		}
+//		
+//		((SourceTypeBinding) currentType).classScope.connectTypeHierarchy();
+//	} while ((currentType = currentType.superclass()) != null);
+//	return null;
+//}
 ImportBinding[] getDefaultImports() {
 	// initialize the default imports if necessary... share the default java.lang.* import
 	Binding importBinding = environment.defaultPackage;
@@ -1122,10 +1122,10 @@ private ReferenceBinding typeToRecord(TypeBinding type) {
 	if (refType.isLocalType()) return null;
 	return refType;
 }
-public void verifyMethods(MethodVerifier verifier) {
-	for (int i = 0, length = topLevelTypes.length; i < length; i++)
-		topLevelTypes[i].verifyMethods(verifier);
- }
+//public void verifyMethods(MethodVerifier verifier) {
+//	for (int i = 0, length = topLevelTypes.length; i < length; i++)
+//		topLevelTypes[i].verifyMethods(verifier);
+// }
 
 public void cleanup()
 {

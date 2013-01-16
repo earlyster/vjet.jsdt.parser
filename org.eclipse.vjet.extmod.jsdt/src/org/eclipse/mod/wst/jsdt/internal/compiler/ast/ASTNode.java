@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,15 +16,10 @@ import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
 import org.eclipse.mod.wst.jsdt.internal.compiler.DelegateASTVisitor;
 import org.eclipse.mod.wst.jsdt.internal.compiler.classfmt.ClassFileConstants;
-import org.eclipse.mod.wst.jsdt.internal.compiler.env.AccessRestriction;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ArrayBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BlockScope;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ExtraCompilerModifiers;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.InvocationSite;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.MethodBinding;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ReferenceBinding;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.Scope;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeConstants;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeIds;
@@ -235,163 +230,147 @@ public abstract class ASTNode implements TypeConstants, TypeIds, IASTNode {
 
 		super();
 	}
-	private static int checkInvocationArgument(BlockScope scope, Expression argument, TypeBinding parameterType, TypeBinding argumentType, TypeBinding originalParameterType) {
-		argument.computeConversion(scope, parameterType, argumentType);
-
-		TypeBinding checkedParameterType = originalParameterType == null ? parameterType : originalParameterType;
-		if (argumentType != checkedParameterType && argumentType.needsUncheckedConversion(checkedParameterType)) {
-			return INVOCATION_ARGUMENT_UNCHECKED;
-		}
-		return INVOCATION_ARGUMENT_OK;
-	}
-	public static void checkInvocationArguments(BlockScope scope, Expression receiver, TypeBinding receiverType, MethodBinding method, Expression[] arguments, TypeBinding[] argumentTypes, boolean argsContainCast, InvocationSite invocationSite) {
-		TypeBinding[] params = method.parameters;
-		int paramLength = params.length;
-//		boolean isRawMemberInvocation = false;//!method.isStatic()
-//				&& !receiverType.isUnboundWildcard()
-//				&& method.declaringClass.isRawType()
-//				&& method.hasSubstitutedParameters();
-
-		MethodBinding rawOriginalGenericMethod = null;
-//		if (!isRawMemberInvocation) {
-//			if (method instanceof ParameterizedGenericMethodBinding) {
-//				ParameterizedGenericMethodBinding paramMethod = (ParameterizedGenericMethodBinding) method;
-//				if (paramMethod.isUnchecked || (paramMethod.isRaw && method.hasSubstitutedParameters())) {
-//					rawOriginalGenericMethod = method.original();
+//	private static int checkInvocationArgument(BlockScope scope, Expression argument, TypeBinding parameterType, TypeBinding argumentType, TypeBinding originalParameterType) {
+//		TypeBinding checkedParameterType = originalParameterType == null ? parameterType : originalParameterType;
+//		if (argumentType != checkedParameterType && argumentType.needsUncheckedConversion(checkedParameterType)) {
+//			return INVOCATION_ARGUMENT_UNCHECKED;
+//		}
+//		return INVOCATION_ARGUMENT_OK;
+//	}
+//	public static void checkInvocationArguments(BlockScope scope, Expression receiver, TypeBinding receiverType, MethodBinding method, Expression[] arguments, TypeBinding[] argumentTypes, boolean argsContainCast, InvocationSite invocationSite) {
+//		TypeBinding[] params = method.parameters;
+//		int paramLength = params.length;
+//
+//		int invocationStatus = INVOCATION_ARGUMENT_OK;
+//		if (arguments != null) {
+//			if (method.isVarargs()) {
+//				// 4 possibilities exist for a call to the vararg method foo(int i, long ... value) : foo(1), foo(1, 2), foo(1, 2, 3, 4) & foo(1, new long[] {1, 2})
+//				int lastIndex = paramLength - 1;
+//				for (int i = 0; i < lastIndex; i++) {
+//					TypeBinding originalRawParam = null;
+//					invocationStatus |= checkInvocationArgument(scope, arguments[i], params[i] , argumentTypes[i], originalRawParam);
+//				}
+//			   int argLength = arguments.length;
+//			   if (lastIndex < argLength) { // vararg argument was provided
+//				   	TypeBinding parameterType = params[lastIndex];
+//					TypeBinding originalRawParam = null;
+//
+//				    if (paramLength != argLength || parameterType.dimensions() != argumentTypes[lastIndex].dimensions()) {
+//				    	parameterType = ((ArrayBinding) parameterType).elementsType(); // single element was provided for vararg parameter
+//				    }
+//					for (int i = lastIndex; i < argLength; i++) {
+//						invocationStatus |= checkInvocationArgument(scope, arguments[i], parameterType, argumentTypes[i], originalRawParam);
+//					}
+//				}
+//
+//			   if (paramLength == argumentTypes.length) { // 70056
+//					int varargsIndex = paramLength - 1;
+//					ArrayBinding varargsType = (ArrayBinding) params[varargsIndex];
+//					TypeBinding lastArgType = argumentTypes[varargsIndex];
+//					int dimensions;
+//					if (lastArgType != TypeBinding.NULL && (varargsType.dimensions <= (dimensions = lastArgType.dimensions()))) {
+//						if (lastArgType.leafComponentType().isBaseType()) {
+//							dimensions--;
+//						}
+//					}
+//				}
+//			} else {
+//				int length = (paramLength<arguments.length) ? paramLength : arguments.length;
+//				for (int i = 0; i < length; i++) {
+//					TypeBinding originalRawParam = null;
+//					invocationStatus |= checkInvocationArgument(scope, arguments[i], params[i], argumentTypes[i], originalRawParam);
 //				}
 //			}
 //		}
-		int invocationStatus = INVOCATION_ARGUMENT_OK;
-		if (arguments != null) {
-			if (method.isVarargs()) {
-				// 4 possibilities exist for a call to the vararg method foo(int i, long ... value) : foo(1), foo(1, 2), foo(1, 2, 3, 4) & foo(1, new long[] {1, 2})
-				int lastIndex = paramLength - 1;
-				for (int i = 0; i < lastIndex; i++) {
-					TypeBinding originalRawParam = rawOriginalGenericMethod == null ? null : rawOriginalGenericMethod.parameters[i];
-					invocationStatus |= checkInvocationArgument(scope, arguments[i], params[i] , argumentTypes[i], originalRawParam);
-				}
-			   int argLength = arguments.length;
-			   if (lastIndex < argLength) { // vararg argument was provided
-				   	TypeBinding parameterType = params[lastIndex];
-					TypeBinding originalRawParam = null;
-
-				    if (paramLength != argLength || parameterType.dimensions() != argumentTypes[lastIndex].dimensions()) {
-				    	parameterType = ((ArrayBinding) parameterType).elementsType(); // single element was provided for vararg parameter
-						originalRawParam = rawOriginalGenericMethod == null ? null : ((ArrayBinding)rawOriginalGenericMethod.parameters[lastIndex]).elementsType();
-				    }
-					for (int i = lastIndex; i < argLength; i++) {
-						invocationStatus |= checkInvocationArgument(scope, arguments[i], parameterType, argumentTypes[i], originalRawParam);
-					}
-				}
-
-			   if (paramLength == argumentTypes.length) { // 70056
-					int varargsIndex = paramLength - 1;
-					ArrayBinding varargsType = (ArrayBinding) params[varargsIndex];
-					TypeBinding lastArgType = argumentTypes[varargsIndex];
-					int dimensions;
-					if (lastArgType != TypeBinding.NULL && (varargsType.dimensions <= (dimensions = lastArgType.dimensions()))) {
-						if (lastArgType.leafComponentType().isBaseType()) {
-							dimensions--;
-						}
-					}
-				}
-			} else {
-				int length = (paramLength<arguments.length) ? paramLength : arguments.length;
-				for (int i = 0; i < length; i++) {
-					TypeBinding originalRawParam = rawOriginalGenericMethod == null ? null : rawOriginalGenericMethod.parameters[i];
-					invocationStatus |= checkInvocationArgument(scope, arguments[i], params[i], argumentTypes[i], originalRawParam);
-				}
-			}
-		}
-//		if ((invocationStatus & INVOCATION_ARGUMENT_WILDCARD) != 0) {
-//		    scope.problemReporter().wildcardInvocation((ASTNode)invocationSite, receiverType, method, argumentTypes);
-//		} else if (!method.isStatic() && !receiverType.isUnboundWildcard() && method.declaringClass.isRawType() && method.hasSubstitutedParameters()) {
-//		    scope.problemReporter().unsafeRawInvocation((ASTNode)invocationSite, method);
-//		} else if (rawOriginalGenericMethod != null) {
-//		    scope.problemReporter().unsafeRawGenericMethodInvocation((ASTNode)invocationSite, method);
-//		}
-	}
+////		if ((invocationStatus & INVOCATION_ARGUMENT_WILDCARD) != 0) {
+////		    scope.problemReporter().wildcardInvocation((ASTNode)invocationSite, receiverType, method, argumentTypes);
+////		} else if (!method.isStatic() && !receiverType.isUnboundWildcard() && method.declaringClass.isRawType() && method.hasSubstitutedParameters()) {
+////		    scope.problemReporter().unsafeRawInvocation((ASTNode)invocationSite, method);
+////		} else if (rawOriginalGenericMethod != null) {
+////		    scope.problemReporter().unsafeRawGenericMethodInvocation((ASTNode)invocationSite, method);
+////		}
+//	}
 	public ASTNode concreteStatement() {
 		return this;
 	}
 
-	public final boolean isFieldUseDeprecated(FieldBinding field, Scope scope, boolean isStrictlyAssigned) {
-
-		if (!isStrictlyAssigned && (field.isPrivate() || (field.declaringClass != null && field.declaringClass.isLocalType())) && !scope.isDefinedInField(field)) {
-			// ignore cases where field is used from within inside itself
-			field.original().modifiers |= ExtraCompilerModifiers.AccLocallyUsed;
-		}
-
-		if ((field.modifiers & ExtraCompilerModifiers.AccRestrictedAccess) != 0) {
-			AccessRestriction restriction =
-				scope.environment().getAccessRestriction(field.declaringClass);
-			if (restriction != null) {
-				scope.problemReporter().forbiddenReference(field, this,
-						restriction.getFieldAccessMessageTemplate(), restriction.getProblemId());
-			}
-		}
-
-		if (!field.isViewedAsDeprecated()) return false;
-
-		// inside same unit - no report
-		if (scope.isDefinedInSameUnit(field.declaringClass)) return false;
-
-		// if context is deprecated, may avoid reporting
-		if (!scope.compilerOptions().reportDeprecationInsideDeprecatedCode && scope.isInsideDeprecatedCode()) return false;
-		return true;
-	}
+//	public final boolean isFieldUseDeprecated(FieldBinding field, Scope scope, boolean isStrictlyAssigned) {
+//
+//		if (!isStrictlyAssigned && (field.isPrivate() || (field.declaringClass != null && field.declaringClass.isLocalType())) && !scope.isDefinedInField(field)) {
+//			// ignore cases where field is used from within inside itself
+//			field.original().modifiers |= ExtraCompilerModifiers.AccLocallyUsed;
+//		}
+//
+//		if ((field.modifiers & ExtraCompilerModifiers.AccRestrictedAccess) != 0) {
+//			AccessRestriction restriction =
+//				scope.environment().getAccessRestriction(field.declaringClass);
+//			if (restriction != null) {
+//				scope.problemReporter().forbiddenReference(field, this,
+//						restriction.getFieldAccessMessageTemplate(), restriction.getProblemId());
+//			}
+//		}
+//
+//		if (!field.isViewedAsDeprecated()) return false;
+//
+//		// inside same unit - no report
+//		if (scope.isDefinedInSameUnit(field.declaringClass)) return false;
+//
+//		// if context is deprecated, may avoid reporting
+//		if (!scope.compilerOptions().reportDeprecationInsideDeprecatedCode && scope.isInsideDeprecatedCode()) return false;
+//		return true;
+//	}
 
 	public boolean isImplicitThis() {
 
 		return false;
 	}
 
-	/* Answer true if the method use is considered deprecated.
-	* An access in the same compilation unit is allowed.
-	*/
-	public final boolean isMethodUseDeprecated(MethodBinding method, Scope scope,
-			boolean isExplicitUse) {
-		if ((method.isPrivate() /*|| method.declaringClass.isLocalType()*/) && !scope.isDefinedInMethod(method)) {
-			// ignore cases where method is used from within inside itself (e.g. direct recursions)
-			method.original().modifiers |= ExtraCompilerModifiers.AccLocallyUsed;
-		}
-
-		// TODO (maxime) consider separating concerns between deprecation and access restriction.
-		// 				 Caveat: this was not the case when access restriction funtion was added.
-		if (isExplicitUse && (method.modifiers & ExtraCompilerModifiers.AccRestrictedAccess) != 0) {
-			// note: explicit constructors calls warnings are kept despite the 'new C1()' case (two
-			//       warnings, one on type, the other on constructor), because of the 'super()' case.
-			AccessRestriction restriction =
-				scope.environment().getAccessRestriction(method.declaringClass);
-			if (restriction != null) {
-				if (method.isConstructor()) {
-					scope.problemReporter().forbiddenReference(method, this,
-							restriction.getConstructorAccessMessageTemplate(),
-							restriction.getProblemId());
-				}
-				else {
-					scope.problemReporter().forbiddenReference(method, this,
-							restriction.getMethodAccessMessageTemplate(),
-							restriction.getProblemId());
-				}
-			}
-		}
-
-		if (!method.isViewedAsDeprecated()) return false;
-
-		// inside same unit - no report
-		if (scope.isDefinedInSameUnit(method.declaringClass)) return false;
-
-		// non explicit use and non explicitly deprecated - no report
-		if (!isExplicitUse &&
-				(method.modifiers & ClassFileConstants.AccDeprecated) == 0) {
-			return false;
-		}
-
-		// if context is deprecated, may avoid reporting
-		if (!scope.compilerOptions().reportDeprecationInsideDeprecatedCode && scope.isInsideDeprecatedCode()) return false;
-		return true;
-	}
+//	/* Answer true if the method use is considered deprecated.
+//	* An access in the same compilation unit is allowed.
+//	*/
+//	public final boolean isMethodUseDeprecated(MethodBinding method, Scope scope,
+//			boolean isExplicitUse) {
+//		if ((method.isPrivate() /*|| method.declaringClass.isLocalType()*/) && !scope.isDefinedInMethod(method)) {
+//			// ignore cases where method is used from within inside itself (e.g. direct recursions)
+//			method.original().modifiers |= ExtraCompilerModifiers.AccLocallyUsed;
+//		}
+//
+//		// TODO (maxime) consider separating concerns between deprecation and access restriction.
+//		// 				 Caveat: this was not the case when access restriction funtion was added.
+//		if (isExplicitUse && (method.modifiers & ExtraCompilerModifiers.AccRestrictedAccess) != 0) {
+//			// note: explicit constructors calls warnings are kept despite the 'new C1()' case (two
+//			//       warnings, one on type, the other on constructor), because of the 'super()' case.
+//			AccessRestriction restriction =
+//				scope.environment().getAccessRestriction(method.declaringClass);
+//			if (restriction != null) {
+//				if (method.isConstructor()) {
+//					scope.problemReporter().forbiddenReference(method, this,
+//							restriction.getConstructorAccessMessageTemplate(),
+//							restriction.getProblemId());
+//				}
+//				else {
+//					scope.problemReporter().forbiddenReference(method, this,
+//							restriction.getMethodAccessMessageTemplate(),
+//							restriction.getProblemId());
+//				}
+//			}
+//		}
+//
+//		if (!method.isViewedAsDeprecated()) return false;
+//
+//		// inside same unit - no report
+//		if (scope.isDefinedInSameUnit(method.declaringClass)) return false;
+//
+//		// non explicit use and non explicitly deprecated - no report
+//		if (!isExplicitUse &&
+//				(method.modifiers & ClassFileConstants.AccDeprecated) == 0) {
+//			return false;
+//		}
+//
+//		// if context is deprecated, may avoid reporting
+//		if (!scope.compilerOptions().reportDeprecationInsideDeprecatedCode && scope.isInsideDeprecatedCode()) return false;
+//		return true;
+//	}
 
 	public boolean isSuper() {
 
@@ -406,44 +385,44 @@ public abstract class ASTNode implements TypeConstants, TypeIds, IASTNode {
 	/* Answer true if the type use is considered deprecated.
 	* An access in the same compilation unit is allowed.
 	*/
-	public final boolean isTypeUseDeprecated(TypeBinding type, Scope scope) {
-
-		if (type.isArrayType())
-			return isTypeUseDeprecated(((ArrayBinding) type).leafComponentType, scope);
-		if (type.isBaseType())
-			return false;
-
-
-		/* BC - threw an exception-- temp fix */
-		ReferenceBinding refType=null;
-		try {
-			refType = (ReferenceBinding) type;
-		} catch (Exception ex) {
-			// TODO Auto-generated catch block
-			ex.printStackTrace();
-		}
-
-		if ((refType.isPrivate() || refType.isLocalType()) && !scope.isDefinedInType(refType)) {
-			// ignore cases where type is used from within inside itself
-			((ReferenceBinding)refType).modifiers |= ExtraCompilerModifiers.AccLocallyUsed;
-		}
-
-		if (refType.hasRestrictedAccess()) {
-			AccessRestriction restriction = scope.environment().getAccessRestriction(type);
-			if (restriction != null) {
-				scope.problemReporter().forbiddenReference(type, this, restriction.getMessageTemplate(), restriction.getProblemId());
-			}
-		}
-
-		if (!refType.isViewedAsDeprecated()) return false;
-
-		// inside same unit - no report
-		if (scope.isDefinedInSameUnit(refType)) return false;
-
-		// if context is deprecated, may avoid reporting
-		if (!scope.compilerOptions().reportDeprecationInsideDeprecatedCode && scope.isInsideDeprecatedCode()) return false;
-		return true;
-	}
+//	public final boolean isTypeUseDeprecated(TypeBinding type, Scope scope) {
+//
+//		if (type.isArrayType())
+//			return isTypeUseDeprecated(((ArrayBinding) type).leafComponentType, scope);
+//		if (type.isBaseType())
+//			return false;
+//
+//
+//		/* BC - threw an exception-- temp fix */
+//		ReferenceBinding refType=null;
+//		try {
+//			refType = (ReferenceBinding) type;
+//		} catch (Exception ex) {
+//			// TODO Auto-generated catch block
+//			ex.printStackTrace();
+//		}
+//
+//		if ((refType.isPrivate() || refType.isLocalType()) && !scope.isDefinedInType(refType)) {
+//			// ignore cases where type is used from within inside itself
+//			refType.modifiers |= ExtraCompilerModifiers.AccLocallyUsed;
+//		}
+//
+//		if (refType.hasRestrictedAccess()) {
+//			AccessRestriction restriction = scope.environment().getAccessRestriction(type);
+//			if (restriction != null) {
+//				scope.problemReporter().forbiddenReference(type, this, restriction.getMessageTemplate(), restriction.getProblemId());
+//			}
+//		}
+//
+//		if (!refType.isViewedAsDeprecated()) return false;
+//
+//		// inside same unit - no report
+//		if (scope.isDefinedInSameUnit(refType)) return false;
+//
+//		// if context is deprecated, may avoid reporting
+//		if (!scope.compilerOptions().reportDeprecationInsideDeprecatedCode && scope.isInsideDeprecatedCode()) return false;
+//		return true;
+//	}
 
 	public abstract StringBuffer print(int indent, StringBuffer output);
 
@@ -478,8 +457,10 @@ public abstract class ASTNode implements TypeConstants, TypeIds, IASTNode {
 	public int sourceEnd() {
 		return this.sourceEnd;
 	}
+	public void setSourceEnd(int pos) {
+		this.sourceEnd = pos;
+	}
 	public String toString() {
-
 		return print(0, new StringBuffer(30)).toString();
 	}
 
@@ -487,8 +468,7 @@ public abstract class ASTNode implements TypeConstants, TypeIds, IASTNode {
 		// do nothing by default
 	}
 
-	public boolean isInferred()
-	{
+	public boolean isInferred() {
 		return false;
 	}
 	public int getASTType() {
@@ -496,10 +476,7 @@ public abstract class ASTNode implements TypeConstants, TypeIds, IASTNode {
 	
 	}
 	
-	
-	public void traverse(org.eclipse.mod.wst.jsdt.core.ast.ASTVisitor visitor)
-	{
+	public void traverse(org.eclipse.mod.wst.jsdt.core.ast.ASTVisitor visitor) {
 		this.traverse(new DelegateASTVisitor(visitor), null);
 	}
-
 }

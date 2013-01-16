@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2012 IBM Corporation and others.
+ * Copyright (c) 2005, 2008 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,22 +10,17 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
-
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IObjectLiteral;
 import org.eclipse.mod.wst.jsdt.core.ast.IObjectLiteralField;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
-import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowContext;
 import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowInfo;
-import org.eclipse.mod.wst.jsdt.internal.compiler.impl.Constant;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BlockScope;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding;
 
 
 public class ObjectLiteral extends Expression implements IObjectLiteral {
 
 	public ObjectLiteralField [] fields;
-//	public InferredType inferredType;
 	
 	public StringBuffer printExpression(int indent, StringBuffer output) {
 		if (fields==null || fields.length==0)
@@ -51,14 +46,7 @@ public class ObjectLiteral extends Expression implements IObjectLiteral {
 		return output;
 	}
 	
-//	public InferredType getInferredType() {
-//		return this.inferredType;
-//	}
-//	
-//	public void setInferredType(InferredType type) {
-//		this.inferredType=type;
-//	}
-	
+
 	public IObjectLiteralField[] getFields() {
 		return this.fields;
 	}
@@ -73,30 +61,12 @@ public class ObjectLiteral extends Expression implements IObjectLiteral {
 	}
 
 
-	public TypeBinding resolveType(BlockScope scope) {
-		this.constant=Constant.NotAConstant;
-		if (this.fields!=null)
-			for (int i = 0; i < this.fields.length; i++) {
-				this.fields[i].resolveType(scope);
-			}
-		return TypeBinding.ANY;
-	}
 
 	public int nullStatus(FlowInfo flowInfo) {
 			return FlowInfo.NON_NULL; // constant expression cannot be null
 	}
 
-	public FlowInfo analyseCode(
-			BlockScope classScope,
-			FlowContext initializationContext,
-			FlowInfo flowInfo) {
-		if (this.fields!=null)
-			for (int i = 0; i < this.fields.length; i++) {
-				flowInfo=this.fields[i].analyseCode(classScope,initializationContext, flowInfo);
-			}
 
-		return flowInfo;
-	}
 	public int getASTType() {
 		return IASTNode.OBJECT_LITERAL;
 	

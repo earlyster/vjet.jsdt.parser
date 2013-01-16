@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2008 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IRegExLiteral;
@@ -38,10 +37,10 @@ public class RegExLiteral extends Literal implements IRegExLiteral {
 		constant = StringConstant.fromValue(String.valueOf(source));
 	}
 
-	public TypeBinding literalType(BlockScope scope) {
-		return null;
+//	public TypeBinding literalType(BlockScope scope) {
+//
 //		return scope.getJavaLangRegExp();
-	}
+//	}
 
 	public StringBuffer printExpression(int indent, StringBuffer output) {
 

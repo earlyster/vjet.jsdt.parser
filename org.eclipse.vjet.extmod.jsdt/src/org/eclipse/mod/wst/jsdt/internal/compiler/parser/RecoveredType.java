@@ -268,152 +268,152 @@ public void updateBodyStart(int bodyStart){
 	this.foundOpeningBrace = true;
 	this.typeDeclaration.bodyStart = bodyStart;
 }
-public Statement updatedStatement(){
-
-	// ignore closed anonymous type
-	if ((typeDeclaration.bits & ASTNode.IsAnonymousType) != 0 && !this.preserveContent){
-		return null;
-	}
-
-	TypeDeclaration updatedType = this.updatedTypeDeclaration();
-	if ((updatedType.bits & ASTNode.IsAnonymousType) != 0){
-		/* in presence of an anonymous type, we want the full allocation expression */
-		return updatedType.allocation;
-	}
-	return updatedType;
-}
-public TypeDeclaration updatedTypeDeclaration(){
-	int lastEnd = typeDeclaration.bodyStart;
-	/* update member types */
-	if (memberTypeCount > 0){
-		int existingCount = typeDeclaration.memberTypes == null ? 0 : typeDeclaration.memberTypes.length;
-		TypeDeclaration[] memberTypeDeclarations = new TypeDeclaration[existingCount + memberTypeCount];
-		if (existingCount > 0){
-			System.arraycopy(typeDeclaration.memberTypes, 0, memberTypeDeclarations, 0, existingCount);
-		}
-		// may need to update the declarationSourceEnd of the last type
-		if (memberTypes[memberTypeCount - 1].typeDeclaration.declarationSourceEnd == 0){
-			int bodyEndValue = bodyEnd();
-			memberTypes[memberTypeCount - 1].typeDeclaration.declarationSourceEnd = bodyEndValue;
-			memberTypes[memberTypeCount - 1].typeDeclaration.bodyEnd =  bodyEndValue;
-		}
-		for (int i = 0; i < memberTypeCount; i++){
-			memberTypeDeclarations[existingCount + i] = memberTypes[i].updatedTypeDeclaration();
-		}
-		typeDeclaration.memberTypes = memberTypeDeclarations;
-		if(memberTypeDeclarations[memberTypeDeclarations.length - 1].declarationSourceEnd > lastEnd) {
-			lastEnd = memberTypeDeclarations[memberTypeDeclarations.length - 1].declarationSourceEnd;
-		}
-	}
-	/* update fields */
-	if (fieldCount > 0){
-		int existingCount = typeDeclaration.fields == null ? 0 : typeDeclaration.fields.length;
-		FieldDeclaration[] fieldDeclarations = new FieldDeclaration[existingCount + fieldCount];
-		if (existingCount > 0){
-			System.arraycopy(typeDeclaration.fields, 0, fieldDeclarations, 0, existingCount);
-		}
-		// may need to update the declarationSourceEnd of the last field
-		if (fields[fieldCount - 1].fieldDeclaration.declarationSourceEnd == 0){
-			int temp = bodyEnd();
-			fields[fieldCount - 1].fieldDeclaration.declarationSourceEnd = temp;
-			fields[fieldCount - 1].fieldDeclaration.declarationEnd = temp;
-		}
-		for (int i = 0; i < fieldCount; i++){
-			fieldDeclarations[existingCount + i] = fields[i].updatedFieldDeclaration();
-		}
-		typeDeclaration.fields = fieldDeclarations;
-		if(fieldDeclarations[fieldDeclarations.length - 1].declarationSourceEnd > lastEnd) {
-			lastEnd = fieldDeclarations[fieldDeclarations.length - 1].declarationSourceEnd;
-		}
-	}
-	/* update methods */
-	int existingCount = typeDeclaration.methods == null ? 0 : typeDeclaration.methods.length;
-	boolean hasConstructor = false, hasRecoveredConstructor = false;
-	boolean hasAbstractMethods = false;
-	int defaultConstructorIndex = -1;
-	if (methodCount > 0){
-		AbstractMethodDeclaration[] methodDeclarations = new AbstractMethodDeclaration[existingCount + methodCount];
-		for (int i = 0; i < existingCount; i++){
-			AbstractMethodDeclaration m = typeDeclaration.methods[i];
-			if (m.isDefaultConstructor()) defaultConstructorIndex = i;
-			if (m.isAbstract()) hasAbstractMethods = true;
-			methodDeclarations[i] = m;
-		}
-		// may need to update the declarationSourceEnd of the last method
-		if (methods[methodCount - 1].methodDeclaration.declarationSourceEnd == 0){
-			int bodyEndValue = bodyEnd();
-			methods[methodCount - 1].methodDeclaration.declarationSourceEnd = bodyEndValue;
-			methods[methodCount - 1].methodDeclaration.bodyEnd = bodyEndValue;
-		}
-		for (int i = 0; i < methodCount; i++){
-			AbstractMethodDeclaration updatedMethod = methods[i].updatedMethodDeclaration();
-			if (updatedMethod.isConstructor()) hasRecoveredConstructor = true;
-			if (updatedMethod.isAbstract()) hasAbstractMethods = true;
-			methodDeclarations[existingCount + i] = updatedMethod;
-		}
-		typeDeclaration.methods = methodDeclarations;
-		if(methodDeclarations[methodDeclarations.length - 1].declarationSourceEnd > lastEnd) {
-			lastEnd = methodDeclarations[methodDeclarations.length - 1].declarationSourceEnd;
-		}
-		if (hasAbstractMethods) typeDeclaration.bits |= ASTNode.HasAbstractMethods;
-		hasConstructor = typeDeclaration.checkConstructors(this.parser());
-	} else {
-		for (int i = 0; i < existingCount; i++){
-			if (typeDeclaration.methods[i].isConstructor()) hasConstructor = true;
-		}
-	}
-	/* add clinit ? */
-	if (typeDeclaration.needClassInitMethod()){
-		boolean alreadyHasClinit = false;
-		for (int i = 0; i < existingCount; i++){
-			if (typeDeclaration.methods[i].isClinit()){
-				alreadyHasClinit = true;
-				break;
-			}
-		}
-		if (!alreadyHasClinit) typeDeclaration.addClinit();
-	}
-	/* add default constructor ? */
-	if (defaultConstructorIndex >= 0 && hasRecoveredConstructor){
-		/* should discard previous default construtor */
-		AbstractMethodDeclaration[] methodDeclarations = new AbstractMethodDeclaration[typeDeclaration.methods.length - 1];
-		if (defaultConstructorIndex != 0){
-			System.arraycopy(typeDeclaration.methods, 0, methodDeclarations, 0, defaultConstructorIndex);
-		}
-		if (defaultConstructorIndex != typeDeclaration.methods.length-1){
-			System.arraycopy(
-				typeDeclaration.methods,
-				defaultConstructorIndex+1,
-				methodDeclarations,
-				defaultConstructorIndex,
-				typeDeclaration.methods.length - defaultConstructorIndex - 1);
-		}
-		typeDeclaration.methods = methodDeclarations;
-	} else {
-		if (!hasConstructor) {// if was already reduced, then constructor
-			boolean insideFieldInitializer = false;
-			RecoveredElement parentElement = this.parent;
-			while (parentElement != null){
-				if (parentElement instanceof RecoveredField){
-						insideFieldInitializer = true;
-						break;
-				}
-				parentElement = parentElement.parent;
-			}
-			typeDeclaration.createDefaultConstructor(!parser().diet || insideFieldInitializer, true);
-		}
-	}
-	if (parent instanceof RecoveredType){
-		typeDeclaration.bits |= ASTNode.IsMemberType;
-	} else if (parent instanceof RecoveredMethod){
-		typeDeclaration.bits |= ASTNode.IsLocalType;
-	}
-	if(typeDeclaration.declarationSourceEnd == 0) {
-		typeDeclaration.declarationSourceEnd = lastEnd;
-		typeDeclaration.bodyEnd = lastEnd;
-	}
-	return typeDeclaration;
-}
+//public Statement updatedStatement(){
+//
+//	// ignore closed anonymous type
+//	if ((typeDeclaration.bits & ASTNode.IsAnonymousType) != 0 && !this.preserveContent){
+//		return null;
+//	}
+//
+////	TypeDeclaration updatedType = this.updatedTypeDeclaration();
+//	if ((updatedType.bits & ASTNode.IsAnonymousType) != 0){
+//		/* in presence of an anonymous type, we want the full allocation expression */
+//		return updatedType.allocation;
+//	}
+//	return updatedType;
+//}
+//public TypeDeclaration updatedTypeDeclaration(){
+//	int lastEnd = typeDeclaration.bodyStart;
+//	/* update member types */
+//	if (memberTypeCount > 0){
+//		int existingCount = typeDeclaration.memberTypes == null ? 0 : typeDeclaration.memberTypes.length;
+//		TypeDeclaration[] memberTypeDeclarations = new TypeDeclaration[existingCount + memberTypeCount];
+//		if (existingCount > 0){
+//			System.arraycopy(typeDeclaration.memberTypes, 0, memberTypeDeclarations, 0, existingCount);
+//		}
+//		// may need to update the declarationSourceEnd of the last type
+//		if (memberTypes[memberTypeCount - 1].typeDeclaration.declarationSourceEnd == 0){
+//			int bodyEndValue = bodyEnd();
+//			memberTypes[memberTypeCount - 1].typeDeclaration.declarationSourceEnd = bodyEndValue;
+//			memberTypes[memberTypeCount - 1].typeDeclaration.bodyEnd =  bodyEndValue;
+//		}
+//		for (int i = 0; i < memberTypeCount; i++){
+//			memberTypeDeclarations[existingCount + i] = memberTypes[i].updatedTypeDeclaration();
+//		}
+//		typeDeclaration.memberTypes = memberTypeDeclarations;
+//		if(memberTypeDeclarations[memberTypeDeclarations.length - 1].declarationSourceEnd > lastEnd) {
+//			lastEnd = memberTypeDeclarations[memberTypeDeclarations.length - 1].declarationSourceEnd;
+//		}
+//	}
+//	/* update fields */
+//	if (fieldCount > 0){
+//		int existingCount = typeDeclaration.fields == null ? 0 : typeDeclaration.fields.length;
+//		FieldDeclaration[] fieldDeclarations = new FieldDeclaration[existingCount + fieldCount];
+//		if (existingCount > 0){
+//			System.arraycopy(typeDeclaration.fields, 0, fieldDeclarations, 0, existingCount);
+//		}
+//		// may need to update the declarationSourceEnd of the last field
+//		if (fields[fieldCount - 1].fieldDeclaration.declarationSourceEnd == 0){
+//			int temp = bodyEnd();
+//			fields[fieldCount - 1].fieldDeclaration.declarationSourceEnd = temp;
+//			fields[fieldCount - 1].fieldDeclaration.declarationEnd = temp;
+//		}
+//		for (int i = 0; i < fieldCount; i++){
+//			fieldDeclarations[existingCount + i] = fields[i].updatedFieldDeclaration();
+//		}
+//		typeDeclaration.fields = fieldDeclarations;
+//		if(fieldDeclarations[fieldDeclarations.length - 1].declarationSourceEnd > lastEnd) {
+//			lastEnd = fieldDeclarations[fieldDeclarations.length - 1].declarationSourceEnd;
+//		}
+//	}
+//	/* update methods */
+//	int existingCount = typeDeclaration.methods == null ? 0 : typeDeclaration.methods.length;
+//	boolean hasConstructor = false, hasRecoveredConstructor = false;
+//	boolean hasAbstractMethods = false;
+//	int defaultConstructorIndex = -1;
+//	if (methodCount > 0){
+//		AbstractMethodDeclaration[] methodDeclarations = new AbstractMethodDeclaration[existingCount + methodCount];
+//		for (int i = 0; i < existingCount; i++){
+//			AbstractMethodDeclaration m = typeDeclaration.methods[i];
+//			if (m.isDefaultConstructor()) defaultConstructorIndex = i;
+//			if (m.isAbstract()) hasAbstractMethods = true;
+//			methodDeclarations[i] = m;
+//		}
+//		// may need to update the declarationSourceEnd of the last method
+//		if (methods[methodCount - 1].methodDeclaration.declarationSourceEnd == 0){
+//			int bodyEndValue = bodyEnd();
+//			methods[methodCount - 1].methodDeclaration.declarationSourceEnd = bodyEndValue;
+//			methods[methodCount - 1].methodDeclaration.bodyEnd = bodyEndValue;
+//		}
+//		for (int i = 0; i < methodCount; i++){
+//			AbstractMethodDeclaration updatedMethod = methods[i].updatedMethodDeclaration();
+//			if (updatedMethod.isConstructor()) hasRecoveredConstructor = true;
+//			if (updatedMethod.isAbstract()) hasAbstractMethods = true;
+//			methodDeclarations[existingCount + i] = updatedMethod;
+//		}
+//		typeDeclaration.methods = methodDeclarations;
+//		if(methodDeclarations[methodDeclarations.length - 1].declarationSourceEnd > lastEnd) {
+//			lastEnd = methodDeclarations[methodDeclarations.length - 1].declarationSourceEnd;
+//		}
+//		if (hasAbstractMethods) typeDeclaration.bits |= ASTNode.HasAbstractMethods;
+//		hasConstructor = typeDeclaration.checkConstructors(this.parser());
+//	} else {
+//		for (int i = 0; i < existingCount; i++){
+//			if (typeDeclaration.methods[i].isConstructor()) hasConstructor = true;
+//		}
+//	}
+//	/* add clinit ? */
+//	if (typeDeclaration.needClassInitMethod()){
+//		boolean alreadyHasClinit = false;
+//		for (int i = 0; i < existingCount; i++){
+//			if (typeDeclaration.methods[i].isClinit()){
+//				alreadyHasClinit = true;
+//				break;
+//			}
+//		}
+//		if (!alreadyHasClinit) typeDeclaration.addClinit();
+//	}
+//	/* add default constructor ? */
+//	if (defaultConstructorIndex >= 0 && hasRecoveredConstructor){
+//		/* should discard previous default construtor */
+//		AbstractMethodDeclaration[] methodDeclarations = new AbstractMethodDeclaration[typeDeclaration.methods.length - 1];
+//		if (defaultConstructorIndex != 0){
+//			System.arraycopy(typeDeclaration.methods, 0, methodDeclarations, 0, defaultConstructorIndex);
+//		}
+//		if (defaultConstructorIndex != typeDeclaration.methods.length-1){
+//			System.arraycopy(
+//				typeDeclaration.methods,
+//				defaultConstructorIndex+1,
+//				methodDeclarations,
+//				defaultConstructorIndex,
+//				typeDeclaration.methods.length - defaultConstructorIndex - 1);
+//		}
+//		typeDeclaration.methods = methodDeclarations;
+//	} else {
+//		if (!hasConstructor) {// if was already reduced, then constructor
+//			boolean insideFieldInitializer = false;
+//			RecoveredElement parentElement = this.parent;
+//			while (parentElement != null){
+//				if (parentElement instanceof RecoveredField){
+//						insideFieldInitializer = true;
+//						break;
+//				}
+//				parentElement = parentElement.parent;
+//			}
+//			typeDeclaration.createDefaultConstructor(!parser().diet || insideFieldInitializer, true);
+//		}
+//	}
+//	if (parent instanceof RecoveredType){
+//		typeDeclaration.bits |= ASTNode.IsMemberType;
+//	} else if (parent instanceof RecoveredMethod){
+//		typeDeclaration.bits |= ASTNode.IsLocalType;
+//	}
+//	if(typeDeclaration.declarationSourceEnd == 0) {
+//		typeDeclaration.declarationSourceEnd = lastEnd;
+//		typeDeclaration.bodyEnd = lastEnd;
+//	}
+//	return typeDeclaration;
+//}
 /*
  * Update the corresponding parse node from parser state which
  * is about to disappear because of restarting recovery
@@ -496,9 +496,9 @@ public RecoveredElement updateOnOpeningBrace(int braceStart, int braceEnd){
 	}
 	return super.updateOnOpeningBrace(braceStart, braceEnd);
 }
-public void updateParseTree(){
-	this.updatedTypeDeclaration();
-}
+//public void updateParseTree(){
+//	this.updatedTypeDeclaration();
+//}
 /*
  * Update the declarationSourceEnd of the corresponding parse node
  */

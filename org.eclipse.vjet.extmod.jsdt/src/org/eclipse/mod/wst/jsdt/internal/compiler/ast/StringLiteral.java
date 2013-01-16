@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IStringLiteral;
@@ -40,12 +39,6 @@ public class StringLiteral extends Literal implements IStringLiteral {
 		constant = StringConstant.fromValue(String.valueOf(source));
 	}
 
-	public ExtendedStringLiteral extendWith(CharLiteral lit){
-
-		//add the lit source to mine, just as if it was mine
-		return new ExtendedStringLiteral(this,lit);
-	}
-
 	public ExtendedStringLiteral extendWith(StringLiteral lit){
 
 		//add the lit source to mine, just as if it was mine
@@ -58,11 +51,10 @@ public class StringLiteral extends Literal implements IStringLiteral {
 	public StringLiteralConcatenation extendsWith(StringLiteral lit) {
 		return new StringLiteralConcatenation(this, lit);
 	}
-	public TypeBinding literalType(BlockScope scope) {
-		return null;
-		
+//	public TypeBinding literalType(BlockScope scope) {
+//
 //		return scope.getJavaLangString();
-	}
+//	}
 
 	public StringBuffer printExpression(int indent, StringBuffer output) {
 

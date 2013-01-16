@@ -284,23 +284,23 @@ public AbstractMethodDeclaration updatedMethodDeclaration(){
 			methodDeclaration.statements = block.statements;
 
 			/* first statement might be an explict constructor call destinated to a special slot */
-			if (methodDeclaration.isConstructor()) {
-				ConstructorDeclaration constructor = (ConstructorDeclaration)methodDeclaration;
-				if (methodDeclaration.statements != null
-					&& methodDeclaration.statements[0] instanceof ExplicitConstructorCall){
-					constructor.constructorCall = (ExplicitConstructorCall)methodDeclaration.statements[0];
-					int length = methodDeclaration.statements.length;
-					System.arraycopy(
-						methodDeclaration.statements,
-						1,
-						(methodDeclaration.statements = new Statement[length-1]),
-						0,
-						length-1);
-					}
-					if (constructor.constructorCall == null){ // add implicit constructor call
-						constructor.constructorCall = SuperReference.implicitSuperConstructorCall();
-					}
-			}
+//			if (methodDeclaration.isConstructor()) {
+//				ConstructorDeclaration constructor = (ConstructorDeclaration)methodDeclaration;
+//				if (methodDeclaration.statements != null
+//					&& methodDeclaration.statements[0] instanceof ExplicitConstructorCall){
+//					constructor.constructorCall = (ExplicitConstructorCall)methodDeclaration.statements[0];
+//					int length = methodDeclaration.statements.length;
+//					System.arraycopy(
+//						methodDeclaration.statements,
+//						1,
+//						(methodDeclaration.statements = new Statement[length-1]),
+//						0,
+//						length-1);
+//					}
+//					if (constructor.constructorCall == null){ // add implicit constructor call
+//						constructor.constructorCall = SuperReference.implicitSuperConstructorCall();
+//					}
+//			}
 		}
 	}
 	if (localTypeCount > 0) methodDeclaration.bits |= ASTNode.HasLocalType;

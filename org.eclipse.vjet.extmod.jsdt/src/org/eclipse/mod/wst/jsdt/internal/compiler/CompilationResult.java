@@ -119,12 +119,7 @@ private int computePriority(CategorizedProblem problem){
 	}
 	ReferenceContext context = this.problemsMap == null ? null : (ReferenceContext) this.problemsMap.get(problem);
 	if (context != null){
-		if (context instanceof AbstractMethodDeclaration){
-			AbstractMethodDeclaration method = (AbstractMethodDeclaration) context;
-			if (method.isStatic()) {
-				priority += P_STATIC;
-			}
-		} else {
+		if (!(context instanceof AbstractMethodDeclaration)){
 			priority += P_OUTSIDE_METHOD;
 		}
 		if (this.firstErrors.contains(problem)){ // if context is null, firstErrors is null too

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,8 +10,7 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
-
-//import org.eclipse.mod.wst.jsdt.core.JavaScriptConstants;
+//import org.eclipse.mod.wst.jsdt.core.JavaScriptCore;
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.ITryStatement;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
@@ -31,10 +30,6 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ReferenceBinding;
 //import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeIds;
 
 public class TryStatement extends SubRoutineStatement implements ITryStatement {
-
-//	private final static char[] SECRET_RETURN_ADDRESS_NAME = " returnAddress".toCharArray(); //$NON-NLS-1$
-//	private final static char[] SECRET_ANY_HANDLER_NAME = " anyExceptionHandler".toCharArray(); //$NON-NLS-1$
-//	private final static char[] SECRET_RETURN_VALUE_NAME = " returnValue".toCharArray(); //$NON-NLS-1$
 
 	public Block tryBlock;
 	public Block[] catchBlocks;
@@ -63,256 +58,6 @@ public class TryStatement extends SubRoutineStatement implements ITryStatement {
 	int naturalExitMergeInitStateIndex = -1;
 	int[] catchExitInitStateIndexes;
 
-public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, FlowInfo flowInfo) {
-
-	// Consider the try block and catch block so as to compute the intersection of initializations and
-	// the minimum exit relative depth amongst all of them. Then consider the subroutine, and append its
-	// initialization to the try/catch ones, if the subroutine completes normally. If the subroutine does not
-	// complete, then only keep this result for the rest of the analysis
-
-	// process the finally block (subroutine) - create a context for the subroutine
-
-//	this.preTryInitStateIndex =
-//		currentScope.methodScope().recordInitializationStates(flowInfo);
-
-	if (this.anyExceptionVariable != null) {
-		this.anyExceptionVariable.useFlag = LocalVariableBinding.USED;
-	}
-	if (this.returnAddressVariable != null) { // TODO (philippe) if subroutine is escaping, unused
-		this.returnAddressVariable.useFlag = LocalVariableBinding.USED;
-	}
-	if (!isSubRoutineStartLabel) {
-		// no finally block -- this is a simplified copy of the else part
-		// process the try block in a context handling the local exceptions.
-		ExceptionHandlingFlowContext handlingContext =
-			new ExceptionHandlingFlowContext(
-				flowContext,
-				this,
-				this.caughtExceptionTypes,
-				this.scope,
-				flowInfo.unconditionalInits());
-		handlingContext.initsOnFinally =
-			new NullInfoRegistry(flowInfo.unconditionalInits());
-		// only try blocks initialize that member - may consider creating a
-		// separate class if needed
-
-		FlowInfo tryInfo;
-		if (this.tryBlock.isEmptyBlock()) {
-			tryInfo = flowInfo;
-		} else {
-			tryInfo = this.tryBlock.analyseCode(currentScope, handlingContext, flowInfo.copy());
-			if ((tryInfo.tagBits & FlowInfo.UNREACHABLE) != 0)
-				this.bits |= ASTNode.IsTryBlockExiting;
-		}
-
-		// check unreachable catch blocks
-		handlingContext.complainIfUnusedExceptionHandlers(this.scope, this);
-
-		// process the catch blocks - computing the minimal exit depth amongst try/catch
-		if (this.catchArguments != null) {
-			int catchCount;
-			this.catchExits = new boolean[catchCount = this.catchBlocks.length];
-			this.catchExitInitStateIndexes = new int[catchCount];
-			for (int i = 0; i < catchCount; i++) {
-				// keep track of the inits that could potentially have led to this exception handler (for final assignments diagnosis)
-				FlowInfo catchInfo;
-				if (this.caughtExceptionTypes[i].isUncheckedException(true)) {
-					catchInfo =
-						handlingContext.initsOnFinally.mitigateNullInfoOf(
-							flowInfo.unconditionalCopy().
-								addPotentialInitializationsFrom(
-									handlingContext.initsOnException(
-										this.caughtExceptionTypes[i])).
-								addPotentialInitializationsFrom(tryInfo).
-								addPotentialInitializationsFrom(
-									handlingContext.initsOnReturn));
-				} else {
-					catchInfo =
-						flowInfo.unconditionalCopy().
-							addPotentialInitializationsFrom(
-								handlingContext.initsOnException(
-									this.caughtExceptionTypes[i]))
-							.addPotentialInitializationsFrom(
-								tryInfo.nullInfoLessUnconditionalCopy())
-								// remove null info to protect point of
-								// exception null info
-							.addPotentialInitializationsFrom(
-								handlingContext.initsOnReturn.
-									nullInfoLessUnconditionalCopy());
-				}
-
-				// catch var is always set
-				LocalVariableBinding catchArg = this.catchArguments[i].binding;
-				catchInfo.markAsDefinitelyAssigned(catchArg);
-				catchInfo.markAsDefinitelyNonNull(catchArg);
-				/*
-				"If we are about to consider an unchecked exception handler, potential inits may have occured inside
-				the try block that need to be detected , e.g.
-				try { x = 1; throwSomething();} catch(Exception e){ x = 2} "
-				"(uncheckedExceptionTypes notNil and: [uncheckedExceptionTypes at: index])
-				ifTrue: [catchInits addPotentialInitializationsFrom: tryInits]."
-				*/
-				if (this.tryBlock.statements == null) {
-					catchInfo.setReachMode(FlowInfo.UNREACHABLE);
-				}
-				catchInfo =
-					this.catchBlocks[i].analyseCode(
-						currentScope,
-						flowContext,
-						catchInfo);
-//				this.catchExitInitStateIndexes[i] = currentScope.methodScope().recordInitializationStates(catchInfo);
-				this.catchExits[i] =
-					(catchInfo.tagBits & FlowInfo.UNREACHABLE) != 0;
-				tryInfo = tryInfo.mergedWith(catchInfo.unconditionalInits());
-			}
-		}
-//		this.mergedInitStateIndex =
-//			currentScope.methodScope().recordInitializationStates(tryInfo);
-
-		// chain up null info registry
-		if (flowContext.initsOnFinally != null) {
-			flowContext.initsOnFinally.add(handlingContext.initsOnFinally);
-		}
-
-		return tryInfo;
-	} else {
-		InsideSubRoutineFlowContext insideSubContext;
-		FinallyFlowContext finallyContext;
-		UnconditionalFlowInfo subInfo;
-		// analyse finally block first
-		insideSubContext = new InsideSubRoutineFlowContext(flowContext, this);
-
-		subInfo =
-			this.finallyBlock
-				.analyseCode(
-					currentScope,
-					finallyContext = new FinallyFlowContext(flowContext, this.finallyBlock),
-					flowInfo.nullInfoLessUnconditionalCopy())
-				.unconditionalInits();
-		if (subInfo == FlowInfo.DEAD_END) {
-			this.bits |= ASTNode.IsSubRoutineEscaping;
-			this.scope.problemReporter().finallyMustCompleteNormally(this.finallyBlock);
-		}
-		this.subRoutineInits = subInfo;
-		// process the try block in a context handling the local exceptions.
-		ExceptionHandlingFlowContext handlingContext =
-			new ExceptionHandlingFlowContext(
-				insideSubContext,
-				this,
-				this.caughtExceptionTypes,
-				this.scope,
-				flowInfo.unconditionalInits());
-		handlingContext.initsOnFinally =
-			new NullInfoRegistry(flowInfo.unconditionalInits());
-		// only try blocks initialize that member - may consider creating a
-		// separate class if needed
-
-		FlowInfo tryInfo;
-		if (this.tryBlock.isEmptyBlock()) {
-			tryInfo = flowInfo;
-		} else {
-			tryInfo = this.tryBlock.analyseCode(currentScope, handlingContext, flowInfo.copy());
-			if ((tryInfo.tagBits & FlowInfo.UNREACHABLE) != 0)
-				this.bits |= ASTNode.IsTryBlockExiting;
-		}
-
-		// check unreachable catch blocks
-		handlingContext.complainIfUnusedExceptionHandlers(this.scope, this);
-
-		// process the catch blocks - computing the minimal exit depth amongst try/catch
-		if (this.catchArguments != null) {
-			int catchCount;
-			this.catchExits = new boolean[catchCount = this.catchBlocks.length];
-			this.catchExitInitStateIndexes = new int[catchCount];
-			for (int i = 0; i < catchCount; i++) {
-				// keep track of the inits that could potentially have led to this exception handler (for final assignments diagnosis)
-				FlowInfo catchInfo;
-				if (this.caughtExceptionTypes[i].isUncheckedException(true)) {
-					catchInfo =
-						handlingContext.initsOnFinally.mitigateNullInfoOf(
-							flowInfo.unconditionalCopy().
-								addPotentialInitializationsFrom(
-									handlingContext.initsOnException(
-										this.caughtExceptionTypes[i])).
-								addPotentialInitializationsFrom(tryInfo).
-								addPotentialInitializationsFrom(
-									handlingContext.initsOnReturn));
-				}else {
-					catchInfo =
-						flowInfo.unconditionalCopy()
-							.addPotentialInitializationsFrom(
-								handlingContext.initsOnException(
-									this.caughtExceptionTypes[i]))
-									.addPotentialInitializationsFrom(
-								tryInfo.nullInfoLessUnconditionalCopy())
-								// remove null info to protect point of
-								// exception null info
-							.addPotentialInitializationsFrom(
-									handlingContext.initsOnReturn.
-									nullInfoLessUnconditionalCopy());
-				}
-
-				// catch var is always set
-				LocalVariableBinding catchArg = this.catchArguments[i].binding;
-				catchInfo.markAsDefinitelyAssigned(catchArg);
-				catchInfo.markAsDefinitelyNonNull(catchArg);
-				/*
-				"If we are about to consider an unchecked exception handler, potential inits may have occured inside
-				the try block that need to be detected , e.g.
-				try { x = 1; throwSomething();} catch(Exception e){ x = 2} "
-				"(uncheckedExceptionTypes notNil and: [uncheckedExceptionTypes at: index])
-				ifTrue: [catchInits addPotentialInitializationsFrom: tryInits]."
-				*/
-				if (this.tryBlock.statements == null) {
-					catchInfo.setReachMode(FlowInfo.UNREACHABLE);
-				}
-				catchInfo =
-					this.catchBlocks[i].analyseCode(
-						currentScope,
-						insideSubContext,
-						catchInfo);
-//				this.catchExitInitStateIndexes[i] = currentScope.methodScope().recordInitializationStates(catchInfo);
-				this.catchExits[i] =
-					(catchInfo.tagBits & FlowInfo.UNREACHABLE) != 0;
-				tryInfo = tryInfo.mergedWith(catchInfo.unconditionalInits());
-			}
-		}
-		// we also need to check potential multiple assignments of final variables inside the finally block
-		// need to include potential inits from returns inside the try/catch parts - 1GK2AOF
-		finallyContext.complainOnDeferredChecks(
-			handlingContext.initsOnFinally.mitigateNullInfoOf(
-				(tryInfo.tagBits & FlowInfo.UNREACHABLE) == 0 ?
-					flowInfo.unconditionalCopy().
-					addPotentialInitializationsFrom(tryInfo).
-						// lighten the influence of the try block, which may have
-						// exited at any point
-					addPotentialInitializationsFrom(insideSubContext.initsOnReturn) :
-					insideSubContext.initsOnReturn),
-			currentScope);
-
-		// chain up null info registry
-		if (flowContext.initsOnFinally != null) {
-			flowContext.initsOnFinally.add(handlingContext.initsOnFinally);
-		}
-
-//		this.naturalExitMergeInitStateIndex =
-//			currentScope.methodScope().recordInitializationStates(tryInfo);
-		if (subInfo == FlowInfo.DEAD_END) {
-//			this.mergedInitStateIndex =
-//				currentScope.methodScope().recordInitializationStates(subInfo);
-			return subInfo;
-		} else {
-			FlowInfo mergedInfo = tryInfo.addInitializationsFrom(subInfo);
-//			this.mergedInitStateIndex =
-//				currentScope.methodScope().recordInitializationStates(mergedInfo);
-			return mergedInfo;
-		}
-	}
-}
-
-
- 
-
  
 public boolean isSubRoutineEscaping() {
 	return (this.bits & ASTNode.IsSubRoutineEscaping) != 0;
@@ -339,8 +84,7 @@ public StringBuffer printStatement(int indent, StringBuffer output) {
 	return output;
 }
 
-public void resolve(BlockScope upperScope) {
-	return;
+//public void resolve(BlockScope upperScope) {
 //	// special scope for secret locals optimization.
 //	this.scope = new BlockScope(upperScope);
 //
@@ -353,7 +97,7 @@ public void resolve(BlockScope upperScope) {
 //				this.scope.problemReporter().undocumentedEmptyBlock(this.finallyBlock.sourceStart, this.finallyBlock.sourceEnd);
 //			}
 //		} else {
-//			finallyScope = JavaScriptConstants.IS_ECMASCRIPT4 ? new BlockScope(this.scope, false) : this.scope; // don't add it yet to parent scope
+//			finallyScope = JavaScriptCore.IS_ECMASCRIPT4 ? new BlockScope(this.scope, false) : this.scope; // don't add it yet to parent scope
 //
 //			// provision for returning and forcing the finally block to run
 //			MethodScope methodScope = this.scope.methodScope();
@@ -390,7 +134,7 @@ public void resolve(BlockScope upperScope) {
 //				}
 //			}
 //			this.finallyBlock.resolveUsing(finallyScope);
-//			if (JavaScriptConstants.IS_ECMASCRIPT4) {
+//			if (JavaScriptCore.IS_ECMASCRIPT4) {
 //				// force the finally scope to have variable positions shifted after its try scope and catch ones
 //				finallyScope.shiftScopes = new BlockScope[this.catchArguments == null ? 1
 //						: this.catchArguments.length + 1];
@@ -407,7 +151,7 @@ public void resolve(BlockScope upperScope) {
 //		boolean catchHasError = false;
 //		for (int i = 0; i < length; i++) {
 //			BlockScope catchScope = new BlockScope(this.scope);
-//			if (JavaScriptConstants.IS_ECMASCRIPT4 && finallyScope != null){
+//			if (JavaScriptCore.IS_ECMASCRIPT4 && finallyScope != null){
 //				finallyScope.shiftScopes[i+1] = catchScope;
 //			}
 //			// side effect on catchScope in resolveForCatch(..)
@@ -434,13 +178,13 @@ public void resolve(BlockScope upperScope) {
 //		this.caughtExceptionTypes = new ReferenceBinding[0];
 //	}
 //
-//	if (JavaScriptConstants.IS_ECMASCRIPT4 && finallyScope != null){
+//	if (JavaScriptCore.IS_ECMASCRIPT4 && finallyScope != null){
 //		// add finallyScope as last subscope, so it can be shifted behind try/catch subscopes.
 //		// the shifting is necessary to achieve no overlay in between the finally scope and its
 //		// sibling in term of local variable positions.
 //		this.scope.addSubscope(finallyScope);
 //	}
-}
+//}
 
 public void traverse(ASTVisitor visitor, BlockScope blockScope) {
 	if (visitor.visit(this, blockScope)) {

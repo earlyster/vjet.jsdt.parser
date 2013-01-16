@@ -12,7 +12,6 @@ package org.eclipse.mod.wst.jsdt.internal.compiler.lookup;
 
 import org.eclipse.mod.wst.jsdt.core.JavaScriptConstants;
 import org.eclipse.mod.wst.jsdt.core.compiler.CharOperation;
-import org.eclipse.mod.wst.jsdt.core.infer.InferredAttribute;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.AbstractVariableDeclaration;
 import org.eclipse.mod.wst.jsdt.internal.compiler.classfmt.ClassFileConstants;
 
@@ -26,10 +25,7 @@ public FieldBinding(char[] name, TypeBinding type, int modifiers, ReferenceBindi
 	super(name, type, modifiers);
 	this.declaringClass = declaringClass;
 }
-public FieldBinding(InferredAttribute field, TypeBinding type, int modifiers, ReferenceBinding declaringClass) {
-	this(field.name, type, modifiers, declaringClass);
-	field.binding = this; // record binding in declaration
-}
+
 // special API used to change field declaring class for runtime visibility check
 public FieldBinding(FieldBinding initialFieldBinding, ReferenceBinding declaringClass) {
 	super(initialFieldBinding.name, initialFieldBinding.type, initialFieldBinding.modifiers);
@@ -60,100 +56,100 @@ public final boolean canBeSeenBy(PackageBinding invocationPackage) {
 * NOTE: Cannot invoke this method with a compilation unit scope.
 */
 
-public final boolean canBeSeenBy(TypeBinding receiverType, InvocationSite invocationSite, Scope scope) {
-	if (isPublic() || !JavaScriptConstants.IS_ECMASCRIPT4) return true;
-
-	SourceTypeBinding invocationType = scope.enclosingSourceType();
-	if (invocationType == declaringClass && invocationType == receiverType) return true;
-
-	if( (receiverType instanceof SourceTypeBinding) && ((SourceTypeBinding)receiverType).nextType!=null) {
-		SourceTypeBinding combinedBinding = (SourceTypeBinding) receiverType;
-		if (combinedBinding.contains(declaringClass)  && combinedBinding.contains(invocationType)) return true;
-
-	}
-
-	if (invocationType == null) // static import call
-		return !isPrivate() && scope.getCurrentPackage() == declaringClass.fPackage;
-
-	if (isProtected()) {
-		// answer true if the invocationType is the declaringClass or they are in the same package
-		// OR the invocationType is a subclass of the declaringClass
-		//    AND the receiverType is the invocationType or its subclass
-		//    OR the method is a static method accessed directly through a type
-		//    OR previous assertions are true for one of the enclosing type
-		if (invocationType == declaringClass) return true;
-		if (invocationType.fPackage == declaringClass.fPackage) return true;
-
-		ReferenceBinding currentType = invocationType;
-		int depth = 0;
-		ReferenceBinding receiverErasure = (ReferenceBinding)receiverType;
-		ReferenceBinding declaringErasure = declaringClass;
-		do {
-			if (currentType.findSuperTypeWithSameErasure(declaringErasure) != null) {
-				if (invocationSite.isSuperAccess())
-					return true;
-				// receiverType can be an array binding in one case... see if you can change it
-				if (receiverType instanceof ArrayBinding)
-					return false;
-				if (isStatic()) {
-					if (depth > 0) invocationSite.setDepth(depth);
-					return true; // see 1FMEPDL - return invocationSite.isTypeAccess();
-				}
-				if (currentType == receiverErasure || receiverErasure.findSuperTypeWithSameErasure(currentType) != null) {
-					if (depth > 0) invocationSite.setDepth(depth);
-					return true;
-				}
-			}
-			depth++;
-			currentType = currentType.enclosingType();
-		} while (currentType != null);
-		return false;
-	}
-
-	if (isPrivate()) {
-		// answer true if the receiverType is the declaringClass
-		// AND the invocationType and the declaringClass have a common enclosingType
-		
-		if (receiverType != declaringClass) {
-			// special tolerance for type variable direct bounds
-			return false;
-		}
-
-		if (invocationType != declaringClass) {
-			ReferenceBinding outerInvocationType = invocationType;
-			ReferenceBinding temp = outerInvocationType.enclosingType();
-			while (temp != null) {
-				outerInvocationType = temp;
-				temp = temp.enclosingType();
-			}
-
-			ReferenceBinding outerDeclaringClass = (ReferenceBinding) declaringClass;
-			temp = outerDeclaringClass.enclosingType();
-			while (temp != null) {
-				outerDeclaringClass = temp;
-				temp = temp.enclosingType();
-			}
-			if (outerInvocationType != outerDeclaringClass) return false;
-		}
-		return true;
-	}
-
-	// isDefault()
-	PackageBinding declaringPackage = declaringClass.fPackage;
-	if (invocationType.fPackage != declaringPackage) return false;
-
-	// receiverType can be an array binding in one case... see if you can change it
-	if (receiverType instanceof ArrayBinding)
-		return false;
-	ReferenceBinding currentType = (ReferenceBinding) receiverType;
-	do {
-		if (declaringClass == currentType) return true;
-		PackageBinding currentPackage = currentType.fPackage;
-		// package could be null for wildcards/intersection types, ignore and recurse in superclass
-		if (currentPackage != null && currentPackage != declaringPackage) return false;
-	} while ((currentType = currentType.superclass()) != null);
-	return false;
-}
+//public final boolean canBeSeenBy(TypeBinding receiverType, InvocationSite invocationSite, Scope scope) {
+//	if (isPublic() || !JavaScriptConstants.IS_ECMASCRIPT4) return true;
+//
+//	SourceTypeBinding invocationType = scope.enclosingSourceType();
+//	if (invocationType == declaringClass && invocationType == receiverType) return true;
+//
+//	if( (receiverType instanceof SourceTypeBinding) && ((SourceTypeBinding)receiverType).nextType!=null) {
+//		SourceTypeBinding combinedBinding = (SourceTypeBinding) receiverType;
+//		if (combinedBinding.contains(declaringClass)  && combinedBinding.contains(invocationType)) return true;
+//
+//	}
+//
+//	if (invocationType == null) // static import call
+//		return !isPrivate() && scope.getCurrentPackage() == declaringClass.fPackage;
+//
+//	if (isProtected()) {
+//		// answer true if the invocationType is the declaringClass or they are in the same package
+//		// OR the invocationType is a subclass of the declaringClass
+//		//    AND the receiverType is the invocationType or its subclass
+//		//    OR the method is a static method accessed directly through a type
+//		//    OR previous assertions are true for one of the enclosing type
+//		if (invocationType == declaringClass) return true;
+//		if (invocationType.fPackage == declaringClass.fPackage) return true;
+//
+//		ReferenceBinding currentType = invocationType;
+//		int depth = 0;
+//		ReferenceBinding receiverErasure = (ReferenceBinding)receiverType;
+//		ReferenceBinding declaringErasure = declaringClass;
+//		do {
+//			if (currentType.findSuperTypeWithSameErasure(declaringErasure) != null) {
+//				if (invocationSite.isSuperAccess())
+//					return true;
+//				// receiverType can be an array binding in one case... see if you can change it
+//				if (receiverType instanceof ArrayBinding)
+//					return false;
+//				if (isStatic()) {
+//					if (depth > 0) invocationSite.setDepth(depth);
+//					return true; // see 1FMEPDL - return invocationSite.isTypeAccess();
+//				}
+//				if (currentType == receiverErasure || receiverErasure.findSuperTypeWithSameErasure(currentType) != null) {
+//					if (depth > 0) invocationSite.setDepth(depth);
+//					return true;
+//				}
+//			}
+//			depth++;
+//			currentType = currentType.enclosingType();
+//		} while (currentType != null);
+//		return false;
+//	}
+//
+//	if (isPrivate()) {
+//		// answer true if the receiverType is the declaringClass
+//		// AND the invocationType and the declaringClass have a common enclosingType
+//		
+//		if (receiverType != declaringClass) {
+//			// special tolerance for type variable direct bounds
+//			return false;
+//		}
+//
+//		if (invocationType != declaringClass) {
+//			ReferenceBinding outerInvocationType = invocationType;
+//			ReferenceBinding temp = outerInvocationType.enclosingType();
+//			while (temp != null) {
+//				outerInvocationType = temp;
+//				temp = temp.enclosingType();
+//			}
+//
+//			ReferenceBinding outerDeclaringClass = (ReferenceBinding) declaringClass;
+//			temp = outerDeclaringClass.enclosingType();
+//			while (temp != null) {
+//				outerDeclaringClass = temp;
+//				temp = temp.enclosingType();
+//			}
+//			if (outerInvocationType != outerDeclaringClass) return false;
+//		}
+//		return true;
+//	}
+//
+//	// isDefault()
+//	PackageBinding declaringPackage = declaringClass.fPackage;
+//	if (invocationType.fPackage != declaringPackage) return false;
+//
+//	// receiverType can be an array binding in one case... see if you can change it
+//	if (receiverType instanceof ArrayBinding)
+//		return false;
+//	ReferenceBinding currentType = (ReferenceBinding) receiverType;
+//	do {
+//		if (declaringClass == currentType) return true;
+//		PackageBinding currentPackage = currentType.fPackage;
+//		// package could be null for wildcards/intersection types, ignore and recurse in superclass
+//		if (currentPackage != null && currentPackage != declaringPackage) return false;
+//	} while ((currentType = currentType.superclass()) != null);
+//	return false;
+//}
 /*
  * declaringUniqueKey dot fieldName ) returnTypeUniqueKey
  * p.X { X<T> x} --> Lp/X;.x)p/X<TT;>;

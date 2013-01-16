@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2008 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -79,18 +79,6 @@ public class ThisReference extends Reference implements IThisReference {
 
 		if (this.isImplicitThis()) return output;
 		return output.append("this"); //$NON-NLS-1$
-	}
-
-	public TypeBinding resolveType(BlockScope scope) {
-
-		constant = Constant.NotAConstant;
-		if (!this.isImplicitThis() &&!checkAccess(scope.methodScope())) {
-			return null;
-		}
-		MethodScope methodScope = scope.methodScope();
-		if (methodScope!=null && methodScope.isStatic)
-			bits |= Binding.TYPE;
-		return this.resolvedType = scope.enclosingReceiverType();
 	}
 
 	public void traverse(ASTVisitor visitor, BlockScope blockScope) {

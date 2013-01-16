@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.core.util;
-
 
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.mod.wst.jsdt.internal.compiler.classfmt.ClassFileConstants;
@@ -22,6 +21,7 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.problem.ProblemSeverities;
  * Internal parser used for parsing source to create DOM AST nodes.
  *
  * @since 3.0
+ * 
  */
 public class CommentRecorderParser extends Parser {
 
@@ -66,9 +66,9 @@ public class CommentRecorderParser extends Parser {
 			int commentSourceEnd = this.scanner.commentStops[lastCommentIndex] - 1; //stop is one over
 
 			// do not report problem before last parsed comment while recovering code...
-			this.javadocParser.reportProblems = this.currentElement == null || commentSourceEnd > this.lastJavadocEnd;
-			deprecated = this.javadocParser.checkDeprecation(lastCommentIndex);
-			this.javadoc = this.javadocParser.docComment;
+//			this.javadocParser.reportProblems = this.currentElement == null || commentSourceEnd > this.lastJavadocEnd;
+//			deprecated = this.javadocParser.checkDeprecation(lastCommentIndex);
+//			this.javadoc = this.javadocParser.docComment;
 			break nextComment;
 		}
 		if (deprecated) {
@@ -83,31 +83,9 @@ public class CommentRecorderParser extends Parser {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.wst.jsdt.internal.compiler.parser.Parser#consumeClassHeader()
-	 */
-	protected void consumeClassHeader() {
-		pushOnCommentsStack(0, this.scanner.commentPtr);
-		super.consumeClassHeader();
-	}
-	/* (non-Javadoc)
-	 * @see org.eclipse.wst.jsdt.internal.compiler.parser.Parser#consumeEmptyTypeDeclaration()
-	 */
-	protected void consumeEmptyTypeDeclaration() {
-		pushOnCommentsStack(0, this.scanner.commentPtr);
-		super.consumeEmptyTypeDeclaration();
-	}
-	/* (non-Javadoc)
-	 * @see org.eclipse.wst.jsdt.internal.compiler.parser.Parser#consumeInterfaceHeader()
-	 */
-	protected void consumeInterfaceHeader() {
-		pushOnCommentsStack(0, this.scanner.commentPtr);
-		super.consumeInterfaceHeader();
-	}
-
 	/**
 	 * Insure that start position is always positive.
-	 * @see org.eclipse.mod.wst.jsdt.internal.compiler.parser.Parser#containsComment(int, int)
+	 * @see org.eclipse.wst.jsdt.internal.compiler.parser.Parser#containsComment(int, int)
 	 */
 	public boolean containsComment(int sourceStart, int sourceEnd) {
 		int iComment = this.scanner.commentPtr;

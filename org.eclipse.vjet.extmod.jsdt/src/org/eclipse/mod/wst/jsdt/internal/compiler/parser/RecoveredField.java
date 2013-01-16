@@ -120,15 +120,15 @@ public FieldDeclaration updatedFieldDeclaration(){
 					typeDeclaration.declarationSourceEnd = this.fieldDeclaration.declarationSourceEnd;
 					typeDeclaration.bodyEnd = this.fieldDeclaration.declarationSourceEnd;
 				}
-				if (recoveredType.preserveContent){
-					TypeDeclaration anonymousType = recoveredType.updatedTypeDeclaration();
-					fieldDeclaration.initialization = anonymousType.allocation;
-					if(this.fieldDeclaration.declarationSourceEnd == 0) {
-						int end = anonymousType.declarationSourceEnd;
-						this.fieldDeclaration.declarationSourceEnd = end;
-						this.fieldDeclaration.declarationEnd = end;
-					}
-				}
+//				if (recoveredType.preserveContent){
+//					TypeDeclaration anonymousType = recoveredType.updatedTypeDeclaration();
+//					fieldDeclaration.initialization = anonymousType.allocation;
+//					if(this.fieldDeclaration.declarationSourceEnd == 0) {
+//						int end = anonymousType.declarationSourceEnd;
+//						this.fieldDeclaration.declarationSourceEnd = end;
+//						this.fieldDeclaration.declarationEnd = end;
+//					}
+//				}
 			}
 			if (this.anonymousTypeCount > 0) fieldDeclaration.bits |= ASTNode.HasLocalType;
 		}

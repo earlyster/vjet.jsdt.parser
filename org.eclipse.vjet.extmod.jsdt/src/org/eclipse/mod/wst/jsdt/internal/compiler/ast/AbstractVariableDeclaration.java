@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,18 +10,12 @@
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
-
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IAbstractVariableDeclaration;
 import org.eclipse.mod.wst.jsdt.core.ast.IExpression;
 import org.eclipse.mod.wst.jsdt.core.ast.IJsDoc;
-import org.eclipse.mod.wst.jsdt.core.infer.InferredType;
-import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowContext;
-import org.eclipse.mod.wst.jsdt.internal.compiler.flow.FlowInfo;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.InvocationSite;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.ReferenceBinding;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeBinding;
 
 public abstract class AbstractVariableDeclaration extends Statement implements  IAbstractVariableDeclaration, InvocationSite {
 	public int declarationEnd;
@@ -33,28 +27,16 @@ public abstract class AbstractVariableDeclaration extends Statement implements  
 	public int modifiersSourceStart;
 	public Javadoc javadoc;
 
-
-	public InferredType inferredType;
 	public char[] name;
 
 	public TypeReference type;
 	
 	public AbstractVariableDeclaration nextLocal;
-
-//	public InferredType getInferredType() {
-//		return this.inferredType;
-//	}
-
-//	public void setInferredType(InferredType type) {
-//		this.inferredType = type;
-//	}
 	
 	public char[] getName() {
 		return this.name;
 	}
-	public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, FlowInfo flowInfo) {
-		return flowInfo;
-	}
+
 
 	public static final int FIELD = 1;
 	public static final int INITIALIZER = 2;
@@ -111,10 +93,6 @@ public abstract class AbstractVariableDeclaration extends Statement implements  
 		}
 	}
 
-	public void resolve(BlockScope scope) {
-		// do nothing by default (redefined for local variables)
-	}
-
 	/* (non-Javadoc)
 	 * @see org.eclipse.wst.jsdt.internal.compiler.lookup.InvocationSite#setActualReceiverType(org.eclipse.wst.jsdt.internal.compiler.lookup.ReferenceBinding)
 	 */
@@ -137,15 +115,7 @@ public abstract class AbstractVariableDeclaration extends Statement implements  
 		// do nothing by default
 	}
 
-	public TypeBinding getTypeBinding()
-	{
-		if (type!=null)
-			return type.resolvedType;
-//		else if (inferredType!=null)
-//			return inferredType.binding;
-		return null;
 
-	}
 	public int getASTType() {
 		return IASTNode.ABSTRACT_VARIABLE_DECLARATION;
 	
@@ -160,6 +130,4 @@ public abstract class AbstractVariableDeclaration extends Statement implements  
 	{
 		return this.initialization;
 	}
-
-
 }

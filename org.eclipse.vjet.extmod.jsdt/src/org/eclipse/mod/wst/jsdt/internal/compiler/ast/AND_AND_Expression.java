@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2008 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 import org.eclipse.mod.wst.jsdt.core.ast.IAND_AND_Expression;
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
@@ -29,45 +28,45 @@ public class AND_AND_Expression extends BinaryExpression implements IAND_AND_Exp
 		super(left, right, operator);
 	}
 
-	public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, FlowInfo flowInfo) {
-
-		Constant cst = this.left.optimizedBooleanConstant();
-		boolean isLeftOptimizedTrue = cst != Constant.NotAConstant && cst.booleanValue() == true;
-		boolean isLeftOptimizedFalse = cst != Constant.NotAConstant && cst.booleanValue() == false;
-
-		if (isLeftOptimizedTrue) {
-			// TRUE && anything
-			// need to be careful of scenario:
-			//  (x && y) && !z, if passing the left info to the right, it would
-			// be swapped by the !
-			FlowInfo mergedInfo = left.analyseCode(currentScope, flowContext, flowInfo)
-					.unconditionalInits();
-			mergedInfo = right.analyseCode(currentScope, flowContext, mergedInfo);
-//			mergedInitStateIndex = currentScope.methodScope()
-//					.recordInitializationStates(mergedInfo);
-			return mergedInfo;
-		}
-
-		FlowInfo leftInfo = left.analyseCode(currentScope, flowContext, flowInfo);
-		// need to be careful of scenario:
-		//  (x && y) && !z, if passing the left info to the right, it would be
-		// swapped by the !
-		FlowInfo rightInfo = leftInfo.initsWhenTrue().unconditionalCopy();
-//		rightInitStateIndex = currentScope.methodScope().recordInitializationStates(rightInfo);
-
-		int previousMode = rightInfo.reachMode();
-		if (isLeftOptimizedFalse) {
-			rightInfo.setReachMode(FlowInfo.UNREACHABLE);
-		}
-		rightInfo = right.analyseCode(currentScope, flowContext, rightInfo);
-		FlowInfo mergedInfo = FlowInfo.conditional(
-				rightInfo.safeInitsWhenTrue(),
-				leftInfo.initsWhenFalse().unconditionalInits().mergedWith(
-						rightInfo.initsWhenFalse().setReachMode(previousMode).unconditionalInits()));
-		// reset after trueMergedInfo got extracted
-//		mergedInitStateIndex = currentScope.methodScope().recordInitializationStates(mergedInfo);
-		return mergedInfo;
-	}
+//	public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, FlowInfo flowInfo) {
+//
+//		Constant cst = this.left.optimizedBooleanConstant();
+//		boolean isLeftOptimizedTrue = cst != Constant.NotAConstant && cst.booleanValue() == true;
+//		boolean isLeftOptimizedFalse = cst != Constant.NotAConstant && cst.booleanValue() == false;
+//
+//		if (isLeftOptimizedTrue) {
+//			// TRUE && anything
+//			// need to be careful of scenario:
+//			//  (x && y) && !z, if passing the left info to the right, it would
+//			// be swapped by the !
+//			FlowInfo mergedInfo = left.analyseCode(currentScope, flowContext, flowInfo)
+//					.unconditionalInits();
+//			mergedInfo = right.analyseCode(currentScope, flowContext, mergedInfo);
+////			mergedInitStateIndex = currentScope.methodScope()
+////					.recordInitializationStates(mergedInfo);
+//			return mergedInfo;
+//		}
+//
+//		FlowInfo leftInfo = left.analyseCode(currentScope, flowContext, flowInfo);
+//		// need to be careful of scenario:
+//		//  (x && y) && !z, if passing the left info to the right, it would be
+//		// swapped by the !
+//		FlowInfo rightInfo = leftInfo.initsWhenTrue().unconditionalCopy();
+////		rightInitStateIndex = currentScope.methodScope().recordInitializationStates(rightInfo);
+//
+//		int previousMode = rightInfo.reachMode();
+//		if (isLeftOptimizedFalse) {
+//			rightInfo.setReachMode(FlowInfo.UNREACHABLE);
+//		}
+//		rightInfo = right.analyseCode(currentScope, flowContext, rightInfo);
+//		FlowInfo mergedInfo = FlowInfo.conditional(
+//				rightInfo.safeInitsWhenTrue(),
+//				leftInfo.initsWhenFalse().unconditionalInits().mergedWith(
+//						rightInfo.initsWhenFalse().setReachMode(previousMode).unconditionalInits()));
+//		// reset after trueMergedInfo got extracted
+////		mergedInitStateIndex = currentScope.methodScope().recordInitializationStates(mergedInfo);
+//		return mergedInfo;
+//	}
 
 	public boolean isCompactableOperation() {
 		return false;

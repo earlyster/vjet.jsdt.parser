@@ -65,7 +65,7 @@ public class LookupEnvironment implements ProblemReasons, TypeConstants {
 	public Object missingClassFileLocation = null; // only set when resolving certain references, to help locating problems
 
 	private CompilationUnitDeclaration[] units = new CompilationUnitDeclaration[4];
-	private MethodVerifier verifier;
+//	private MethodVerifier verifier;
 	HashSet acceptedCompilationUnits=new HashSet();
 
 
@@ -229,15 +229,15 @@ Binding askForBinding(PackageBinding packageBinding, char[] name, int mask) {
 * NOTE: This method can be called multiple times as additional source files are needed
 */
 
-public void buildTypeBindings(CompilationUnitDeclaration unit, AccessRestriction accessRestriction) {
-	CompilationUnitScope scope = new CompilationUnitScope(unit, this);
-	scope.buildTypeBindings(accessRestriction);
-
-	int unitsLength = units.length;
-	if (++lastUnitIndex >= unitsLength)
-		System.arraycopy(units, 0, units = new CompilationUnitDeclaration[2 * unitsLength], 0, unitsLength);
-	units[lastUnitIndex] = unit;
-}
+//public void buildTypeBindings(CompilationUnitDeclaration unit, AccessRestriction accessRestriction) {
+//	CompilationUnitScope scope = new CompilationUnitScope(unit, this);
+//	scope.buildTypeBindings(accessRestriction);
+//
+//	int unitsLength = units.length;
+//	if (++lastUnitIndex >= unitsLength)
+//		System.arraycopy(units, 0, units = new CompilationUnitDeclaration[2 * unitsLength], 0, unitsLength);
+//	units[lastUnitIndex] = unit;
+//}
 /* Cache the binary type since we know it is needed during this compile.
 *
 * Answer the created BinaryTypeBinding or null if the type is already in the cache.
@@ -293,28 +293,28 @@ public void buildTypeBindings(CompilationUnitDeclaration unit, AccessRestriction
 * suitable replacement will be substituted (such as Object for a missing superclass)
 */
 
-public void completeTypeBindings() {
-	stepCompleted = BUILD_TYPE_HIERARCHY;
-
-	for (int i = this.lastCompletedUnitIndex + 1; i <= this.lastUnitIndex; i++) {
-	    (this.unitBeingCompleted = this.units[i]).scope.checkAndSetImports();
-	}
-	stepCompleted = CHECK_AND_SET_IMPORTS;
-
-	for (int i = this.lastCompletedUnitIndex + 1; i <= this.lastUnitIndex; i++) {
-	    (this.unitBeingCompleted = this.units[i]).scope.connectTypeHierarchy();
-	}
-	stepCompleted = CONNECT_TYPE_HIERARCHY;
-
-	for (int i = this.lastCompletedUnitIndex + 1; i <= this.lastUnitIndex; i++) {
-		CompilationUnitScope unitScope = (this.unitBeingCompleted = this.units[i]).scope;
-		unitScope.buildFieldsAndMethods();
-		this.units[i] = null; // release unnecessary reference to the parsed unit
-	}
-	stepCompleted = BUILD_FIELDS_AND_METHODS;
-	this.lastCompletedUnitIndex = this.lastUnitIndex;
-	this.unitBeingCompleted = null;
-}
+//public void completeTypeBindings() {
+//	stepCompleted = BUILD_TYPE_HIERARCHY;
+//
+//	for (int i = this.lastCompletedUnitIndex + 1; i <= this.lastUnitIndex; i++) {
+//	    (this.unitBeingCompleted = this.units[i]).scope.checkAndSetImports();
+//	}
+//	stepCompleted = CHECK_AND_SET_IMPORTS;
+//
+//	for (int i = this.lastCompletedUnitIndex + 1; i <= this.lastUnitIndex; i++) {
+//	    (this.unitBeingCompleted = this.units[i]).scope.connectTypeHierarchy();
+//	}
+//	stepCompleted = CONNECT_TYPE_HIERARCHY;
+//
+//	for (int i = this.lastCompletedUnitIndex + 1; i <= this.lastUnitIndex; i++) {
+//		CompilationUnitScope unitScope = (this.unitBeingCompleted = this.units[i]).scope;
+//		unitScope.buildFieldsAndMethods();
+//		this.units[i] = null; // release unnecessary reference to the parsed unit
+//	}
+//	stepCompleted = BUILD_FIELDS_AND_METHODS;
+//	this.lastCompletedUnitIndex = this.lastUnitIndex;
+//	this.unitBeingCompleted = null;
+//}
 /*
 * 1. Connect the type hierarchy for the type bindings created for parsedUnits.
 * 2. Create the field bindings
@@ -327,24 +327,24 @@ public void completeTypeBindings() {
 * suitable replacement will be substituted (such as Object for a missing superclass)
 */
 
-public void completeTypeBindings(CompilationUnitDeclaration parsedUnit) {
-	if (stepCompleted == BUILD_FIELDS_AND_METHODS) {
-		// This can only happen because the original set of units are completely built and
-		// are now being processed, so we want to treat all the additional units as a group
-		// until they too are completely processed.
-		completeTypeBindings();
-	} else {
-		if (parsedUnit.scope == null) return; // parsing errors were too severe
-
-		if (stepCompleted >= CHECK_AND_SET_IMPORTS)
-			(this.unitBeingCompleted = parsedUnit).scope.checkAndSetImports();
-
-		if (stepCompleted >= CONNECT_TYPE_HIERARCHY)
-			(this.unitBeingCompleted = parsedUnit).scope.connectTypeHierarchy();
-
-		this.unitBeingCompleted = null;
-	}
-}
+//public void completeTypeBindings(CompilationUnitDeclaration parsedUnit) {
+//	if (stepCompleted == BUILD_FIELDS_AND_METHODS) {
+//		// This can only happen because the original set of units are completely built and
+//		// are now being processed, so we want to treat all the additional units as a group
+//		// until they too are completely processed.
+//		completeTypeBindings();
+//	} else {
+//		if (parsedUnit.scope == null) return; // parsing errors were too severe
+//
+//		if (stepCompleted >= CHECK_AND_SET_IMPORTS)
+//			(this.unitBeingCompleted = parsedUnit).scope.checkAndSetImports();
+//
+//		if (stepCompleted >= CONNECT_TYPE_HIERARCHY)
+//			(this.unitBeingCompleted = parsedUnit).scope.connectTypeHierarchy();
+//
+//		this.unitBeingCompleted = null;
+//	}
+//}
 /*
 * Used by other compiler tools which do not start by calling completeTypeBindings().
 *
@@ -460,44 +460,44 @@ private PackageBinding computePackageFrom(char[][] constantPoolName) {
 
 /* Used to guarantee array type identity.
 */
-public ArrayBinding createArrayType(TypeBinding leafComponentType, int dimensionCount) {
-	if (leafComponentType instanceof LocalTypeBinding) // cache local type arrays with the local type itself
-		return ((LocalTypeBinding) leafComponentType).createArrayType(dimensionCount,this);
-
-	// find the array binding cache for this dimension
-	int dimIndex = dimensionCount - 1;
-	int length = uniqueArrayBindings.length;
-	ArrayBinding[] arrayBindings;
-	if (dimIndex < length) {
-		if ((arrayBindings = uniqueArrayBindings[dimIndex]) == null)
-			uniqueArrayBindings[dimIndex] = arrayBindings = new ArrayBinding[10];
-	} else {
-		System.arraycopy(
-			uniqueArrayBindings, 0,
-			uniqueArrayBindings = new ArrayBinding[dimensionCount][], 0,
-			length);
-		uniqueArrayBindings[dimIndex] = arrayBindings = new ArrayBinding[10];
-	}
-
-	// find the cached array binding for this leaf component type (if any)
-	int index = -1;
-	length = arrayBindings.length;
-	while (++index < length) {
-		ArrayBinding currentBinding = arrayBindings[index];
-		if (currentBinding == null) // no matching array, but space left
-			return arrayBindings[index] = new ArrayBinding(leafComponentType, dimensionCount, this);
-		if (currentBinding.leafComponentType == leafComponentType)
-			return currentBinding;
-	}
-
-	// no matching array, no space left
-	System.arraycopy(
-		arrayBindings, 0,
-		(arrayBindings = new ArrayBinding[length * 2]), 0,
-		length);
-	uniqueArrayBindings[dimIndex] = arrayBindings;
-	return arrayBindings[length] = new ArrayBinding(leafComponentType, dimensionCount, this);
-}
+//public ArrayBinding createArrayType(TypeBinding leafComponentType, int dimensionCount) {
+//	if (leafComponentType instanceof LocalTypeBinding) // cache local type arrays with the local type itself
+//		return ((LocalTypeBinding) leafComponentType).createArrayType(dimensionCount,this);
+//
+//	// find the array binding cache for this dimension
+//	int dimIndex = dimensionCount - 1;
+//	int length = uniqueArrayBindings.length;
+//	ArrayBinding[] arrayBindings;
+//	if (dimIndex < length) {
+//		if ((arrayBindings = uniqueArrayBindings[dimIndex]) == null)
+//			uniqueArrayBindings[dimIndex] = arrayBindings = new ArrayBinding[10];
+//	} else {
+//		System.arraycopy(
+//			uniqueArrayBindings, 0,
+//			uniqueArrayBindings = new ArrayBinding[dimensionCount][], 0,
+//			length);
+//		uniqueArrayBindings[dimIndex] = arrayBindings = new ArrayBinding[10];
+//	}
+//
+//	// find the cached array binding for this leaf component type (if any)
+//	int index = -1;
+//	length = arrayBindings.length;
+//	while (++index < length) {
+//		ArrayBinding currentBinding = arrayBindings[index];
+//		if (currentBinding == null) // no matching array, but space left
+//			return arrayBindings[index] = new ArrayBinding(leafComponentType, dimensionCount, this);
+//		if (currentBinding.leafComponentType == leafComponentType)
+//			return currentBinding;
+//	}
+//
+//	// no matching array, no space left
+//	System.arraycopy(
+//		arrayBindings, 0,
+//		(arrayBindings = new ArrayBinding[length * 2]), 0,
+//		length);
+//	uniqueArrayBindings[dimIndex] = arrayBindings;
+//	return arrayBindings[length] = new ArrayBinding(leafComponentType, dimensionCount, this);
+//}
 //public BinaryTypeBinding createBinaryTypeFrom(ISourceType binaryType, PackageBinding packageBinding, AccessRestriction accessRestriction) {
 //	return createBinaryTypeFrom(binaryType, packageBinding, true, accessRestriction);
 //}
@@ -727,101 +727,101 @@ PackageBinding getTopLevelPackage(char[] name) {
 * NOTE: Does answer base types & array types.
 */
 
-TypeBinding getTypeFromSignature(char[] signature, int start, int end, boolean isParameterized, TypeBinding enclosingType) {
-	int dimension = 0;
-	while (signature[start] == '[') {
-		start++;
-		dimension++;
-	}
-	if (end == -1)
-		end = signature.length - 1;
-
-	// Just switch on signature[start] - the L case is the else
-	TypeBinding binding = null;
-	if (start == end) {
-		switch (signature[start]) {
-			case 'I' :
-				binding = TypeBinding.INT;
-				break;
-			case 'Z' :
-				binding = TypeBinding.BOOLEAN;
-				break;
-			case 'V' :
-				binding = TypeBinding.VOID;
-				break;
-			case 'C' :
-				binding = TypeBinding.CHAR;
-				break;
-			case 'D' :
-				binding = TypeBinding.DOUBLE;
-				break;
-			case 'B' :
-				binding = TypeBinding.BYTE;
-				break;
-			case 'F' :
-				binding = TypeBinding.FLOAT;
-				break;
-			case 'J' :
-				binding = TypeBinding.LONG;
-				break;
-			case 'S' :
-				binding = TypeBinding.SHORT;
-				break;
-			default :
-				problemReporter.corruptedSignature(enclosingType, signature, start);
-				// will never reach here, since error will cause abort
-		}
-	} else {
-//		binding = getTypeFromConstantPoolName(signature, start + 1, end, isParameterized); // skip leading 'L' or 'T'
-	}
-
-	if (dimension == 0)
-		return binding;
-	return createArrayType(binding, dimension);
-}
-TypeBinding getTypeFromTypeSignature(SignatureWrapper wrapper, ReferenceBinding enclosingType) {
-	// TypeVariableSignature = 'T' Identifier ';'
-	// ArrayTypeSignature = '[' TypeSignature
-	// ClassTypeSignature = 'L' Identifier TypeArgs(optional) ';'
-	//   or ClassTypeSignature '.' 'L' Identifier TypeArgs(optional) ';'
-	// TypeArgs = '<' VariantTypeSignature VariantTypeSignatures '>'
-	int dimension = 0;
-	while (wrapper.signature[wrapper.start] == '[') {
-		wrapper.start++;
-		dimension++;
-	}
-
-	if (wrapper.signature[wrapper.start] == 'T') {
-		return null; // cannot reach this, since previous problem will abort compilation
-	}
-	TypeBinding type = getTypeFromSignature(wrapper.signature, wrapper.start, wrapper.computeEnd(), false, enclosingType);
-	return dimension == 0 ? type : createArrayType(type, dimension);
-}
-TypeBinding getTypeFromVariantTypeSignature(
-	SignatureWrapper wrapper,
-	ReferenceBinding enclosingType,
-	ReferenceBinding genericType,
-	int rank) {
-	// VariantTypeSignature = '-' TypeSignature
-	//   or '+' TypeSignature
-	//   or TypeSignature
-	//   or '*'
-	switch (wrapper.signature[wrapper.start]) {
-		case '-' :
-			// ? super aType
-			wrapper.start++;
-			TypeBinding bound = getTypeFromTypeSignature(wrapper, enclosingType);
-		case '+' :
-			// ? extends aType
-			wrapper.start++;
-			bound = getTypeFromTypeSignature(wrapper, enclosingType);
-		case '*' :
-			// ?
-			wrapper.start++;
-		default :
-			return getTypeFromTypeSignature(wrapper, enclosingType);
-	}
-}
+//TypeBinding getTypeFromSignature(char[] signature, int start, int end, boolean isParameterized, TypeBinding enclosingType) {
+//	int dimension = 0;
+//	while (signature[start] == '[') {
+//		start++;
+//		dimension++;
+//	}
+//	if (end == -1)
+//		end = signature.length - 1;
+//
+//	// Just switch on signature[start] - the L case is the else
+//	TypeBinding binding = null;
+//	if (start == end) {
+//		switch (signature[start]) {
+//			case 'I' :
+//				binding = TypeBinding.INT;
+//				break;
+//			case 'Z' :
+//				binding = TypeBinding.BOOLEAN;
+//				break;
+//			case 'V' :
+//				binding = TypeBinding.VOID;
+//				break;
+//			case 'C' :
+//				binding = TypeBinding.CHAR;
+//				break;
+//			case 'D' :
+//				binding = TypeBinding.DOUBLE;
+//				break;
+//			case 'B' :
+//				binding = TypeBinding.BYTE;
+//				break;
+//			case 'F' :
+//				binding = TypeBinding.FLOAT;
+//				break;
+//			case 'J' :
+//				binding = TypeBinding.LONG;
+//				break;
+//			case 'S' :
+//				binding = TypeBinding.SHORT;
+//				break;
+//			default :
+//				problemReporter.corruptedSignature(enclosingType, signature, start);
+//				// will never reach here, since error will cause abort
+//		}
+//	} else {
+////		binding = getTypeFromConstantPoolName(signature, start + 1, end, isParameterized); // skip leading 'L' or 'T'
+//	}
+//
+//	if (dimension == 0)
+//		return binding;
+//	return createArrayType(binding, dimension);
+//}
+//TypeBinding getTypeFromTypeSignature(SignatureWrapper wrapper, ReferenceBinding enclosingType) {
+//	// TypeVariableSignature = 'T' Identifier ';'
+//	// ArrayTypeSignature = '[' TypeSignature
+//	// ClassTypeSignature = 'L' Identifier TypeArgs(optional) ';'
+//	//   or ClassTypeSignature '.' 'L' Identifier TypeArgs(optional) ';'
+//	// TypeArgs = '<' VariantTypeSignature VariantTypeSignatures '>'
+//	int dimension = 0;
+//	while (wrapper.signature[wrapper.start] == '[') {
+//		wrapper.start++;
+//		dimension++;
+//	}
+//
+//	if (wrapper.signature[wrapper.start] == 'T') {
+//		return null; // cannot reach this, since previous problem will abort compilation
+//	}
+//	TypeBinding type = getTypeFromSignature(wrapper.signature, wrapper.start, wrapper.computeEnd(), false, enclosingType);
+//	return dimension == 0 ? type : createArrayType(type, dimension);
+//}
+//TypeBinding getTypeFromVariantTypeSignature(
+//	SignatureWrapper wrapper,
+//	ReferenceBinding enclosingType,
+//	ReferenceBinding genericType,
+//	int rank) {
+//	// VariantTypeSignature = '-' TypeSignature
+//	//   or '+' TypeSignature
+//	//   or TypeSignature
+//	//   or '*'
+//	switch (wrapper.signature[wrapper.start]) {
+//		case '-' :
+//			// ? super aType
+//			wrapper.start++;
+//			TypeBinding bound = getTypeFromTypeSignature(wrapper, enclosingType);
+//		case '+' :
+//			// ? extends aType
+//			wrapper.start++;
+//			bound = getTypeFromTypeSignature(wrapper, enclosingType);
+//		case '*' :
+//			// ?
+//			wrapper.start++;
+//		default :
+//			return getTypeFromTypeSignature(wrapper, enclosingType);
+//	}
+//}
 
 /* Ask the oracle if a package exists named name in the package named compoundName.
 */
@@ -832,18 +832,18 @@ boolean isPackage(char[][] compoundName, char[] name) {
 }
 // The method verifier is lazily initialized to guarantee the receiver, the compiler & the oracle are ready.
 
-public MethodVerifier methodVerifier() {
-	if (verifier == null)
-		verifier = new MethodVerifier(this);
-	return verifier;
-}
+//public MethodVerifier methodVerifier() {
+//	if (verifier == null)
+//		verifier = new MethodVerifier(this);
+//	return verifier;
+//}
 public void reset() {
 	this.defaultPackage = new PackageBinding(this); // assume the default package always exists
 	this.defaultImports = null;
 	//this.knownPackages = new HashtableOfPackage();
 	this.accessRestrictions = new HashMap(3);
 
-	this.verifier = null;
+//	this.verifier = null;
 	for (int i = this.uniqueArrayBindings.length; --i >= 0;) {
 		ArrayBinding[] arrayBindings = this.uniqueArrayBindings[i];
 		if (arrayBindings != null)
@@ -871,38 +871,38 @@ public void setAccessRestriction(ReferenceBinding type, AccessRestriction access
 	this.accessRestrictions.put(type, accessRestriction);
 }
 
-public void buildTypeBindings(LibraryAPIs libraryMetaData) {
-
-	ClassData[] classes = libraryMetaData.classes;
-	PackageBinding packageBinding = this.defaultPackage;
-	int typeLength=(classes!=null ? classes.length:0);
-	int count = 0;
-
-	LibraryAPIsScope scope=new LibraryAPIsScope(libraryMetaData,this);
-	SourceTypeBinding[] topLevelTypes = new SourceTypeBinding[typeLength];
-
-		for (int i = 0; i < typeLength; i++) {
-			ClassData clazz=classes[i];
-			char[][] className = CharOperation.arrayConcat(packageBinding.compoundName,clazz.name.toCharArray());
-
-			SourceTypeBinding binding = new MetatdataTypeBinding(className, packageBinding, clazz,  scope) ;
-			this.defaultPackage.addType(binding);
-			binding.fPackage.addType(binding);
-			topLevelTypes[count++] = binding;
-
-		}
-		if (count != topLevelTypes.length)
-			System.arraycopy(topLevelTypes, 0, topLevelTypes = new SourceTypeBinding[count], 0, count);
-		
-		char [] fullFileName=libraryMetaData.fileName.toCharArray();
-
-		LibraryAPIsBinding libraryAPIsBinding=new LibraryAPIsBinding(null,defaultPackage,fullFileName);
-
-		if (packageBinding!=this.defaultPackage)
-			packageBinding.addBinding(libraryAPIsBinding, libraryAPIsBinding.shortReadableName(), Binding.COMPILATION_UNIT);
-
-
-}
+//public void buildTypeBindings(LibraryAPIs libraryMetaData) {
+//
+//	ClassData[] classes = libraryMetaData.classes;
+//	PackageBinding packageBinding = this.defaultPackage;
+//	int typeLength=(classes!=null ? classes.length:0);
+//	int count = 0;
+//
+//	LibraryAPIsScope scope=new LibraryAPIsScope(libraryMetaData,this);
+//	SourceTypeBinding[] topLevelTypes = new SourceTypeBinding[typeLength];
+//
+//		for (int i = 0; i < typeLength; i++) {
+//			ClassData clazz=classes[i];
+//			char[][] className = CharOperation.arrayConcat(packageBinding.compoundName,clazz.name.toCharArray());
+//
+//			SourceTypeBinding binding = new MetatdataTypeBinding(className, packageBinding, clazz,  scope) ;
+//			this.defaultPackage.addType(binding);
+//			binding.fPackage.addType(binding);
+//			topLevelTypes[count++] = binding;
+//
+//		}
+//		if (count != topLevelTypes.length)
+//			System.arraycopy(topLevelTypes, 0, topLevelTypes = new SourceTypeBinding[count], 0, count);
+//		
+//		char [] fullFileName=libraryMetaData.fileName.toCharArray();
+//
+//		LibraryAPIsBinding libraryAPIsBinding=new LibraryAPIsBinding(null,defaultPackage,fullFileName);
+//
+//		if (packageBinding!=this.defaultPackage)
+//			packageBinding.addBinding(libraryAPIsBinding, libraryAPIsBinding.shortReadableName(), Binding.COMPILATION_UNIT);
+//
+//
+//}
 
 
 }

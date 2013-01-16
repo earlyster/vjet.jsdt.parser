@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2012 IBM Corporation and others.
+ * Copyright (c) 2006, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,6 @@
  *     Michael Spector <spektom@gmail.com>  Bug 242754
  *******************************************************************************/
 package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
-
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.ICombinedBinaryExpression;
@@ -124,36 +123,7 @@ public CombinedBinaryExpression(Expression left, Expression right, int operator,
 	}
 }
 
-public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext,
-		FlowInfo flowInfo) {
-	// keep implementation in sync with BinaryExpression#analyseCode
-	if (this.referencesTable == null) {
-		return super.analyseCode(currentScope, flowContext, flowInfo);
-	}
-	if (this.referencesTable[0] != null && this.referencesTable[0].resolvedType != null) {
-		BinaryExpression cursor;
-		if ((cursor = this.referencesTable[0]).resolvedType.id !=
-				TypeIds.T_JavaLangString) {
-			cursor.left.checkNPE(currentScope, flowContext, flowInfo);
-		}
-		flowInfo = cursor.left.analyseCode(currentScope, flowContext, flowInfo).
-			unconditionalInits();
-		for (int i = 0, end = this.arity; i < end; i ++) {
-			if ((cursor = this.referencesTable[i]).resolvedType.id !=
-					TypeIds.T_JavaLangString) {
-				cursor.right.checkNPE(currentScope, flowContext, flowInfo);
-			}
-			flowInfo = cursor.right.
-				analyseCode(currentScope, flowContext, flowInfo).
-					unconditionalInits();
-		}
-	}
-	if (this.resolvedType.id != TypeIds.T_JavaLangString) {
-		this.right.checkNPE(currentScope, flowContext, flowInfo);
-	}
-	return this.right.analyseCode(currentScope, flowContext, flowInfo).
-		unconditionalInits();
-}
+
 
 public StringBuffer printExpressionNoParenthesis(int indent,
 		StringBuffer output) {
@@ -180,19 +150,19 @@ public StringBuffer printExpressionNoParenthesis(int indent,
 	return this.right.printExpression(0, output);
 }
 
-public TypeBinding resolveType(BlockScope scope) {
-	// keep implementation in sync with BinaryExpression#resolveType
-	if (this.referencesTable == null) {
-		return super.resolveType(scope);
-	}
-	BinaryExpression cursor = this.referencesTable[0];
-	cursor.left.resolveType(scope);
-	for (int i = 0, end = this.arity; i < end; i ++) {
-		this.referencesTable[i].nonRecursiveResolveTypeUpwards(scope);
-	}
-	nonRecursiveResolveTypeUpwards(scope);
-	return this.resolvedType;
-}
+//public TypeBinding resolveType(BlockScope scope) {
+//	// keep implementation in sync with BinaryExpression#resolveType
+//	if (this.referencesTable == null) {
+//		return super.resolveType(scope);
+//	}
+//	BinaryExpression cursor = this.referencesTable[0];
+//	cursor.left.resolveType(scope);
+//	for (int i = 0, end = this.arity; i < end; i ++) {
+//		this.referencesTable[i].nonRecursiveResolveTypeUpwards(scope);
+//	}
+//	nonRecursiveResolveTypeUpwards(scope);
+//	return this.resolvedType;
+//}
 
 public void traverse(ASTVisitor visitor, BlockScope scope) {
 	if (this.referencesTable == null) {

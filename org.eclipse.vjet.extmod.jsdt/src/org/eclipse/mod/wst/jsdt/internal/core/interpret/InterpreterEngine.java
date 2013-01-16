@@ -19,7 +19,6 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.ast.Assignment;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.BinaryExpression;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.Block;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.BreakStatement;
-import org.eclipse.mod.wst.jsdt.internal.compiler.ast.CharLiteral;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.ContinueStatement;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ast.EqualExpression;
@@ -617,23 +616,6 @@ public class InterpreterEngine extends ASTVisitor implements Contants{
 	}
 	
 	
-
-	public boolean visit(CharLiteral charLiteral, BlockScope scope) {
-		String value;
-		if (charLiteral.source==null)
-		{
-			char [] chars={charLiteral.value};
-			value = new String(chars);
-		}
-		else  
-		{
-			char [] chars=new char[charLiteral.source.length-2];
-			System.arraycopy(charLiteral.source, 1, chars, 0, chars.length);
-			value =new String(chars);
-		}
-		pushString(value);
-		return super.visit(charLiteral, scope);
-	}
 
 	public boolean visit(FalseLiteral falseLiteral, BlockScope scope) {
 		pushValue(Value.BOOLEAN, 0, null);
