@@ -2624,8 +2624,8 @@ public void parseErrorInsertToComplete(
 	String inserted,
 	String completed){
 	String[] arguments = new String[] {inserted, completed};
-	if (";".equals(inserted))	// ignore missing semicolon error //$NON-NLS-1$
-		return;
+//	if (";".equals(inserted))	// ignore missing semicolon error //$NON-NLS-1$
+//		return;
 	this.handle(
 		IProblem.ParsingErrorInsertToComplete,
 		arguments,

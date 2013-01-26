@@ -26,7 +26,6 @@ $break
 			break;
 ./
 
-
 $readableName 
 /.1#$rule_number#./
 $compliance
@@ -45,12 +44,12 @@ $Terminals
 	Identifier
 
 	abstract boolean break byte case catch char class 
-	continue const default delete debugger do double else enum export extends false final finally float
-	for function  goto if in infinity implements import instanceof int
-	interface long native new null package private
-	protected public return short static strictfp super switch
+	continue const default debugger delete do double else enum export extends false final finally float
+	for function  goto if in implements import instanceof int
+	interface let long native new null package private
+	protected public return short static super switch
 	synchronized this throw throws transient true try typeof undefined var void
-	volatile with while
+	volatile while with yield
 
 	IntegerLiteral
 	LongLiteral
@@ -108,7 +107,6 @@ $Terminals
 	COMMA
 	DOT
 	EQUAL
-	AT
 
 --    BodyMarker
 
@@ -162,7 +160,6 @@ $Alias
 	','    ::= COMMA
 	'.'    ::= DOT
 	'='    ::= EQUAL
-	'@'	   ::= AT
 	
 $Start
 	Goal
@@ -174,12 +171,13 @@ protected void consumeRule(int act) {
   switch ( act ) {
 ./
 
+
+
 Goal ::= '++' CompilationUnit
 Goal ::= '--' MethodBody
 -- error recovery
 -- Modifiersopt is used to properly consume a header and exit the rule reduction at the end of the parse() method
 Goal ::= '>>>' Header1 Modifiersopt
--- Goal ::= '!' Header2 Modifiersopt
 Goal ::= '*' BlockStatements
 Goal ::= '*' CatchHeader
 -- JDOM
@@ -206,20 +204,9 @@ BooleanLiteral -> true
 BooleanLiteral -> false
 /:$readableName BooleanLiteral:/
 
-
 --------------------------------------------------------------
---------------------------------------------------------------
-
-Name -> SimpleName
-Name -> QualifiedName
-/:$readableName Name:/
-
-SimpleName -> 'Identifier'
+SimpleName -> Identifier
 /:$readableName SimpleName:/
-
-QualifiedName ::= Name '.' SimpleName 
-/.$putCase consumeQualifiedName(); $break ./
-/:$readableName QualifiedName:/
 
 CompilationUnit ::= EnterCompilationUnit InternalCompilationUnit
 /.$putCase consumeCompilationUnit(); $break ./
@@ -230,10 +217,6 @@ InternalCompilationUnit ::= ProgramElements
 InternalCompilationUnit ::= $empty
 /.$putCase consumeEmptyInternalCompilationUnit(); $break ./
 /:$readableName CompilationUnit:/
-
--- ReduceImports ::= $empty
--- /.$putCase consumeReduceImports(); $break ./
--- /:$readableName ReduceImports:/
 
 EnterCompilationUnit ::= $empty
 /.$putCase consumeEnterCompilationUnit(); $break ./
@@ -249,37 +232,6 @@ Header1 -> Header
 CatchHeader ::= 'catch' '(' FormalParameter ')' '{'
 /.$putCase consumeCatchHeader(); $break ./
 /:$readableName CatchHeader:/
-
------------------------------------------------
--- 1.5 feature
------------------------------------------------
--- TypeDeclaration -> EnumDeclaration
--- -- TypeDeclaration -> AnnotationTypeDeclaration
--- /:$readableName TypeDeclaration:/
-
---18.7 Only in the LALR(1) Grammar
-
-Modifiers -> Modifier
-Modifiers ::= Modifiers Modifier
-/.$putCase consumeModifiers2(); $break ./
-/:$readableName Modifiers:/
-
-Modifier -> 'public' 
-Modifier -> 'protected'
-Modifier -> 'private'
-Modifier -> 'static'
-Modifier -> 'abstract'
-Modifier -> 'final'
-Modifier -> 'native'
-Modifier -> 'transient'
-Modifier -> 'volatile'
-Modifier -> 'strictfp'
-/.$putCase consumeAnnotationAsModifier(); $break ./
-/:$readableName Modifier:/
-
-Diet ::= $empty
-/.$putCase consumeDiet(); $break./
-/:$readableName Diet:/
 
 VariableDeclarators -> VariableDeclarator 
 VariableDeclarators ::= VariableDeclarators ',' VariableDeclarator
@@ -325,7 +277,6 @@ VariableDeclaratorId ::= 'Identifier'
 /:$recovery_template Identifier:/
 
 VariableInitializer -> AssignmentExpression
--- VariableInitializer -> ArrayInitializer
 /:$readableName VariableInitializer:/
 /:$recovery_template Identifier:/
 
@@ -347,7 +298,6 @@ FunctionExpressionHeaderName ::= Modifiersopt 'function' 'Identifier' '('
 FunctionExpressionHeaderName ::= Modifiersopt 'function'   '('
 /.$putCase consumeMethodHeaderName(true); $break ./
 /:$readableName FunctionExpressionHeaderName :/
-
 
 MethodDeclaration -> AbstractMethodDeclaration
 MethodDeclaration ::= MethodHeader MethodBody 
@@ -381,6 +331,7 @@ FormalParameterList ::= FormalParameterList ',' FormalParameter
 --1.1 feature
 FormalParameter ::= VariableDeclaratorId
 /.$putCase consumeFormalParameter(false); $break ./
+/:$readableName FormalParameter:/
 
 MethodBody ::= NestedMethod '{' PostDoc BlockStatementsopt '}' 
 /.$putCase consumeMethodBody(); $break ./
@@ -395,10 +346,9 @@ PostDoc ::= $empty
 /.$putCase consumePostDoc(); $break ./
 /:$readableName PostDoc:/
 
-PushLeftBraceObjLit ::= $empty
+PushLeftBraceObjectLiteral ::= $empty
 /.$putCase consumePushLeftBrace(); $break ./
 /:$readableName PushLeftBrace:/
-
 
 Block ::= OpenBlock '{' BlockStatementsopt '}'
 /.$putCase consumeBlock(); $break ./
@@ -413,7 +363,6 @@ ProgramElements ::= ProgramElements ProgramElement
 /.$putCase consumeProgramElements() ; $break ./
 /:$readableName ProgramElements:/
 
--- ProgramElement -> MethodDeclaration
 ProgramElement -> BlockStatement
 /:$readableName ProgramElement:/
 
@@ -443,7 +392,6 @@ PushModifiers ::= $empty
 /.$putCase consumePushModifiers(); $break ./
 /:$readableName PushModifiers:/
 
-
 Statement -> StatementWithoutTrailingSubstatement
 Statement -> LabeledStatement
 Statement -> IfThenStatement
@@ -451,10 +399,6 @@ Statement -> IfThenElseStatement
 Statement -> WhileStatement
 Statement -> WithStatement
 Statement -> ForStatement
------------------------------------------------
--- 1.5 feature
------------------------------------------------
--- Statement -> EnhancedForStatement
 /:$readableName Statement:/
 /:$recovery_template ;:/
 
@@ -464,10 +408,6 @@ StatementNoShortIf -> IfThenElseStatementNoShortIf
 StatementNoShortIf -> WhileStatementNoShortIf
 StatementNoShortIf -> WithStatementNoShortIf
 StatementNoShortIf -> ForStatementNoShortIf
------------------------------------------------
--- 1.5 feature
------------------------------------------------
--- StatementNoShortIf -> EnhancedForStatementNoShortIf
 /:$readableName Statement:/
 
 StatementWithoutTrailingSubstatement -> Block
@@ -480,9 +420,10 @@ StatementWithoutTrailingSubstatement -> ContinueStatement
 StatementWithoutTrailingSubstatement -> ReturnStatement
 StatementWithoutTrailingSubstatement -> ThrowStatement
 StatementWithoutTrailingSubstatement -> TryStatement
+StatementWithoutTrailingSubstatement -> DebuggerStatement
 /:$readableName Statement:/
 
-EmptyStatement ::= ';'
+EmptyStatement ::= PushPosition ';'
 /.$putCase consumeEmptyStatement(); $break ./
 /:$readableName EmptyStatement:/
 /:$empty_statement:/
@@ -495,22 +436,15 @@ LabeledStatementNoShortIf ::= Label ':' StatementNoShortIf
 /.$putCase consumeStatementLabel() ; $break ./
 /:$readableName LabeledStatement:/
 
-Label ::= 'Identifier'
+Label ::= Identifier
 /.$putCase consumeLabel() ; $break ./
 /:$readableName Label:/
 
 ExpressionStatement ::= StatementExpression ';'
 /. $putCase consumeExpressionStatement(); $break ./
+/:$readableName Statement:/
 
 StatementExpression ::= ListExpressionStmt
-/:$readableName Expression:/
-
-StatementExpressionNoIn ::= PreIncrementExpression
-StatementExpressionNoIn ::= PreDecrementExpression
-StatementExpressionNoIn ::= PostIncrementExpressionStmt
-StatementExpressionNoIn ::= PostDecrementExpressionStmt
-StatementExpressionNoIn ::= MethodInvocationStmt
-
 /:$readableName Expression:/
 
 IfThenStatement ::=  'if' '(' Expression ')' BlockStatement
@@ -529,7 +463,7 @@ IfThenElseStatement ::=  'if' '(' Expression ')' LocalVariableDeclarationStateme
 /.$putCase consumeStatementIfWithElse(); $break ./
 /:$readableName IfStatement:/
 
-IfThenElseStatementNoShortIf ::=  'if' '(' Expression ')' LocalVariableDeclarationStatement 'else' LocalVariableDeclarationStatement
+IfThenElseStatementNoShortIf ::=  'if' '(' Expression ')' LocalVariableDeclarationStatement 'else' StatementNoShortIf
 /.$putCase consumeStatementIfWithElse(); $break ./
 /:$readableName IfStatement:/
 
@@ -591,7 +525,7 @@ ForStatement ::= 'for' '(' ForInitopt ';' Expressionopt ';' ForUpdateopt ')' Sta
 /.$putCase consumeStatementFor() ; $break ./
 /:$readableName ForStatement:/
 
-ForStatement ::= 'for' '(' ForInInit 'in' Expression  ')' Statement
+ForStatement ::= 'for' '(' ForInInit 'in' Expression ')' Statement
 /.$putCase consumeStatementForIn() ; $break ./
 /:$readableName ForStatement:/
 
@@ -599,19 +533,17 @@ ForStatementNoShortIf ::= 'for' '(' ForInitopt ';' Expressionopt ';' ForUpdateop
 /.$putCase consumeStatementFor() ; $break ./
 /:$readableName ForStatement:/
 
-ForStatementNoShortIf ::= 'for' '(' ForInInit 'in' Expression  ')' StatementNoShortIf
+ForStatementNoShortIf ::= 'for' '(' ForInInit 'in' Expression ')' StatementNoShortIf
 /.$putCase consumeStatementForIn() ; $break ./
 /:$readableName ForStatement:/
 
-
--- SHOULD BE 'FullPostfixExpression', but that causes shift/reduce conflict
-ForInInit ::= SimpleName
+ForInInit ::= LeftHandSideExpression
 /.$putCase consumeForInInit() ; $break ./
 ForInInit -> LocalVariableDeclarationNoIn
-/:$readableName ForInit:/
+/:$readableName ForInInit:/
 
---the minus one allows to avoid a stack-to-stack transfer
-ForInit ::= StatementExpressionListNoIn
+-- the minus one allows to avoid a stack-to-stack transfer
+ForInit ::= ExpressionNoIn
 /.$putCase consumeForInit() ; $break ./
 ForInit -> LocalVariableDeclarationNoIn
 /:$readableName ForInit:/
@@ -621,11 +553,6 @@ ForUpdate -> StatementExpressionList
 
 StatementExpressionList -> AssignmentExpression
 StatementExpressionList ::= StatementExpressionList ',' AssignmentExpression
-/.$putCase consumeStatementExpressionList() ; $break ./
-/:$readableName StatementExpressionList:/
-
-StatementExpressionListNoIn -> AssignmentExpressionNoIn
-StatementExpressionListNoIn ::= StatementExpressionListNoIn ',' AssignmentExpressionNoIn
 /.$putCase consumeStatementExpressionList() ; $break ./
 /:$readableName StatementExpressionList:/
 
@@ -676,6 +603,9 @@ CatchClause ::= 'catch' '(' FormalParameter ')'    Block
 Finally ::= 'finally'    Block
 /:$readableName Finally:/
 
+DebuggerStatement ::= 'debugger' ';'
+/.$putCase consumeDebuggerStatement() ; $break ./
+/:$readableName DebuggerStatement:/
 --18.12 Productions from 14: Expressions
 
 --for source positionning purpose
@@ -691,111 +621,146 @@ PushRPAREN ::= ')'
 Primary -> PrimaryNoNewArray
 Primary -> ArrayLiteral
 Primary -> ObjectLiteral
-Primary	-> 	FunctionExpression
 /:$readableName Primary:/
 
 PrimaryNoNewArray -> Literal
+PrimaryNoNewArray ::= SimpleName
+/.$putCase consumePrimarySimpleName(); $break ./
 PrimaryNoNewArray ::= 'this'
 /.$putCase consumePrimaryNoNewArrayThis(); $break ./
+/:$readableName PrimaryNoNewArray:/
 
-PrimaryNoNewArray ::=  PushLPAREN AssignmentExpression PushRPAREN 
+PrimaryNoNewArray ::=  PushLPAREN Expression PushRPAREN 
 /.$putCase consumePrimaryNoNewArray(); $break ./
-/:$readableName Expression:/
+/:$readableName PrimaryNoNewArray:/
 
+ObjectLiteral ::= '{' PushLeftBraceObjectLiteral '}'
+/.$putCase consumeEmptyObjectLiteral(); $break ./
+/:$readableName ObjectLiteral:/
 
-ObjectLiteral ::=	'{'PushLeftBraceObjLit FieldList '}'
+ObjectLiteral ::= '{' PushLeftBraceObjectLiteral PropertyNameAndValueList '}'
+/.$putCase consumeObjectLiteral(); $break ./
+/:$readableName ObjectLiteral:/
+
+ObjectLiteral ::= '{' PushLeftBraceObjectLiteral PropertyNameAndValueList ',' '}'
 /.$putCase consumeObjectLiteral(); $break ./
 /:$readableName ObjectLiteral:/
 	
-FieldList	::= $empty
-/.$putCase consumeEmptyFieldList(); $break ./
-FieldList	-> NonemptyFieldList
-/:$readableName FieldList:/
-	
-NonemptyFieldList	-> LiteralField
-NonemptyFieldList	::= NonemptyFieldList	',' LiteralField 
-/.$putCase consumeFieldList(); $break ./
+PropertyNameAndValueList -> PropertyAssignment
+PropertyNameAndValueList ::= PropertyNameAndValueList ',' PropertyAssignment 
+/.$putCase consumePropertyNameAndValueList(); $break ./
 /:$readableName NonemptyFieldList:/
 	
-LiteralField ::=	FieldName ':' AssignmentExpression
-/.$putCase consumeLiteralField(); $break ./
-/:$readableName LiteralField:/
-	
-FieldName	::= SimpleName
-/.$putCase consumeFieldNameSimple(); $break ./
-FieldName	-> StringLiteral
-FieldName	-> CharacterLiteral
-FieldName	-> IntegerLiteral
+PropertyAssignment ::= PropertyName ':' AssignmentExpression
+/.$putCase consumePropertyAssignment(); $break ./
+/:$readableName PropertyAssignment:/
+
+-- the first PropertyName can only be 'get' or 'set'
+PropertyAssignment ::=	PropertyName PropertyName '(' ')' FunctionBody
+/.$putCase consumeGetSetPropertyAssignment(false); $break ./
+PropertyAssignment ::=	PropertyName PropertyName '(' PropertySetParameterList ')' FunctionBody
+/.$putCase consumeGetSetPropertyAssignment(true); $break ./
+/:$readableName PropertyAssignment:/
+
+PropertySetParameterList ::= SimpleName
+/.$putCase consumePropertySetParameterList(); $break ./
+/:$readableName PropertySetParameterList:/
+
+FunctionBody ::= NestedMethod '{' PostDoc ProgramElementsopt '}'
+/.$putCase consumeMethodBody(); $break ./
+/:$readableName FunctionBody:/
+
+ProgramElementsopt ::= $empty
+/.$putCase consumeEmptyProgramElements(); $break ./
+ProgramElementsopt -> ProgramElements
+/:$readableName ProgramElementsopt:/
+
+PropertyName ::= SimpleName
+/.$putCase consumePropertyName(); $break ./
+PropertyName	-> StringLiteral
+PropertyName	-> CharacterLiteral
+PropertyName	-> IntegerLiteral
 /:$readableName FieldName:/
 	
-ArrayLiteral ::= 	ArrayLiteralHeader  ElisionOpt ']'
-/.$putCase comsumeArrayLiteral(false); $break ./
+ArrayLiteral ::= ArrayLiteralHeader ElisionOpt ']'
+/.$putCase consumeArrayLiteral(false); $break ./
 	
-ArrayLiteral ::= 	ArrayLiteralHeader  ArrayLiteralElementList ']'
-/.$putCase comsumeArrayLiteral(false); $break ./
+ArrayLiteral ::= ArrayLiteralHeader ArrayLiteralElementList ']'
+/.$putCase consumeArrayLiteral(false); $break ./
 /:$readableName ArrayLiteral:/
 	
-ArrayLiteral ::= 	ArrayLiteralHeader  ArrayLiteralElementList ',' ElisionOpt  ']'
-/.$putCase comsumeArrayLiteral(true); $break ./
+ArrayLiteral ::= ArrayLiteralHeader ArrayLiteralElementList ',' ElisionOpt  ']'
+/.$putCase consumeArrayLiteral(true); $break ./
 /:$readableName ArrayLiteral:/
 
-ArrayLiteralHeader ::= 	'[' 
-/.$putCase comsumeArrayLiteralHeader(); $break ./
+ArrayLiteralHeader ::= '[' 
+/.$putCase consumeArrayLiteralHeader(); $break ./
+/:$readableName ArrayLiteralHeader:/
 
 ElisionOpt ::= $empty 
-/.$putCase comsumeElisionEmpty(); $break ./
+/.$putCase consumeElisionEmpty(); $break ./
 ElisionOpt -> Elision
+/:$readableName ElisionOpt:/
 
 Elision ::= ','
-/.$putCase comsumeElisionOne(); $break ./
+/.$putCase consumeElisionOne(); $break ./
 Elision ::= Elision ','
-/.$putCase comsumeElisionList(); $break ./
+/.$putCase consumeElisionList(); $break ./
+/:$readableName Elision:/
  
 ArrayLiteralElementList ::= ElisionOpt ArrayLiteralElement
-/.$putCase comsumeArrayLiteralListOne(); $break ./
+/.$putCase consumeArrayLiteralListOne(); $break ./
 ArrayLiteralElementList ::=	ArrayLiteralElementList ',' ElisionOpt ArrayLiteralElement
-/.$putCase comsumeArrayLiteralList(); $break ./
-	
--- ArrayLiteralElement	::=	$empty
--- /.$putCase comsumeElementListEmpty(); $break ./
+/.$putCase consumeArrayLiteralList(); $break ./
+/:$readableName ArrayLiteralElementList:/
+
 ArrayLiteralElement ::=	AssignmentExpression
-/.$putCase comsumeArrayLiteralElement(); $break ./
+/.$putCase consumeArrayLiteralElement(); $break ./
 /:$readableName ArrayLiteralElement:/
 
-FullNewExpression	::= 'new' FullNewSubexpression '(' ArgumentListopt ')'
-/.$putCase consumeFullNewExpression(); $break ./
-/:$readableName FullNewExpression:/
-	
-FullNewSubexpression ->	Primary
-FullNewSubexpression ::=	SimpleName
-/.$putCase consumeFullNewSubexpressionSimpleName (); $break ./
-FullNewSubexpression ->	FullNewExpression
-FullNewSubexpression ::=	FullNewSubexpression PropertyOperator
-/.$putCase consumeFullNewSubexpressionPropertyOperator(); $break ./
-/:$readableName FullNewSubexpression:/
-	
-ShortNewExpression ::= 'new' ShortNewSubexpression
-/.$putCase comsumeShortNewSubexpression(); $break ./
-/:$readableName ShortNewExpression:/
-	
-	
-ShortNewSubexpression -> FullNewSubexpression
-ShortNewSubexpression -> ShortNewExpression
-/:$readableName ShortNewSubexpression:/
-	
-PropertyOperator ::= '.' SimpleName
-/.$putCase consumePropertyOperator() ; $break ./
-PropertyOperator -> Brackets 
-/.$putCase consumePropertyOperatorBrackets() ; $break ./
-/:$readableName PropertyOperator:/
+MemberExpression -> Primary
+MemberExpression -> FunctionExpression
+MemberExpression ::= MemberExpression '[' Expression ']'
+/.$putCase consumeMemberExpressionWithArrayReference(); $break ./
+MemberExpression ::= MemberExpression '.' SimpleName
+/.$putCase consumeMemberExpressionWithSimpleName(); $break ./
+MemberExpression ::= 'new' MemberExpression Arguments
+/.$putCase consumeNewMemberExpressionWithArguments(); $break ./
+/:$readableName MemberExpression:/
 
-Brackets ::= '[' Expression ']'
-/.$putCase consumeListExpressionBrackets() ; $break ./
-/:$readableName Brackets:/
+NewExpression -> MemberExpression
+NewExpression ::= 'new' NewExpression
+/.$putCase consumeNewExpression(); $break ./
+/:$readableName NewExpression:/
 
+CallExpression ::= MemberExpression Arguments
+/.$putCase consumeCallExpressionWithArguments(); $break ./
+CallExpression ::= CallExpression Arguments
+/.$putCase consumeCallExpressionWithArguments(); $break ./
+CallExpression ::= CallExpression '[' Expression ']'
+/.$putCase consumeCallExpressionWithArrayReference(); $break ./
+CallExpression ::= CallExpression '.' SimpleName
+/.$putCase consumeCallExpressionWithSimpleName(); $break ./
+/:$readableName CallExpression:/
+
+LeftHandSideExpression -> NewExpression
+LeftHandSideExpression -> CallExpression
+/:$readableName LeftHandSideExpression:/
+
+PostfixExpression -> LeftHandSideExpression
+PostfixExpression ::= LeftHandSideExpression '++'
+/.$putCase consumeUnaryExpression(OperatorIds.PLUS, true); $break ./
+PostfixExpression ::= LeftHandSideExpression '--'
+/.$putCase consumeUnaryExpression(OperatorIds.MINUS, true); $break ./
+/:$readableName PostFixExpression:/
 
 ListExpression -> AssignmentExpression
 ListExpression ::= ListExpression ',' AssignmentExpression
+/.$putCase consumeListExpression(); $break ./
+/:$readableName ListExpression:/
+
+ListExpressionNoIn -> AssignmentExpressionNoIn
+ListExpressionNoIn ::= ListExpressionNoIn ',' AssignmentExpressionNoIn
 /.$putCase consumeListExpression(); $break ./
 /:$readableName ListExpression:/
 
@@ -804,61 +769,18 @@ ListExpressionStmt ::= ListExpressionStmt ',' AssignmentExpressionStmt
 /.$putCase consumeListExpression(); $break ./
 /:$readableName ListExpression:/
 
-
-
-ArgumentList ::= AssignmentExpression
+ArgumentList -> AssignmentExpression
 ArgumentList ::= ArgumentList ',' AssignmentExpression
 /.$putCase consumeArgumentList(); $break ./
 /:$readableName ArgumentList:/
 
--- -----------------------------------------------
-
-FieldAccess ::= Primary '.' 'Identifier'
-/.$putCase consumeFieldAccess(false); $break ./
-
-MethodInvocation ::= FullPostfixExpression '(' ArgumentListopt ')'
-/.$putCase consumeMethodInvocationPrimary(); $break ./
-/:$readableName MethodInvocation:/
-
-PostfixExpression	->	FullPostfixExpression
-PostfixExpression	->	ShortNewExpression
-
--- PostfixExpression -> Primary
--- PostfixExpression ::= Name
--- /.$putCase consumePostfixExpression(); $break ./
--- PostfixExpression -> PostIncrementExpression
--- PostfixExpression -> PostDecrementExpression
--- /:$readableName Expression:/
-
-FullPostfixExpression ->	Primary
--- used identifier instead FullPostfixExpression ->	ExpressionQualifiedIdentifier
-FullPostfixExpression ::=	SimpleName
-/.$putCase consumePostfixExpression(); $break ./
-FullPostfixExpression ->	FullNewExpression
-FullPostfixExpression ::=	FullPostfixExpression PropertyOperator
-/.$putCase consumeFullPropertyOperator(); $break ./
-FullPostfixExpression ::=	MethodInvocation 
-/.$putCase consumeMethodInvocation(); $break ./
-FullPostfixExpression -> PostIncrementExpression
-FullPostfixExpression -> PostDecrementExpression
--- /:$readableName FullPostfixExpression:/
-
-
-
-PostIncrementExpression ::= PostfixExpression '++'
-/.$putCase consumeUnaryExpression(OperatorIds.PLUS,true); $break ./
-/:$readableName PostIncrementExpression:/
-
-PostDecrementExpression ::= PostfixExpression '--'
-/.$putCase consumeUnaryExpression(OperatorIds.MINUS,true); $break ./
-/:$readableName PostDecrementExpression:/
-
---for source managment purpose
+--for source management purpose
 PushPosition ::= $empty
  /.$putCase consumePushPosition(); $break ./
 /:$readableName PushPosition:/
 
 UnaryExpression -> PreIncrementExpression
+UnaryExpression -> PreDecrementExpression
 UnaryExpression ::= '+' PushPosition UnaryExpression
 /.$putCase consumeUnaryExpression(OperatorIds.PLUS); $break ./
 UnaryExpression ::= '-' PushPosition UnaryExpression
@@ -867,11 +789,11 @@ UnaryExpression -> UnaryExpressionNotPlusMinus
 /:$readableName Expression:/
 
 PreIncrementExpression ::= '++' PushPosition UnaryExpression
-/.$putCase consumeUnaryExpression(OperatorIds.PLUS,false); $break ./
+/.$putCase consumeUnaryExpression(OperatorIds.PLUS, false); $break ./
 /:$readableName PreIncrementExpression:/
 
 PreDecrementExpression ::= '--' PushPosition UnaryExpression
-/.$putCase consumeUnaryExpression(OperatorIds.MINUS,false); $break ./
+/.$putCase consumeUnaryExpression(OperatorIds.MINUS, false); $break ./
 /:$readableName PreDecrementExpression:/
 
 UnaryExpressionNotPlusMinus -> PostfixExpression
@@ -885,7 +807,6 @@ UnaryExpressionNotPlusMinus ::= 'void' PushPosition UnaryExpression
 /.$putCase consumeUnaryExpression(OperatorIds.VOID); $break ./
 UnaryExpressionNotPlusMinus ::= 'typeof' PushPosition UnaryExpression
 /.$putCase consumeUnaryExpression(OperatorIds.TYPEOF); $break ./
--- UnaryExpressionNotPlusMinus -> CastExpression
 /:$readableName Expression:/
 
 MultiplicativeExpression -> UnaryExpression
@@ -912,7 +833,6 @@ ShiftExpression ::= ShiftExpression '>>'  AdditiveExpression
 ShiftExpression ::= ShiftExpression '>>>' AdditiveExpression
 /.$putCase consumeBinaryExpression(OperatorIds.UNSIGNED_RIGHT_SHIFT); $break ./
 /:$readableName Expression:/
-
 
 --
 --RelationalExpression 
@@ -948,7 +868,6 @@ RelationalExpressionNoIn ::= RelationalExpressionNoIn 'instanceof' ShiftExpressi
 --
 --EqualityExpression
 --
-
 EqualityExpression -> RelationalExpression 
 EqualityExpression ::= EqualityExpression '==' RelationalExpression
 /.$putCase consumeEqualityExpression(OperatorIds.EQUAL_EQUAL); $break ./
@@ -1039,14 +958,14 @@ ConditionalOrExpressionNoIn ::= ConditionalOrExpressionNoIn '||' ConditionalAndE
 --
 --ConditionalExpression 
 --
-ConditionalExpression -> ConditionalOrExpression
-ConditionalExpression ::= ConditionalOrExpression '?' AssignmentExpression ':' AssignmentExpression 
-/.$putCase consumeConditionalExpression(OperatorIds.QUESTIONCOLON) ; $break ./
+ConditionalExpression ->  ConditionalOrExpression
+ConditionalExpression ::= ConditionalOrExpression ? AssignmentExpression ':' AssignmentExpression
+/.$putCase consumeConditionalExpression(OperatorIds.QUESTIONCOLON); $break ./
 /:$readableName Expression:/
 
-ConditionalExpressionNoIn -> ConditionalOrExpressionNoIn
-ConditionalExpressionNoIn ::= ConditionalOrExpressionNoIn '?' AssignmentExpressionNoIn ':' AssignmentExpressionNoIn 
-/.$putCase consumeConditionalExpression(OperatorIds.QUESTIONCOLON) ; $break ./
+ConditionalExpressionNoIn ->  ConditionalOrExpressionNoIn
+ConditionalExpressionNoIn ::= ConditionalOrExpressionNoIn ? AssignmentExpressionNoIn ':' AssignmentExpressionNoIn
+/.$putCase consumeConditionalExpression(OperatorIds.QUESTIONCOLON); $break ./
 /:$readableName Expression:/
 
 --
@@ -1100,12 +1019,13 @@ AssignmentOperator ::= '|='
 /:$readableName AssignmentOperator:/
 /:$recovery_template =:/
 
--- Expression -> AssignmentExpression
 Expression -> ListExpression
 /:$readableName Expression:/
 /:$recovery_template Identifier:/
 
-
+ExpressionNoIn -> ListExpressionNoIn
+/:$readableName Expression:/
+/:$recovery_template Identifier:/
 
 Expressionopt ::= $empty
 /.$putCase consumeEmptyExpression(); $break ./
@@ -1115,69 +1035,74 @@ Expressionopt -> Expression
 ConstantExpression -> Expression
 /:$readableName ConstantExpression:/
 
---
--- Disambigate OpenBlock and ObjectLiteral
---
 PrimaryStmt -> PrimaryNoNewArrayStmt
 PrimaryStmt -> ArrayLiteral
-/:$readableName PrimaryStmt:/
+/:$readableName Primary:/
 
 PrimaryNoNewArrayStmt -> Literal
+PrimaryNoNewArrayStmt ::= SimpleName
+/.$putCase consumePrimarySimpleName(); $break ./
 PrimaryNoNewArrayStmt ::= 'this'
 /.$putCase consumePrimaryNoNewArrayThis(); $break ./
-
-PrimaryNoNewArrayStmt ::=  PushLPAREN AssignmentExpression PushRPAREN 
+PrimaryNoNewArrayStmt ::=  PushLPAREN Expression PushRPAREN 
 /.$putCase consumePrimaryNoNewArray(); $break ./
+/:$readableName PrimaryNoNewArray:/
 
- 
+MemberExpressionStmt -> PrimaryStmt
+MemberExpressionStmt ::= MemberExpressionStmt '[' Expression ']'
+/.$putCase consumeMemberExpressionWithArrayReference(); $break ./
+MemberExpressionStmt ::= MemberExpressionStmt '.' SimpleName
+/.$putCase consumeMemberExpressionWithSimpleName(); $break ./
+MemberExpressionStmt ::= 'new' MemberExpressionStmt Arguments
+/.$putCase consumeNewMemberExpressionWithArguments(); $break ./
+/:$readableName MemberExpression:/
 
+NewExpressionStmt -> MemberExpressionStmt
+NewExpressionStmt ::= 'new' NewExpressionStmt
+/.$putCase consumeNewExpression(); $break ./
+/:$readableName NewExpression:/
 
-FullNewExpressionStmt	::= 'new' FullNewSubexpression '(' ArgumentListopt ')'
-/.$putCase consumeFullNewExpression(); $break ./
-/:$readableName FullNewExpression:/
-	
-ShortNewExpressionStmt ::= 'new' ShortNewSubexpression
-/.$putCase comsumeShortNewSubexpression(); $break ./
-/:$readableName ShortNewExpression:/
+CallExpressionStmt ::= MemberExpressionStmt Arguments
+/.$putCase consumeCallExpressionWithArguments(); $break ./
+CallExpressionStmt ::= CallExpressionStmt Arguments
+/.$putCase consumeCallExpressionWithArguments(); $break ./
+CallExpressionStmt ::= CallExpressionStmt '[' Expression ']'
+/.$putCase consumeCallExpressionWithArrayReference(); $break ./
+CallExpressionStmt ::= CallExpressionStmt '.' SimpleName
+/.$putCase consumeCallExpressionWithSimpleName(); $break ./
+/:$readableName CallExpression:/
 
-	
-MethodInvocationStmt ::= FullPostfixExpressionStmt '(' ArgumentListopt ')'
-/.$putCase consumeMethodInvocationPrimary(); $break ./
-/:$readableName MethodInvocation:/
+Arguments ::= '(' ArgumentListopt ')'
+/.$putCase consumeArguments(); $break ./
+/:$readableName Arguments:/
 
-PostfixExpressionStmt	->	FullPostfixExpressionStmt
-PostfixExpressionStmt	->	ShortNewExpressionStmt
+LeftHandSideExpressionStmt -> NewExpressionStmt
+LeftHandSideExpressionStmt -> CallExpressionStmt
+/:$readableName LeftHandSideExpressionStmt:/
 
- 
+PostfixExpressionStmt -> LeftHandSideExpressionStmt
+PostfixExpressionStmt ::= LeftHandSideExpressionStmt '++'
+/.$putCase consumeUnaryExpression(OperatorIds.PLUS, true); $break ./
+PostfixExpressionStmt ::= LeftHandSideExpressionStmt '--'
+/.$putCase consumeUnaryExpression(OperatorIds.MINUS, true); $break ./
+/:$readableName PostfixExpression:/
 
-FullPostfixExpressionStmt ->	PrimaryStmt
--- used identifier instead FullPostfixExpression ->	ExpressionQualifiedIdentifier
-FullPostfixExpressionStmt ::=	SimpleName
-/.$putCase consumePostfixExpression(); $break ./
-FullPostfixExpressionStmt ->	FullNewExpressionStmt
-FullPostfixExpressionStmt ::=	FullPostfixExpressionStmt PropertyOperator
-/.$putCase consumeFullPropertyOperator(); $break ./
-FullPostfixExpressionStmt ::=	MethodInvocationStmt 
-/.$putCase consumeMethodInvocation(); $break ./
-FullPostfixExpressionStmt -> PostDecrementExpressionStmt
--- /:$readableName FullPostfixExpression:/
+PreIncrementExpressionStmt ::= '++' PushPosition UnaryExpressionStmt
+/.$putCase consumeUnaryExpression(OperatorIds.PLUS, false); $break ./
+/:$readableName PreIncrementExpression:/
 
-PostIncrementExpressionStmt ::= PostfixExpressionStmt '++'
-/.$putCase consumeUnaryExpression(OperatorIds.PLUS,true); $break ./
-/:$readableName PostIncrementExpression:/
+PreDecrementExpressionStmt ::= '--' PushPosition UnaryExpressionStmt
+/.$putCase consumeUnaryExpression(OperatorIds.MINUS, false); $break ./
+/:$readableName PreDecrementExpression:/
 
-PostDecrementExpressionStmt ::= PostfixExpressionStmt '--'
-/.$putCase consumeUnaryExpression(OperatorIds.MINUS,true); $break ./
-/:$readableName PostDecrementExpression:/
-
-UnaryExpressionStmt -> PreIncrementExpression
-UnaryExpressionStmt -> PreDecrementExpression
+UnaryExpressionStmt -> PreIncrementExpressionStmt
+UnaryExpressionStmt -> PreDecrementExpressionStmt
 UnaryExpressionStmt ::= '+' PushPosition UnaryExpression
 /.$putCase consumeUnaryExpression(OperatorIds.PLUS); $break ./
 UnaryExpressionStmt ::= '-' PushPosition UnaryExpression
 /.$putCase consumeUnaryExpression(OperatorIds.MINUS); $break ./
 UnaryExpressionStmt -> UnaryExpressionNotPlusMinusStmt
-/:$readableName Expression:/
+/:$readableName UnaryExpression:/
 
 UnaryExpressionNotPlusMinusStmt -> PostfixExpressionStmt
 UnaryExpressionNotPlusMinusStmt ::= '~' PushPosition UnaryExpression
@@ -1190,9 +1115,7 @@ UnaryExpressionNotPlusMinusStmt ::= 'void' PushPosition UnaryExpression
 /.$putCase consumeUnaryExpression(OperatorIds.VOID); $break ./
 UnaryExpressionNotPlusMinusStmt ::= 'typeof' PushPosition UnaryExpression
 /.$putCase consumeUnaryExpression(OperatorIds.TYPEOF); $break ./
--- UnaryExpressionNotPlusMinus -> CastExpression
-/:$readableName Expression:/
-
+/:$readableName UnaryExpression:/
 
 MultiplicativeExpressionStmt -> UnaryExpressionStmt
 MultiplicativeExpressionStmt ::= MultiplicativeExpressionStmt '*' UnaryExpression
@@ -1201,14 +1124,14 @@ MultiplicativeExpressionStmt ::= MultiplicativeExpressionStmt '/' UnaryExpressio
 /.$putCase consumeBinaryExpression(OperatorIds.DIVIDE); $break ./
 MultiplicativeExpressionStmt ::= MultiplicativeExpressionStmt '%' UnaryExpression
 /.$putCase consumeBinaryExpression(OperatorIds.REMAINDER); $break ./
-/:$readableName Expression:/
+/:$readableName MultiplicativeExpression:/
 
 AdditiveExpressionStmt -> MultiplicativeExpressionStmt
 AdditiveExpressionStmt ::= AdditiveExpressionStmt '+' MultiplicativeExpression
 /.$putCase consumeBinaryExpression(OperatorIds.PLUS); $break ./
 AdditiveExpressionStmt ::= AdditiveExpressionStmt '-' MultiplicativeExpression
 /.$putCase consumeBinaryExpression(OperatorIds.MINUS); $break ./
-/:$readableName Expression:/
+/:$readableName AdditiveExpression:/
 
 ShiftExpressionStmt -> AdditiveExpressionStmt
 ShiftExpressionStmt ::= ShiftExpressionStmt '<<'  AdditiveExpression
@@ -1284,24 +1207,7 @@ AssignmentStmt ::= PostfixExpressionStmt AssignmentOperator AssignmentExpression
 /.$putCase consumeAssignment(); $break ./
 /:$readableName AssignmentStmt:/
 
-
----------------------------------------------------------------------------------------
---
--- The rules below are for optional terminal symbols.  An optional comma,
--- is only used in the context of an array initializer - It is a
--- "syntactic sugar" that otherwise serves no other purpose. By contrast,
--- an optional identifier is used in the definition of a break and 
--- continue statement. When the identifier does not appear, a NULL
--- is produced. When the identifier is present, the user should use the
--- corresponding TOKEN(i) method. See break statement as an example.
---
----------------------------------------------------------------------------------------
-
-,opt -> $empty
-,opt -> ,
-/:$readableName ,:/
-
-Modifiersopt ::= $empty 
+Modifiersopt ::= $empty
 /. $putCase consumeDefaultModifiers(); $break ./
 /:$readableName Modifiers:/
 
@@ -1320,10 +1226,6 @@ FormalParameterListopt ::= $empty
 FormalParameterListopt -> FormalParameterList
 /:$readableName FormalParameterList:/
 
-NestedType ::= $empty 
-/.$putCase consumeNestedType(); $break./
-/:$readableName NestedType:/
-
 ForInitopt ::= $empty
 /. $putCase consumeEmptyForInitopt(); $break ./
 ForInitopt -> ForInit
@@ -1339,23 +1241,9 @@ Catchesopt ::= $empty
 Catchesopt -> Catches
 /:$readableName Catches:/
 
-
-Arguments ::= '(' ArgumentListopt ')'
-/.$putCase consumeArguments(); $break ./
-/:$readableName Arguments:/
-
-Argumentsopt ::= $empty
-/.$putCase consumeEmptyArguments(); $break ./
-Argumentsopt -> Arguments
-/:$readableName Argumentsopt:/
-
-
 -----------------------------------
 -- 1.5 features : recovery rules --
 -----------------------------------
--- RecoveryMethodHeaderName ::= Modifiersopt TypeParameters Type 'Identifier' '('
--- /.$putCase consumeRecoveryMethodHeaderNameWithTypeParameters(); $break ./
--- /:$compliance 1.5:/
 RecoveryMethodHeaderName ::= Modifiersopt 'function' 'Identifier' '('
 /.$putCase consumeRecoveryMethodHeaderName(); $break ./
 /:$readableName MethodHeaderName:/
@@ -1420,7 +1308,6 @@ COLON ::=    ':'
 COMMA ::=    ','    
 DOT ::=    '.'    
 EQUAL ::=    '='    
-AT ::=    '@'    
 
 $end
 -- need a carriage return after the $end
