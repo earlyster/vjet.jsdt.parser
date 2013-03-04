@@ -12,12 +12,11 @@ package org.eclipse.mod.wst.jsdt.internal.compiler.env;
 
 
 import org.eclipse.mod.wst.jsdt.core.LibrarySuperType;
-import org.eclipse.mod.wst.jsdt.core.infer.IInferenceFile;
 
 /**
  * This interface denotes a compilation unit, providing its name and content.
  */
-public interface ICompilationUnit extends IDependent, IInferenceFile {
+public interface ICompilationUnit extends IDependent {
 /**
  * Answer the contents of the compilation unit.
  *

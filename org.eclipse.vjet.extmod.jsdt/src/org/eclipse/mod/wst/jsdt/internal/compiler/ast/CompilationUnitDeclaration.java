@@ -12,23 +12,18 @@ package org.eclipse.mod.wst.jsdt.internal.compiler.ast;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Iterator;
 
 import org.eclipse.mod.wst.jsdt.core.ast.IASTNode;
 import org.eclipse.mod.wst.jsdt.core.ast.IProgramElement;
 import org.eclipse.mod.wst.jsdt.core.ast.IScriptFileDeclaration;
 import org.eclipse.mod.wst.jsdt.core.compiler.CategorizedProblem;
 import org.eclipse.mod.wst.jsdt.core.compiler.CharOperation;
-import org.eclipse.mod.wst.jsdt.core.infer.IInferenceFile;
-//import org.eclipse.mod.wst.jsdt.core.infer.InferredMethod;
-//import org.eclipse.mod.wst.jsdt.core.infer.InferredType;
 import org.eclipse.mod.wst.jsdt.internal.compiler.ASTVisitor;
 import org.eclipse.mod.wst.jsdt.internal.compiler.CompilationResult;
 import org.eclipse.mod.wst.jsdt.internal.compiler.DelegateASTVisitor;
 import org.eclipse.mod.wst.jsdt.internal.compiler.impl.ReferenceContext;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.BlockScope;
+import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.CompilationUnitBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.CompilationUnitScope;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.TypeConstants;
 import org.eclipse.mod.wst.jsdt.internal.compiler.parser.NLSTag;
 import org.eclipse.mod.wst.jsdt.internal.compiler.problem.AbortCompilationUnit;
@@ -37,14 +32,15 @@ import org.eclipse.mod.wst.jsdt.internal.compiler.problem.AbortType;
 import org.eclipse.mod.wst.jsdt.internal.compiler.problem.ProblemReporter;
 import org.eclipse.mod.wst.jsdt.internal.compiler.problem.ProblemSeverities;
 import org.eclipse.mod.wst.jsdt.internal.compiler.util.HashtableOfObject;
-import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.CompilationUnitBinding;
+//import org.eclipse.mod.wst.jsdt.core.infer.InferredMethod;
+//import org.eclipse.mod.wst.jsdt.core.infer.InferredType;
 //import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.LocalTypeBinding;
 //import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.MethodScope;
 //import org.eclipse.mod.wst.jsdt.internal.compiler.lookup.SourceTypeBinding;
 
 public class CompilationUnitDeclaration
 	extends ASTNode
-	implements ProblemSeverities, ReferenceContext, IScriptFileDeclaration, IInferenceFile {
+	implements ProblemSeverities, ReferenceContext, IScriptFileDeclaration {
 
 	private static final Comparator STRING_LITERAL_COMPARATOR = new Comparator() {
 		public int compare(Object o1, Object o2) {

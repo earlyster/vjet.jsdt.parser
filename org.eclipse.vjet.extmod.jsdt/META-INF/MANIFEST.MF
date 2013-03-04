@@ -12,7 +12,6 @@ Export-Package:
   org.eclipse.mod.wst.jsdt.core,
   org.eclipse.mod.wst.jsdt.core.ast,
   org.eclipse.mod.wst.jsdt.core.compiler,
-  org.eclipse.mod.wst.jsdt.core.infer,
   org.eclipse.mod.wst.jsdt.internal.compiler,
   org.eclipse.mod.wst.jsdt.internal.oaametadata,
   org.eclipse.mod.wst.jsdt.internal.compiler.ast,
