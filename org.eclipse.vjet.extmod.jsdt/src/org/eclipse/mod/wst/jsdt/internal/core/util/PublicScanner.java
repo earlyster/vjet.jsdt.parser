@@ -4125,6 +4125,7 @@ protected boolean checkIfRegExp() throws IndexOutOfBoundsException, InvalidInput
 	int previousPosition = this.currentPosition;
 	int previousUnicodePtr = this.withoutUnicodePtr;
 	boolean regExp = false;
+	boolean onCharList = false;
 
 	// consume next character
 	this.unicodeAsBackSlash = false;
@@ -4141,7 +4142,7 @@ protected boolean checkIfRegExp() throws IndexOutOfBoundsException, InvalidInput
 
 	try {
 		while (this.currentCharacter != '/' &&
-				this.currentCharacter != '\r' && this.currentCharacter != '\n') {
+				this.currentCharacter != '\r' && this.currentCharacter != '\n'  && !onCharList) {
 
 			if (this.currentCharacter == '\\') {
 				if (this.unicodeAsBackSlash) {
@@ -4166,6 +4167,10 @@ protected boolean checkIfRegExp() throws IndexOutOfBoundsException, InvalidInput
 				if (scanEscapeCharacter() && this.withoutUnicodePtr != 0) {
 					unicodeStore();
 				}
+			}else if(this.currentCharacter =='['){
+				onCharList = true;
+			}else if(this.currentCharacter == ']'){
+				onCharList = false;
 			}
 
 			// consume next character

@@ -4362,7 +4362,8 @@ protected boolean checkIfRegExp() throws IndexOutOfBoundsException, InvalidInput
 	int previousPosition = this.currentPosition;
 	int previousUnicodePtr = this.withoutUnicodePtr;
 	boolean regExp = false;
-
+	boolean onCharList = false;
+	
 	// consume next character
 	this.unicodeAsBackSlash = false;
 	this.currentCharacter = this.source[this.currentPosition++];
@@ -4383,11 +4384,20 @@ protected boolean checkIfRegExp() throws IndexOutOfBoundsException, InvalidInput
 					}
 					break;
 				case '/' :
-					regExp = true;
-					break loop;
+					if(!onCharList){
+						regExp = true;
+						break loop;
+					}
+					break;
 				case '\r' :
 				case '\n' :
 					break loop;
+				case '[':
+					onCharList = true;
+			    	break;
+				case ']':
+					onCharList = false;
+					break;
 			}
 
 			// consume next character
